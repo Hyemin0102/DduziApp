@@ -39,7 +39,7 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
   label,
   focused,
   size = 24,
-  activeColor = '#37393F',
+  activeColor = '#000',
   inactiveColor = '#82879B',
 }) => {
   const containerStyle: ViewStyle = {
@@ -76,9 +76,7 @@ const TabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          padding: 0,
-          paddingTop: Platform.OS === 'ios' ? 0 : 14,
-          paddingBottom: 14,
+          paddingTop: 14,
           borderTopColor: '#EAEEF4',
           borderWidth: 1,
           shadowColor: '#000',

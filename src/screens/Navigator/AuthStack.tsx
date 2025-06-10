@@ -9,7 +9,6 @@ const AuthStack = () => {
   //메인 탐색 페이지, 클릭 시 게시물로 넘어감
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="Splash" component={Splash} />
       <Stack.Screen name="Login" component={Login} />
     </Stack.Navigator>
   );

@@ -7,7 +7,7 @@ import AuthStack from './AuthStack';
 const RootStack = createNativeStackNavigator();
 
 const Navigator = () => {
-  const isLoggedIn = true; //임시
+  const isLoggedIn = false; //임시
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{headerShown: false}}>

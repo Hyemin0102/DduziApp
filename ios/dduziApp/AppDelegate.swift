@@ -3,6 +3,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import RNBootSplash
+import NaverThirdPartyLogin
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -32,6 +33,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     return true
   }
+
+   func application(
+    _ application: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+  ) -> Bool {
+    
+    // 네이버 로그인 처리
+    if url.scheme == "com.hyemin.dduziapp.naverlogin" { 
+      return NaverThirdPartyLoginConnection.getSharedInstance().application(
+        application,
+        open: url,
+        options: options
+      )
+    }
+    
+    // 카카오 로그인 처리
+    // if RNKakaoLogins.isKakaoTalkLoginUrl(url) {
+    //   return RNKakaoLogins.handleOpenUrl(url)
+    // }
+    
+    return false
+  }
+
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
