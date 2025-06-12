@@ -3,18 +3,20 @@ import {NavigationContainer} from '@react-navigation/native';
 import TabNavigator from './TabNavigator';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import AuthStack from './AuthStack';
+import {useAuth} from '../../components/contexts/AuthContext';
 
 const RootStack = createNativeStackNavigator();
 
+//루트 네비게이터
 const Navigator = () => {
-  const isLoggedIn = false; //임시
+  const {isLoggedIn} = useAuth();
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
         {!isLoggedIn ? (
           <RootStack.Screen name="Auth" component={AuthStack} />
         ) : (
-          <RootStack.Screen name="MainApp" component={TabNavigator} />
+          <RootStack.Screen name="TabNavigator" component={TabNavigator} />
         )}
       </RootStack.Navigator>
     </NavigationContainer>

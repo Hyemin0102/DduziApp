@@ -27,6 +27,7 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 import Navigator from './src/screens/Navigator/Navigator';
+import AuthProvider from './src/components/contexts/AuthContext';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -48,7 +49,9 @@ function App(): React.JSX.Element {
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <SafeAreaProvider>
-        <Navigator />
+        <AuthProvider>
+          <Navigator />
+        </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
