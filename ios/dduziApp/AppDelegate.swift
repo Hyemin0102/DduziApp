@@ -4,6 +4,7 @@ import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import RNBootSplash
 import NaverThirdPartyLogin
+import KakaoSDKAuth
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -41,7 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     
     // 네이버 로그인 처리
-    if url.scheme == "com.hyemin.dduziapp.naverlogin" { 
+    if url.scheme == "com.dduzi.app.naverlogin" { 
       return NaverThirdPartyLoginConnection.getSharedInstance().application(
         application,
         open: url,
@@ -50,9 +51,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     // 카카오 로그인 처리
-    // if RNKakaoLogins.isKakaoTalkLoginUrl(url) {
-    //   return RNKakaoLogins.handleOpenUrl(url)
-    // }
+   if (AuthApi.isKakaoTalkLoginUrl(url)) {
+            return AuthController.handleOpenUrl(url: url)
+        }
+
     
     return false
   }

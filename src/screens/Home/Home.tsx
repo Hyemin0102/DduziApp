@@ -8,6 +8,7 @@ const Home = () => {
   const {logout} = useAuth();
   const [authToken, setAuthToken] = useState<string | null>('');
   const [user, setUser] = useState<string | null>('');
+
   const logoutHandle = async (): Promise<void> => {
     try {
       await NaverLogin.logout();

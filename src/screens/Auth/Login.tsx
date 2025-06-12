@@ -1,13 +1,13 @@
-import NaverLogin, {
-  GetProfileResponse,
-  NaverLoginResponse,
-} from '@react-native-seoul/naver-login';
+import NaverLogin from '@react-native-seoul/naver-login';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
 import {Button, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../components/contexts/AuthContext';
+import {initializeKakaoSDK} from '@react-native-kakao/core';
+import {login as KakaoLogin} from '@react-native-seoul/kakao-login';
+import {getProfile as KakaoGetProfile} from '@react-native-seoul/kakao-login';
 
 const Login = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -16,7 +16,7 @@ const Login = () => {
   const appName = '뜨지';
   const {login, logout, isLoggedIn} = useAuth();
 
-  const serviceUrlSchemeIOS = 'com.hyemin.dduziapp.naverlogin'; //URL Scheme
+  const serviceUrlSchemeIOS = 'com.dduzi.app.naverlogin'; //네이버 URL Scheme
 
   useEffect(() => {
     NaverLogin.initialize({
@@ -26,6 +26,9 @@ const Login = () => {
       serviceUrlSchemeIOS,
       disableNaverAppAuthIOS: true,
     });
+
+    //카카오 SDK 초기화
+    initializeKakaoSDK('781573e57b134e0171078cafee05b0a7');
   }, []);
 
   const loginHandle = async (): Promise<void> => {
@@ -68,6 +71,30 @@ const Login = () => {
     }
   };
 
+  const kakaoLoginHandle = async (): Promise<void> => {
+    try {
+      const result = await KakaoLogin();
+      console.log('카카오 로그인 결과:', result);
+
+      if (result) {
+        const profile = await KakaoGetProfile();
+        console.log('카카오 프로필:', profile);
+
+        // 백엔드로 데이터 전송 (실제 구현 시)
+        // await sendToBackend('kakao', profile);
+
+        await login(result.accessToken, profile.nickname);
+
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'TabNavigator'}],
+        });
+      }
+    } catch (error) {
+      console.error('카카오 로그인 오류:', error);
+    }
+  };
+
   const logoutHandle = async (): Promise<void> => {
     try {
       await NaverLogin.logout();
@@ -91,7 +118,8 @@ const Login = () => {
       <ScrollView
         style={{flex: 1}}
         contentContainerStyle={{flexGrow: 1, padding: 24}}>
-        <Button title={'Login'} onPress={loginHandle} />
+        <Button title={'NaverLogin'} onPress={loginHandle} />
+        <Button title={'KakaoLogin'} onPress={kakaoLoginHandle} />
 
         <Button title={'Logout'} onPress={logoutHandle} />
 

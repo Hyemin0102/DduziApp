@@ -28,6 +28,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import Navigator from './src/screens/Navigator/Navigator';
 import AuthProvider from './src/components/contexts/AuthContext';
+import {initializeKakaoSDK} from '@react-native-kakao/core';
 
 type SectionProps = PropsWithChildren<{
   title: string;
