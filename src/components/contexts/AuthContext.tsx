@@ -13,7 +13,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   user: string;
   isLoading: boolean;
-  login: (token: string, userData: string) => Promise<void>;
+  login: (token: any, userData: any) => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
 }
@@ -28,15 +28,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  console.log('isLogin', isLoggedIn);
 
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
   const checkAuthStatus = async () => {
+    //로그인 되어있는지 확인
+    const authToken = await AsyncStorage.getItem('authToken');
+    console.log('⭐️authToken', authToken);
+
     try {
-      setIsLoggedIn(true);
+      if (authToken && user) {
+        setIsLoggedIn(true);
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -45,7 +50,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   };
 
   //스토리지 상태 저장
-  const login = async (token: string, userData: string) => {
+  const login = async (token: any, userData: any) => {
     await AsyncStorage.setItem('authToken', token);
     await AsyncStorage.setItem('user', JSON.stringify(userData));
     setIsLoggedIn(true);

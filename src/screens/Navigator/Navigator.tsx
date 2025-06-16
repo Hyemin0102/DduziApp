@@ -10,6 +10,8 @@ const RootStack = createNativeStackNavigator();
 //루트 네비게이터
 const Navigator = () => {
   const {isLoggedIn} = useAuth();
+  console.log('✅isLoggedIn', isLoggedIn);
+
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{headerShown: false}}>

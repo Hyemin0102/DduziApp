@@ -8,6 +8,7 @@ import {useAuth} from '../../components/contexts/AuthContext';
 import {initializeKakaoSDK} from '@react-native-kakao/core';
 import {login as KakaoLogin} from '@react-native-seoul/kakao-login';
 import {getProfile as KakaoGetProfile} from '@react-native-seoul/kakao-login';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 const Login = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -29,6 +30,17 @@ const Login = () => {
 
     //카카오 SDK 초기화
     initializeKakaoSDK('781573e57b134e0171078cafee05b0a7');
+
+    //구글 로그인
+    const webClientId =
+      '777449080979-a7ruqn498ftnvkutb4cijlsct5e2k3gm.apps.googleusercontent.com';
+    const iosClientId =
+      '777449080979-a7ruqn498ftnvkutb4cijlsct5e2k3gm.apps.googleusercontent.com';
+    GoogleSignin.configure({
+      webClientId: webClientId,
+      iosClientId: iosClientId,
+      offlineAccess: true,
+    });
   }, []);
 
   const loginHandle = async (): Promise<void> => {
@@ -42,30 +54,11 @@ const Login = () => {
       console.log('성공 응답', successResponse);
 
       navigation.reset({
-        index: 0, // 현재 활성화된 라우트 인덱스
-        routes: [
-          // 네비게이션 스택에 들어갈 라우트들
-          {
-            name: 'TabNavigator',
-            state: {
-              // TabNavigator 내부 상태
-              routes: [
-                {
-                  name: 'HomeTab',
-                  state: {
-                    // HomeTab(HomeStack) 내부 상태
-                    routes: [{name: 'HomeMain'}],
-                    index: 0,
-                  },
-                },
-              ],
-              index: 0,
-            },
-          },
-        ],
+        index: 0,
+        routes: [{name: 'TabNavigator'}],
       });
 
-      await login(successResponse.accessToken, profileResult.response.name);
+      await login(successResponse.accessToken, profileResult.response);
     } else {
       console.log('실패 응답', failureResponse);
     }
@@ -83,7 +76,7 @@ const Login = () => {
         // 백엔드로 데이터 전송 (실제 구현 시)
         // await sendToBackend('kakao', profile);
 
-        await login(result.accessToken, profile.nickname);
+        await login(result.accessToken, profile);
 
         navigation.reset({
           index: 0,
@@ -92,6 +85,27 @@ const Login = () => {
       }
     } catch (error) {
       console.error('카카오 로그인 오류:', error);
+    }
+  };
+
+  const googleLoginHandle = async (): Promise<void> => {
+    try {
+      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+      const {type, data} = await GoogleSignin.signIn();
+      //data?.idToken 을 서버로 넘김
+
+      if (type === 'success') {
+        console.log('data', data);
+        await login(data.idToken, data.user);
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'TabNavigator'}],
+        });
+      } else if (type === 'cancelled') {
+        return;
+      }
+    } catch (error: any) {
+      console.error('구글 로그인 에러', error.message);
     }
   };
 
@@ -120,19 +134,10 @@ const Login = () => {
         contentContainerStyle={{flexGrow: 1, padding: 24}}>
         <Button title={'NaverLogin'} onPress={loginHandle} />
         <Button title={'KakaoLogin'} onPress={kakaoLoginHandle} />
+        <Button title={'GoogleLogin'} onPress={googleLoginHandle} />
 
         <Button title={'Logout'} onPress={logoutHandle} />
-
-        {isLoggedIn ? (
-          <View>
-            <Button title="Delete Token" onPress={deleteToken} />
-            <Text>로그인 됨</Text>
-          </View>
-        ) : (
-          <View>
-            <Text>로그인 안함</Text>
-          </View>
-        )}
+        <Button title={'deleteToken'} onPress={deleteToken} />
       </ScrollView>
     </SafeAreaView>
   );

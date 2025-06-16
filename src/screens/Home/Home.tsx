@@ -6,7 +6,6 @@ import {useEffect, useState} from 'react';
 
 const Home = () => {
   const {logout} = useAuth();
-  const [authToken, setAuthToken] = useState<string | null>('');
   const [user, setUser] = useState<string | null>('');
 
   const logoutHandle = async (): Promise<void> => {
@@ -23,17 +22,15 @@ const Home = () => {
   }, []);
 
   const checkAsyncStorage = async () => {
-    const authToken = await AsyncStorage.getItem('authToken');
     const user = await AsyncStorage.getItem('user');
 
-    setAuthToken(authToken);
     setUser(user);
   };
 
   return (
     <View>
       <Text>홈뷰</Text>
-      <Text>{authToken}</Text>
+
       <Text>{user}</Text>
       <Button title={'Logout'} onPress={logoutHandle} />
     </View>
