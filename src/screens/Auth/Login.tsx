@@ -7,122 +7,104 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../components/contexts/AuthContext';
 import {initializeKakaoSDK} from '@react-native-kakao/core';
 import {login as KakaoLogin} from '@react-native-seoul/kakao-login';
+import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import {getProfile as KakaoGetProfile} from '@react-native-seoul/kakao-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import Config from 'react-native-config';
+
+const KAKAO_SDK = Config.KAKAO_SDK || '';
+const NAVER_SCHEME = Config.NAVER_SCHEME || '';
+const GOOGLE_CLIENT_ID = Config.GOOGLE_CLIENT_ID || '';
+const NAVER_CLIENT_ID = Config.NAVER_CLIENT_ID || '';
+const NAVER_CLIENT_SECRET = Config.NAVER_CLIENT_SECRET || '';
+const APP_NAME = Config.APP_NAME || '';
+
+type SocialLoginType = 'naver' | 'kakao' | 'google';
 
 const Login = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const consumerKey = 'bLDWpbNbiBNWzB2r5wke'; //Client ID
-  const consumerSecret = 's7sblnRtLc'; //Client Secret
-  const appName = '뜨지';
-  const {login, logout, isLoggedIn} = useAuth();
-
-  const serviceUrlSchemeIOS = 'com.dduzi.app.naverlogin'; //네이버 URL Scheme
+  const {login} = useAuth();
 
   useEffect(() => {
+    //네이버 로그인
     NaverLogin.initialize({
-      appName,
-      consumerKey,
-      consumerSecret,
-      serviceUrlSchemeIOS,
+      appName: APP_NAME,
+      consumerKey: NAVER_CLIENT_ID,
+      consumerSecret: NAVER_CLIENT_SECRET,
+      serviceUrlSchemeIOS: NAVER_SCHEME,
       disableNaverAppAuthIOS: true,
     });
 
-    //카카오 SDK 초기화
-    initializeKakaoSDK('781573e57b134e0171078cafee05b0a7');
+    //카카오 로그인
+    initializeKakaoSDK(KAKAO_SDK);
 
     //구글 로그인
-    const webClientId =
-      '777449080979-a7ruqn498ftnvkutb4cijlsct5e2k3gm.apps.googleusercontent.com';
-    const iosClientId =
-      '777449080979-a7ruqn498ftnvkutb4cijlsct5e2k3gm.apps.googleusercontent.com';
     GoogleSignin.configure({
-      webClientId: webClientId,
-      iosClientId: iosClientId,
+      webClientId: GOOGLE_CLIENT_ID,
+      iosClientId: GOOGLE_CLIENT_ID,
       offlineAccess: true,
     });
   }, []);
 
-  const loginHandle = async (): Promise<void> => {
-    const {failureResponse, successResponse} = await NaverLogin.login();
-
-    if (successResponse) {
-      const profileResult = await NaverLogin.getProfile(
-        successResponse!.accessToken,
-      );
-      console.log('프로필', profileResult);
-      console.log('성공 응답', successResponse);
-
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'TabNavigator'}],
-      });
-
-      await login(successResponse.accessToken, profileResult.response);
-    } else {
-      console.log('실패 응답', failureResponse);
-    }
-  };
-
-  const kakaoLoginHandle = async (): Promise<void> => {
+  const socialLoginHandle = async (
+    loginType: SocialLoginType,
+  ): Promise<void> => {
     try {
-      const result = await KakaoLogin();
-      console.log('카카오 로그인 결과:', result);
+      let token: string | null = null;
+      let userProfile: any = null;
 
-      if (result) {
-        const profile = await KakaoGetProfile();
-        console.log('카카오 프로필:', profile);
+      switch (loginType) {
+        case 'naver':
+          const {failureResponse, successResponse} = await NaverLogin.login();
+          if (successResponse) {
+            const profileResult = await NaverLogin.getProfile(
+              successResponse!.accessToken,
+            );
+            token = successResponse.accessToken;
+            userProfile = profileResult.response;
+          } else {
+            console.log('네이버 로그인 실패:', failureResponse);
+            return;
+          }
+          break;
 
-        // 백엔드로 데이터 전송 (실제 구현 시)
-        // await sendToBackend('kakao', profile);
+        case 'kakao':
+          const result = await KakaoLogin();
+          if (result) {
+            const profile = await KakaoGetProfile();
+            token = result.accessToken;
+            userProfile = profile;
+          } else {
+            console.log('카카오 로그인 실패');
+          }
+          break;
 
-        await login(result.accessToken, profile);
+        case 'google':
+          await GoogleSignin.hasPlayServices({
+            showPlayServicesUpdateDialog: true,
+          });
+          const {type, data} = await GoogleSignin.signIn();
+          if (type === 'success') {
+            token = data.idToken;
+            userProfile = data.user;
+          } else if (type === 'cancelled') {
+            console.log('구글 로그인 취소');
+            return;
+          } else {
+            console.log('구글 로그인 실패');
+            return;
+          }
+          break;
 
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'TabNavigator'}],
-        });
+        default:
+          console.error('지원하지 않는 로그인', loginType);
+          return;
       }
-    } catch (error) {
-      console.error('카카오 로그인 오류:', error);
-    }
-  };
 
-  const googleLoginHandle = async (): Promise<void> => {
-    try {
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
-      const {type, data} = await GoogleSignin.signIn();
-      //data?.idToken 을 서버로 넘김
-
-      if (type === 'success') {
-        console.log('data', data);
-        await login(data.idToken, data.user);
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'TabNavigator'}],
-        });
-      } else if (type === 'cancelled') {
-        return;
+      if (token && userProfile && loginType) {
+        await login(token, userProfile, loginType);
       }
     } catch (error: any) {
-      console.error('구글 로그인 에러', error.message);
-    }
-  };
-
-  const logoutHandle = async (): Promise<void> => {
-    try {
-      await NaverLogin.logout();
-      await logout();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const deleteToken = async (): Promise<void> => {
-    try {
-      await NaverLogin.deleteToken();
-    } catch (e) {
-      console.error(e);
+      console.error(`${loginType} 로그인 에러:`, error.message);
     }
   };
 
@@ -132,12 +114,18 @@ const Login = () => {
       <ScrollView
         style={{flex: 1}}
         contentContainerStyle={{flexGrow: 1, padding: 24}}>
-        <Button title={'NaverLogin'} onPress={loginHandle} />
-        <Button title={'KakaoLogin'} onPress={kakaoLoginHandle} />
-        <Button title={'GoogleLogin'} onPress={googleLoginHandle} />
-
-        <Button title={'Logout'} onPress={logoutHandle} />
-        <Button title={'deleteToken'} onPress={deleteToken} />
+        <Button
+          title={'NaverLogin'}
+          onPress={() => socialLoginHandle('naver')}
+        />
+        <Button
+          title={'KakaoLogin'}
+          onPress={() => socialLoginHandle('kakao')}
+        />
+        <Button
+          title={'GoogleLogin'}
+          onPress={() => socialLoginHandle('google')}
+        />
       </ScrollView>
     </SafeAreaView>
   );

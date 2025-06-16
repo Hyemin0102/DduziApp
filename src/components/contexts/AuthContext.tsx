@@ -13,9 +13,10 @@ interface AuthContextType {
   isLoggedIn: boolean;
   user: string;
   isLoading: boolean;
-  login: (token: any, userData: any) => Promise<void>;
+  login: (token: any, userData: any, provider: any) => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
+  provider: string;
 }
 
 interface AuthProviderProps {
@@ -28,6 +29,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [provider, setProvider] = useState<string>('');
 
   useEffect(() => {
     checkAuthStatus();
@@ -50,11 +52,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   };
 
   //스토리지 상태 저장
-  const login = async (token: any, userData: any) => {
+  const login = async (token: any, userData: any, provider: any) => {
     await AsyncStorage.setItem('authToken', token);
     await AsyncStorage.setItem('user', JSON.stringify(userData));
     setIsLoggedIn(true);
     setUser(userData);
+    setProvider(provider);
   };
 
   //스토리지 상태 삭제
@@ -74,6 +77,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         login,
         logout,
         checkAuthStatus,
+        provider,
       }}>
       {children}
     </AuthContext.Provider>
