@@ -1,35 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  Children,
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import {createContext, useContext, useEffect, useState} from 'react';
 import React from 'react';
-
-interface AuthContextType {
-  isLoggedIn: boolean;
-  user: string;
-  isLoading: boolean;
-  login: (token: any, userData: any, provider: any) => Promise<void>;
-  logout: () => Promise<void>;
-  checkAuthStatus: () => Promise<void>;
-  provider: string;
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
+import {
+  AuthContextType,
+  AuthProviderProps,
+  UserProfile,
+  SocialLoginType,
+} from '../../@types/auth';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [user, setUser] = useState<string>('');
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [provider, setProvider] = useState<string>('');
+  const [provider, setProvider] = useState<SocialLoginType | ''>('');
 
   useEffect(() => {
     checkAuthStatus();
@@ -37,15 +22,22 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
   const checkAuthStatus = async () => {
     //로그인 되어있는지 확인
-    const authToken = await AsyncStorage.getItem('authToken');
-    console.log('⭐️authToken', authToken);
-
     try {
-      if (authToken && user) {
+      const authToken = await AsyncStorage.getItem('authToken');
+      const storedUser = await AsyncStorage.getItem('user');
+      const storedProvider = await AsyncStorage.getItem('provider');
+
+      console.log('⭐️authToken', authToken);
+      console.log('⭐️storedUser', storedUser);
+      console.log('⭐️storedProvider', storedProvider);
+
+      if (authToken && storedUser) {
         setIsLoggedIn(true);
+        setUser(JSON.parse(storedUser));
+        setProvider((storedProvider as SocialLoginType) || '');
       }
     } catch (error) {
-      console.log(error);
+      console.log('checkAuthStatus error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +47,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const login = async (token: any, userData: any, provider: any) => {
     await AsyncStorage.setItem('authToken', token);
     await AsyncStorage.setItem('user', JSON.stringify(userData));
+    await AsyncStorage.setItem('provider', provider);
     setIsLoggedIn(true);
     setUser(userData);
     setProvider(provider);
@@ -64,8 +57,10 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const logout = async () => {
     await AsyncStorage.removeItem('authToken');
     await AsyncStorage.removeItem('user');
+    await AsyncStorage.removeItem('provider');
     setIsLoggedIn(false);
-    setUser('');
+    setUser(null);
+    setProvider('');
   };
 
   return (

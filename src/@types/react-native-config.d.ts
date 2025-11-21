@@ -3,7 +3,8 @@ declare module 'react-native-config' {
     APP_NAME: string;
     KAKAO_SDK: string;
     NAVER_SCHEME: string;
-    GOOGLE_CLIENT_ID: string;
+    GOOGLE_WEB_CLIENT_ID: string;
+    GOOGLE_IOS_CLIENT_ID: string;
     NAVER_CLIENT_ID: string;
     NAVER_CLIENT_SECRET: string;
   }

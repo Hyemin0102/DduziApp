@@ -1,11 +1,204 @@
-import {Text, View} from 'react-native';
+import React from 'react';
+import {
+  Text,
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../../components/contexts/AuthContext';
+import UserProfileCard from '../../components/UserProfileCard';
+
+import NaverLogin from '@react-native-seoul/naver-login';
+import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 const Mypage = () => {
+  const {user, provider, logout} = useAuth();
+
+  const handleLogout = async () => {
+    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            // Provider별 로그아웃 처리
+            switch (provider) {
+              case 'kakao':
+                await KakaoLogout();
+                break;
+              case 'naver':
+                await NaverLogin.logout();
+                break;
+              case 'google':
+                await GoogleSignin.signOut();
+                break;
+            }
+
+            // AuthContext 로그아웃
+            await logout();
+          } catch (error) {
+            console.error('로그아웃 에러:', error);
+            Alert.alert('오류', '로그아웃 중 문제가 발생했습니다.');
+          }
+        },
+      },
+    ]);
+  };
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>
+            사용자 정보를 불러올 수 없습니다.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <View>
-      <Text>Mypage</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.title}>마이페이지</Text>
+
+        {/* 사용자 프로필 카드 */}
+        <UserProfileCard user={user} />
+
+        {/* 메뉴 섹션 */}
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>계정</Text>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuText}>프로필 편집</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuText}>설정</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 로그아웃 버튼 */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>로그아웃</Text>
+        </TouchableOpacity>
+
+        {/* 디버그 정보 (개발용) */}
+        {__DEV__ && (
+          <View style={styles.debugSection}>
+            <Text style={styles.debugTitle}>디버그 정보</Text>
+            <Text style={styles.debugText}>Provider: {provider || '없음'}</Text>
+            <Text style={styles.debugText}>User Nickname: {user.nickname}</Text>
+            <Text style={styles.debugText}>User ID: {user.id}</Text>
+            <Text style={styles.debugText} numberOfLines={10}>
+              Raw Profile: {JSON.stringify(user.rawProfile, null, 2)}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    gap: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  menuSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  menuText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  menuArrow: {
+    fontSize: 24,
+    color: '#999',
+  },
+  logoutButton: {
+    backgroundColor: '#ff4444',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  debugSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#ffa500',
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ffa500',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: 'monospace',
+    marginBottom: 4,
+  },
+});
 
 export default Mypage;
