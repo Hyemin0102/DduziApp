@@ -16,13 +16,7 @@ import {
   NaverUserProfile,
   GoogleUserProfile,
 } from '../../@types/auth';
-import {
-  supabaseAuth,
-  supabaseLocalAdminDB,
-  supabaseLocalDB,
-} from '../../lib/supabase';
-import {useNavigation} from '@react-navigation/native';
-import {MAIN_ROUTES, ROOT_ROUTES} from '../../@types/route';
+import {supabaseAuth, supabaseLocalDB} from '../../lib/supabase';
 
 const KAKAO_SDK = Config.KAKAO_SDK || '';
 const NAVER_SCHEME = Config.NAVER_SCHEME || '';
@@ -133,7 +127,7 @@ const Login = () => {
 
         case 'kakao':
           try {
-            // 1. 카카오 로그인
+            // 1. 카카오 로그인 및 ID 토큰 획득
             const result = await KakaoLogin();
             if (!result) {
               setError('카카오 로그인에 실패했습니다.');
@@ -144,10 +138,11 @@ const Login = () => {
 
             const kakaoToken = result.idToken;
 
-            // 2. 프로필 가져오기
+            // 2. 카카오 프로필 정보 가져오기
             const profile = await KakaoGetProfile();
 
-            // 3. Edge Function 호출하여 Supabase에 사용자 저장
+            // 3. Edge Function 호출: 프로덕션 Supabase에 사용자 인증 정보 및 프로필 Provisioning
+            //    (Edge Function 내부에서 로컬 DB 동기화까지 모두 처리됨)
             const {data: authData, error: authError} =
               await supabaseAuth.functions.invoke('kakao-auth', {
                 body: {
@@ -167,7 +162,7 @@ const Login = () => {
 
             console.log('Edge Function 응답:', authData);
 
-            //4. 카카오 Access Token 사용해 세션 설정
+            // 4. 카카오 Access Token 사용해 Supabase 세션 설정 (JWT 교환)
             const {data: supabaseAuthData, error: sessionError} =
               await supabaseAuth.auth.signInWithIdToken({
                 provider: 'kakao',
@@ -187,44 +182,14 @@ const Login = () => {
               const userEmail =
                 profile.email || `kakao_${profile.id}@placeholder.com`;
 
-              // ⭐️ 1단계: 로컬 DB의 auth.users에 유저 생성 (관리자 권한 필요) ⭐️
-              // 이 로직은 Auth의 FK 제약 조건을 만족시키기 위해 '필수'입니다.
-              // 기존 유저/신규 유저 모두 로컬 DB에는 처음 접근할 수 있으므로 유지합니다.
-              const {data: localUser, error: authAdminError} =
-                await supabaseLocalAdminDB.auth.admin.createUser({
-                  email: userEmail,
-                  id: supabaseUserId,
-                  email_confirm: true,
-                });
+              // ⭐️ 관리자 권한 로직 제거 (Edge Function으로 이전됨) ⭐️
+              // ⭐️ 1단계: 로컬 DB의 auth.users에 유저 생성 (삭제)
+              // ⭐️ 2단계: 로컬 DB의 users 테이블에 프로필 Upsert (삭제)
 
-              if (authAdminError && authAdminError.status !== 409) {
-                // 409는 이미 존재하는 에러
-                console.warn('로컬 Auth 유저 생성 오류:', authAdminError);
-              }
-
-              // ⭐️ 2단계: 로컬 DB의 users 테이블에 프로필 Upsert (관리자 권한으로 강제 저장) ⭐️
-              // 로컬 환경의 DB가 프로덕션 Auth와 분리되어 있으므로, 이 로직은 필수입니다.
-              const {error: upsertError} = await supabaseLocalAdminDB
-                .from('users')
-                .upsert(
-                  {
-                    id: supabaseUserId,
-                    username: profile.nickname || `user_${profile.id}`,
-                    avatar_url:
-                      profile.profileImageUrl || profile.thumbnailImageUrl,
-                    last_username_update: new Date().toISOString(), // DB에 이 컬럼이 Not Null이면 추가해야 합니다.
-                  },
-                  {onConflict: 'id'},
-                );
-
-              if (upsertError) {
-                console.error('로컬 DB Upsert 에러:', upsertError);
-                return;
-              }
-
-              //DB에서 유저정보 가져옴
+              // 5. 로컬 DB에서 최종 유저 정보 조회 (일반 사용자 권한만 사용)
+              // Edge Function이 로컬 DB를 동기화했으므로, 이제 일반 권한으로 조회 가능
               const {data: profileData, error: profileError} =
-                await supabaseLocalDB
+                await supabaseLocalDB // ⬅️ 안전한 일반 권한(Anon Key) 클라이언트 사용
                   .from('users')
                   .select('*')
                   .eq('id', supabaseUserId)
@@ -238,7 +203,7 @@ const Login = () => {
               console.log('DB 프로필', profileData);
 
               if (profileData) {
-                // ⭐️ 3단계: userProfile 객체 할당 수정 ⭐️
+                // 6. userProfile 객체 구성 및 로그인 상태 업데이트
                 userProfile = {
                   id: profileData.id,
                   email: userEmail,
@@ -248,17 +213,18 @@ const Login = () => {
                   rawProfile: profile as KakaoUserProfile,
                   nickname: profileData.username,
                 };
-                // 로그인 성공 및 상태 업데이트 로직 호출 (login 함수)
+
+                // 최종 로그인 성공 처리
                 login(
-                  supabaseAuthData.session.access_token, // 발급받은 액세스 토큰
-                  userProfile, // DB에서 가져온 최신 프로필 데이터
+                  supabaseAuthData.session.access_token,
+                  userProfile,
                   'kakao',
                 );
               }
             }
 
-            // 5. 로그인 성공
-            console.log('로그인 성공:', authData.user);
+            // 7. 로그인 성공
+            console.log('로그인 성공:', supabaseAuthData.user);
           } catch (error) {
             console.error('카카오 로그인 에러:', error);
             setError('로그인 처리 중 오류가 발생했습니다.');
