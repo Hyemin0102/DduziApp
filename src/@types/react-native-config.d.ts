@@ -7,6 +7,8 @@ declare module 'react-native-config' {
     GOOGLE_IOS_CLIENT_ID: string;
     NAVER_CLIENT_ID: string;
     NAVER_CLIENT_SECRET: string;
+    RN_SUPABASE_URL: string;
+    
   }
 
   export const Config: Partial<NativeConfig>;

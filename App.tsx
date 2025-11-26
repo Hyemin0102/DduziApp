@@ -53,6 +53,15 @@ function App(): React.JSX.Element {
         <AuthProvider>
           <Navigator />
         </AuthProvider>
+        {/* <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#fff',
+          }}>
+          <Text>Test Without AuthProvider</Text>
+        </View> */}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -14,6 +14,7 @@ import UserProfileCard from '../../components/UserProfileCard';
 import NaverLogin from '@react-native-seoul/naver-login';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {supabaseAuth} from '../../lib/supabase';
 
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
@@ -33,6 +34,7 @@ const Mypage = () => {
             switch (provider) {
               case 'kakao':
                 await KakaoLogout();
+                await supabaseAuth.auth.signOut();
                 break;
               case 'naver':
                 await NaverLogin.logout();

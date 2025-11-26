@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, Text, Image, StyleSheet} from 'react-native';
-import {UserProfile} from '../@types/auth';
+import {KakaoUserProfile, UserProfile} from '../@types/auth';
 
 interface UserProfileCardProps {
   user: UserProfile;
@@ -19,10 +19,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({user}) => {
         return '';
     }
   };
-
-  console.log('dddd', user.rawProfile);
-  console.log('profileImage:', user.profileImage);
-
+  console.log('user', user);
   const getProviderColor = () => {
     switch (user.provider) {
       case 'kakao':
@@ -35,12 +32,21 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({user}) => {
         return '#666';
     }
   };
+  if (!user) {
+    return null; // 또는 로딩 상태
+  }
+
+  const kakaoProfile =
+    user.provider === 'kakao' ? (user.rawProfile as KakaoUserProfile) : null;
+
+  const profileImageUrl =
+    kakaoProfile?.profileImageUrl || kakaoProfile?.thumbnailImageUrl;
 
   return (
     <View style={styles.container}>
       {/* 프로필 이미지 */}
-      {user.profileImage ? (
-        <Image source={{uri: user.profileImage}} style={styles.profileImage} />
+      {profileImageUrl ? (
+        <Image source={{uri: profileImageUrl}} style={styles.profileImage} />
       ) : (
         <View style={styles.profileImagePlaceholder}>
           <Text style={styles.profileImagePlaceholderText}>

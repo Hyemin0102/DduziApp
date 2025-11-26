@@ -59,9 +59,10 @@ export interface UserProfile {
   id: string;
   name?: string;
   email?: string;
+  provider: SocialLoginType;
   profileImage?: string;
   nickname?: string;
-  provider: SocialLoginType;
+
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | NaverUserProfile | GoogleUserProfile;
 }

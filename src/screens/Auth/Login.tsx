@@ -3,9 +3,7 @@ import React, {useEffect, useState} from 'react';
 import {Button, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../components/contexts/AuthContext';
-
 import {login as KakaoLogin} from '@react-native-seoul/kakao-login';
-import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import {getProfile as KakaoGetProfile} from '@react-native-seoul/kakao-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
@@ -18,6 +16,13 @@ import {
   NaverUserProfile,
   GoogleUserProfile,
 } from '../../@types/auth';
+import {
+  supabaseAuth,
+  supabaseLocalAdminDB,
+  supabaseLocalDB,
+} from '../../lib/supabase';
+import {useNavigation} from '@react-navigation/native';
+import {MAIN_ROUTES, ROOT_ROUTES} from '../../@types/route';
 
 const KAKAO_SDK = Config.KAKAO_SDK || '';
 const NAVER_SCHEME = Config.NAVER_SCHEME || '';
@@ -26,8 +31,6 @@ const NAVER_CLIENT_SECRET = Config.NAVER_CLIENT_SECRET || '';
 const GOOGLE_WEB_CLIENT_ID = Config.GOOGLE_WEB_CLIENT_ID || '';
 const GOOGLE_IOS_CLIENT_ID = Config.GOOGLE_IOS_CLIENT_ID || '';
 const APP_NAME = Config.APP_NAME || '';
-console.log('web', GOOGLE_WEB_CLIENT_ID);
-console.log('ios', GOOGLE_IOS_CLIENT_ID);
 
 // 카카오 프로필 → UserProfile 변환
 const convertKakaoProfile = (kakaoProfile: KakaoUserProfile): UserProfile => {
@@ -129,15 +132,136 @@ const Login = () => {
           break;
 
         case 'kakao':
-          const result = await KakaoLogin();
-          if (result) {
+          try {
+            // 1. 카카오 로그인
+            const result = await KakaoLogin();
+            if (!result) {
+              setError('카카오 로그인에 실패했습니다.');
+              return;
+            }
+
+            console.log('카카오 로그인 성공:', result);
+
+            const kakaoToken = result.idToken;
+
+            // 2. 프로필 가져오기
             const profile = await KakaoGetProfile();
-            token = result.accessToken;
-            userProfile = convertKakaoProfile(profile as KakaoUserProfile);
-          } else {
-            setError('카카오 로그인에 실패했습니다.');
-            console.log('카카오 로그인 실패');
-            return;
+
+            // 3. Edge Function 호출하여 Supabase에 사용자 저장
+            const {data: authData, error: authError} =
+              await supabaseAuth.functions.invoke('kakao-auth', {
+                body: {
+                  kakaoId: profile.id,
+                  email: profile.email || `kakao_${profile.id}@placeholder.com`,
+                  username: profile.nickname || `user_${profile.id}`,
+                  profileUrl:
+                    profile.profileImageUrl || profile.thumbnailImageUrl,
+                },
+              });
+
+            if (authError) {
+              console.error('Edge Function 에러:', authError);
+              setError('사용자 정보 저장에 실패했습니다.');
+              return;
+            }
+
+            console.log('Edge Function 응답:', authData);
+
+            //4. 카카오 Access Token 사용해 세션 설정
+            const {data: supabaseAuthData, error: sessionError} =
+              await supabaseAuth.auth.signInWithIdToken({
+                provider: 'kakao',
+                token: kakaoToken,
+              });
+
+            if (sessionError) {
+              console.error('Supabase 세션 발급 에러:', sessionError);
+              setError('세션 발급에 실패했습니다.');
+              return;
+            }
+
+            if (supabaseAuthData.session) {
+              console.log('최종 Supabase 세션 성공:', supabaseAuthData.session);
+
+              const supabaseUserId = supabaseAuthData.session.user.id;
+              const userEmail =
+                profile.email || `kakao_${profile.id}@placeholder.com`;
+
+              // ⭐️ 1단계: 로컬 DB의 auth.users에 유저 생성 (관리자 권한 필요) ⭐️
+              // 이 로직은 Auth의 FK 제약 조건을 만족시키기 위해 '필수'입니다.
+              // 기존 유저/신규 유저 모두 로컬 DB에는 처음 접근할 수 있으므로 유지합니다.
+              const {data: localUser, error: authAdminError} =
+                await supabaseLocalAdminDB.auth.admin.createUser({
+                  email: userEmail,
+                  id: supabaseUserId,
+                  email_confirm: true,
+                });
+
+              if (authAdminError && authAdminError.status !== 409) {
+                // 409는 이미 존재하는 에러
+                console.warn('로컬 Auth 유저 생성 오류:', authAdminError);
+              }
+
+              // ⭐️ 2단계: 로컬 DB의 users 테이블에 프로필 Upsert (관리자 권한으로 강제 저장) ⭐️
+              // 로컬 환경의 DB가 프로덕션 Auth와 분리되어 있으므로, 이 로직은 필수입니다.
+              const {error: upsertError} = await supabaseLocalAdminDB
+                .from('users')
+                .upsert(
+                  {
+                    id: supabaseUserId,
+                    username: profile.nickname || `user_${profile.id}`,
+                    avatar_url:
+                      profile.profileImageUrl || profile.thumbnailImageUrl,
+                    last_username_update: new Date().toISOString(), // DB에 이 컬럼이 Not Null이면 추가해야 합니다.
+                  },
+                  {onConflict: 'id'},
+                );
+
+              if (upsertError) {
+                console.error('로컬 DB Upsert 에러:', upsertError);
+                return;
+              }
+
+              //DB에서 유저정보 가져옴
+              const {data: profileData, error: profileError} =
+                await supabaseLocalDB
+                  .from('users')
+                  .select('*')
+                  .eq('id', supabaseUserId)
+                  .single();
+
+              if (profileError) {
+                console.error('DB 프로필 조회 에러:', profileError);
+                await supabaseAuth.auth.signOut();
+                return;
+              }
+              console.log('DB 프로필', profileData);
+
+              if (profileData) {
+                // ⭐️ 3단계: userProfile 객체 할당 수정 ⭐️
+                userProfile = {
+                  id: profileData.id,
+                  email: userEmail,
+                  name: profileData.username,
+                  profileImage: profileData.avatar_url,
+                  provider: 'kakao',
+                  rawProfile: profile as KakaoUserProfile,
+                  nickname: profileData.username,
+                };
+                // 로그인 성공 및 상태 업데이트 로직 호출 (login 함수)
+                login(
+                  supabaseAuthData.session.access_token, // 발급받은 액세스 토큰
+                  userProfile, // DB에서 가져온 최신 프로필 데이터
+                  'kakao',
+                );
+              }
+            }
+
+            // 5. 로그인 성공
+            console.log('로그인 성공:', authData.user);
+          } catch (error) {
+            console.error('카카오 로그인 에러:', error);
+            setError('로그인 처리 중 오류가 발생했습니다.');
           }
           break;
 

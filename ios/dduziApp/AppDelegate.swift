@@ -70,7 +70,7 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 #if DEBUG
 
     // RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
-   return URL(string: "http://172.30.1.73:8081/index.bundle?platform=ios")
+   return URL(string: "http://172.30.1.77:8081/index.bundle?platform=ios")
 #else
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif

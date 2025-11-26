@@ -1,12 +1,12 @@
+import React, {createContext, useContext, useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {createContext, useContext, useEffect, useState} from 'react';
-import React from 'react';
 import {
   AuthContextType,
   AuthProviderProps,
   UserProfile,
   SocialLoginType,
 } from '../../@types/auth';
+import {supabaseAuth} from '../../lib/supabase';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -23,18 +23,37 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const checkAuthStatus = async () => {
     //로그인 되어있는지 확인
     try {
-      const authToken = await AsyncStorage.getItem('authToken');
-      const storedUser = await AsyncStorage.getItem('user');
-      const storedProvider = await AsyncStorage.getItem('provider');
+      // Supabase 세션 확인
+      const {
+        data: {session},
+      } = await supabaseAuth.auth.getSession();
 
-      console.log('⭐️authToken', authToken);
-      console.log('⭐️storedUser', storedUser);
-      console.log('⭐️storedProvider', storedProvider);
+      if (session) {
+        // Supabase 세션이 있으면 사용
+        console.log('✅ Supabase 세션 확인됨:', session.user);
+        const storedUser = await AsyncStorage.getItem('user');
+        const storedProvider = await AsyncStorage.getItem('provider');
 
-      if (authToken && storedUser) {
-        setIsLoggedIn(true);
-        setUser(JSON.parse(storedUser));
-        setProvider((storedProvider as SocialLoginType) || '');
+        if (storedUser) {
+          setIsLoggedIn(true);
+          setUser(JSON.parse(storedUser));
+          setProvider((storedProvider as SocialLoginType) || '');
+        }
+      } else {
+        // Supabase 세션이 없으면 기존 방식 확인
+        const authToken = await AsyncStorage.getItem('authToken');
+        const storedUser = await AsyncStorage.getItem('user');
+        const storedProvider = await AsyncStorage.getItem('provider');
+
+        console.log('⭐️authToken', authToken);
+        console.log('⭐️storedUser', storedUser);
+        console.log('⭐️storedProvider', storedProvider);
+
+        if (authToken && storedUser) {
+          setIsLoggedIn(true);
+          setUser(JSON.parse(storedUser));
+          setProvider((storedProvider as SocialLoginType) || '');
+        }
       }
     } catch (error) {
       console.log('checkAuthStatus error:', error);
@@ -55,6 +74,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
   //스토리지 상태 삭제
   const logout = async () => {
+    // Supabase 로그아웃
+    await supabaseAuth.auth.signOut();
+
     await AsyncStorage.removeItem('authToken');
     await AsyncStorage.removeItem('user');
     await AsyncStorage.removeItem('provider');
