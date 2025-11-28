@@ -3,7 +3,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import TabNavigator from './TabNavigator';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import AuthStack from './AuthStack';
-import {useAuth} from '../../components/contexts/AuthContext';
+import {useAuth} from '../../contexts/AuthContext';
 
 const RootStack = createNativeStackNavigator();
 

@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../components/contexts/AuthContext';
+import {useAuth} from '../../contexts/AuthContext';
 import UserProfileCard from '../../components/UserProfileCard';
 
 import NaverLogin from '@react-native-seoul/naver-login';
@@ -30,21 +30,6 @@ const Mypage = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            // Provider별 로그아웃 처리
-            switch (provider) {
-              case 'kakao':
-                await KakaoLogout();
-                await supabaseAuth.auth.signOut();
-                break;
-              case 'naver':
-                await NaverLogin.logout();
-                break;
-              case 'google':
-                await GoogleSignin.signOut();
-                break;
-            }
-
-            // AuthContext 로그아웃
             await logout();
           } catch (error) {
             console.error('로그아웃 에러:', error);

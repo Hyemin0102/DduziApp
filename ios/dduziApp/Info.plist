@@ -70,6 +70,8 @@
 		<string>kakaokompassauth</string>
 		<string>storykompassauth</string>
 		<string>kakaolink</string>
+		<string>https</string>
+    <string>http</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

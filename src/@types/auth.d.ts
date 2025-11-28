@@ -1,5 +1,4 @@
-// 소셜 로그인 제공자 타입
-export type SocialLoginType = 'kakao' | 'naver' | 'google';
+
 
 // 카카오 사용자 프로필 (실제 SDK 응답 형식)
 export interface KakaoUserProfile {
@@ -27,6 +26,7 @@ export interface KakaoUserProfile {
   genderNeedsAgreement?: boolean | null;
   phoneNumberNeedsAgreement?: boolean | null;
   isKoreanNeedsAgreement?: boolean | null;
+  picture?: string | null;
 }
 
 // 네이버 사용자 프로필
@@ -59,7 +59,7 @@ export interface UserProfile {
   id: string;
   name?: string;
   email?: string;
-  provider: SocialLoginType;
+  provider: string;
   profileImage?: string;
   nickname?: string;
 
@@ -72,11 +72,11 @@ export interface AuthContextType {
   isLoggedIn: boolean;
   user: UserProfile | null;
   isLoading: boolean;
-  provider: SocialLoginType | '';
+  provider: string;
   login: (
     token: string,
     userData: UserProfile,
-    provider: SocialLoginType,
+    provider: string,
   ) => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;

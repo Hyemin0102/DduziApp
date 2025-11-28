@@ -38,14 +38,14 @@ Deno.serve(async (req) => {
   try {
     const { kakaoId, email, username, profileUrl } = await req.json()
 
-    // ⭐️ 1. 실행 환경 및 클라이언트 설정 ⭐️
+   
     const isLocal = req.headers.get('host')?.includes('localhost') || req.headers.get('host')?.includes('127.0.0.1');
     
     let currentSupabaseUrl = prodSupabaseUrl;
     let currentServiceKey = prodServiceKey;
     
     if (isLocal) {
-      // 로컬 환경에서 실행 중이라면 로컬 키/URL로 오버라이드
+      
       currentSupabaseUrl = localSupabaseUrl;
       currentServiceKey = localServiceKey;
       console.log("Running in Local Development Environment. Syncing with local DB.");
@@ -58,24 +58,25 @@ Deno.serve(async (req) => {
     let isNewUser: boolean = false; 
     let existingAuthUser = null;
 
-    // 2. 기존 사용자 확인 (SDK 사용)
+
     try {
-      // PROD든 Local이든 현재의 Admin 클라이언트 사용
+      //기존 사용자 확인
       const { data } = await supabaseAdmin.auth.admin.getUserByEmail(email);
       existingAuthUser = data;
     } catch (error) {
       console.log(`User not found for ${email}. Proceeding to create/find ID.`);
     }
 
+
     let existingProfile = null;
     let authUserExists = false; 
 
     if (existingAuthUser?.user) {
-      // 3. Auth 유저가 확인된 경우
       authUserExists = true;
       userId = existingAuthUser.user.id;
       isNewUser = false;
       
+      //users 테이블에서 기존 유저의 모든 칼럼 가져와서 프로필 업데이트
       const { data: profile } = await supabaseAdmin
           .from('users')
           .select('*')
@@ -85,18 +86,17 @@ Deno.serve(async (req) => {
       existingProfile = profile;
     }
 
-    // 4. 프로필 업데이트 또는 생성
     if (authUserExists && existingProfile) {
-      // 4-A. 기존 유저 & 기존 프로필: 업데이트 방지 (패스)
+      //기존 유저 & 기존 프로필인 경우
       console.log(`User ${userId} logged in. Profile update skipped.`);
       
     } else {
-      // 4-B. 신규 유저 또는 프로필 없는 유저: 최초 생성/ID 확보
-      
+      // 신규 유저, 프로필 없는 경우
       if (!authUserExists) {
-        // 유저가 없다고 판단됨 -> 생성 시도
+        //신규 유저인 경우
         isNewUser = true;
 
+        //supabase auth에 user 등록
         const { data: newAuthUser, error: createError } =
           await supabaseAdmin.auth.admin.createUser({
             email: email,
@@ -105,11 +105,11 @@ Deno.serve(async (req) => {
           })
 
         if (createError) {
+          //이미 Auth 에 등록된 유저인 경우
           if (createError.message.includes("A user with this email address has already been registered")) {
             console.warn(`Duplicate email detected. Attempting ID retrieval via RPC.`);
             
             // ⭐️ RPC 함수를 사용한 ID 복구 (PROD 환경에서만 RPC 함수가 동작함) ⭐️
-            // 로컬 환경에서는 DB 함수가 정의되어 있지 않을 수 있으므로, PROD 환경에서만 호출합니다.
             const rpcClient = createClient(prodSupabaseUrl, prodServiceKey); // PROD RPC 클라이언트 생성
             const existingUserId = await getUserIdByEmailRPC(rpcClient, email); 
         
@@ -123,6 +123,7 @@ Deno.serve(async (req) => {
             throw createError 
           }
         } else {
+          //신규 유저인 경우 Auth user의 id 확보
           userId = newAuthUser.user.id
         }
       }
@@ -130,6 +131,7 @@ Deno.serve(async (req) => {
       // userId가 확보되었으므로 Upsert 진행 (PROD 또는 Local)
       const defaultUsername = `dduzi_${Math.floor(Math.random() * 10000)}` 
       
+      //id값이 이미 존재하면 새로운 값으로 업데이트, 없으면 새로운 유저 추가
       const { error: profileUpsertError } = await supabaseAdmin
       .from('users')
       .upsert({
@@ -137,16 +139,17 @@ Deno.serve(async (req) => {
         username: defaultUsername, 
         avatar_url: profileUrl,
         last_username_update: new Date().toISOString(),
+        provider: 'kakao',
       }, { onConflict: 'id' }) 
         
       if (profileUpsertError) throw profileUpsertError
     }
     
-    // ⭐️ 5. 로컬 환경일 경우 로컬 DB에 추가 동기화 ⭐️
+    // ⭐️ 로컬 환경일 경우 로컬 DB에 추가 동기화
     if (isLocal) {
       const supabaseLocalAdmin = createClient(localSupabaseUrl, localServiceKey);
 
-      // 5-A. 로컬 auth.users에 유저 강제 생성 (409 에러 무시)
+      // 로컬 auth.users에 유저 강제 생성 (409 동일 유저 에러 무시)
       await supabaseLocalAdmin.auth.admin.createUser({
           email: email,
           id: userId, // PROD에서 확보한 ID 사용
@@ -157,7 +160,7 @@ Deno.serve(async (req) => {
           }
       });
 
-      // 5-B. 로컬 public.users에 프로필 Upsert
+      // 로컬 public.users에 프로필 Upsert
       const { error: localUpsertError } = await supabaseLocalAdmin
           .from('users')
           .upsert(
@@ -166,6 +169,7 @@ Deno.serve(async (req) => {
                   username: username, 
                   avatar_url: profileUrl,
                   last_username_update: new Date().toISOString(),
+                  provider: 'kakao',
               },
               {onConflict: 'id'}
           );
@@ -178,7 +182,7 @@ Deno.serve(async (req) => {
     }
 
 
-    // 6. 응답
+    // 최종 응답
     return new Response(
       JSON.stringify({
         success: true,

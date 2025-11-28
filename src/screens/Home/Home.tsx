@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text, View, StyleSheet, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../components/contexts/AuthContext';
+import {useAuth} from '../../contexts/AuthContext';
 import UserProfileCard from '../../components/UserProfileCard';
 
 const Home = () => {
