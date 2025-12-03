@@ -19,20 +19,33 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [provider, setProvider] = useState<string>('');
-  console.log('✅ user', user);
+  console.log('✅ Authuser', user);
 
-  const convertSupabaseUserToProfile = (session: any): UserProfile => {
+  const fetchUserWithProfile = async (session: any): Promise<UserProfile> => {
+    const {data: dbUser, error} = await supabaseAuth
+      .from('users')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    if (error) {
+      console.error('❌ users 테이블 조회 에러:', error);
+    }
+
     return {
       id: session.user.id,
       email: session.user.email,
       name:
         session.user.user_metadata?.full_name ||
         session.user.user_metadata?.name,
-      nickname: session.user.user_metadata?.name,
+      nickname: dbUser?.username || session.user.user_metadata?.name,
+      bio: dbUser?.bio || null,
       profileImage:
+        dbUser?.avatar_url ||
         session.user.user_metadata?.avatar_url ||
         session.user.user_metadata?.picture,
       provider: session.user.app_metadata.provider || 'google',
+      defaultImageId: dbUser?.default_image_id,
       rawProfile: {
         id: session.user.id,
         email: session.user.email,
@@ -48,11 +61,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
     const {data: authListener} = supabaseAuth.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔔 Auth event:', event);
-        console.log('🔔 Auth session:', session);
-
         if (event === 'SIGNED_IN' && session) {
-          const userData = convertSupabaseUserToProfile(session);
+          const userData = fetchUserWithProfile(session);
 
           await login(
             session.access_token,
@@ -77,7 +87,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       if (session) {
         console.log('✅ Supabase 세션 확인됨:', session.user);
 
-        const userData = convertSupabaseUserToProfile(session);
+        // 🔥 users 테이블에서 추가 정보 조회
+        const {data: dbUser, error} = await supabaseAuth
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('❌ users 테이블 조회 에러:', error);
+        }
+
+        console.log('dbUser', dbUser);
+
+        const userData = await fetchUserWithProfile(session);
 
         setIsLoggedIn(true);
         setUser(userData);
@@ -90,7 +113,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           session.user.app_metadata.provider || 'google',
         );
       } else {
-        // Supabase 세션이 없으면 기존 AsyncStorage 확인 (하위 호환성)
+        // Supabase 세션이 없으면 기존 AsyncStorage 확인
         const authToken = await AsyncStorage.getItem('authToken');
         const storedUser = await AsyncStorage.getItem('user');
         const storedProvider = await AsyncStorage.getItem('provider');

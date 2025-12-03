@@ -3,6 +3,15 @@
 import { supabaseAuth } from "../supabase";
 
 
+const DEFAULT_IMAGES = {
+  1: require('../../assets/images/app_icon.png'),
+  2:require('../../assets/images/app_icon.png'),
+  3:require('../../assets/images/app_icon.png'),
+};
+
+export const getDefaultImageById = (id: number) => {
+  return DEFAULT_IMAGES[id as keyof typeof DEFAULT_IMAGES] || DEFAULT_IMAGES[1];
+};
 
 // 랜덤 기본 이미지 ID 생성 (1~10)
 export const getRandomDefaultImageId = (): number => {
@@ -27,7 +36,7 @@ export const createOrUpdateUser = async (
     nickname?: string;
     profileImageUrl?: string;
   }
-) => {
+): Promise<{ user: any; isNewUser: boolean }> => {
   try {
     console.log('👤 사용자 정보 저장 시작...', user.id);
 
@@ -39,14 +48,10 @@ export const createOrUpdateUser = async (
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      // PGRST116 = 데이터 없음 (정상)
       console.error('❌ 사용자 조회 에러:', fetchError);
       throw fetchError;
     }
 
-
-
-    // 2. 프로필 이미지 URL 결정
     const avatarUrl =
       profile?.profileImageUrl ||
       user.user_metadata?.avatar_url ||
@@ -59,16 +64,18 @@ export const createOrUpdateUser = async (
         profile?.nickname || user.user_metadata?.name,
         user.id
       );
+      
+      const defaultImageId = getRandomDefaultImageId();
 
-      console.log('🆕 신규 사용자 생성 중...', { username, avatarUrl });
+      console.log('🆕 신규 사용자 생성 중...', { username, defaultImageId });
 
       const { data: newUser, error: insertError } = await supabaseAuth
         .from('users')
         .insert({
-          id: user.id, // auth.users.id와 동일
+          id: user.id,
           username: username,
-          bio: null,
-          default_image_id: getRandomDefaultImageId(),
+          bio: null, // 최초엔 null, Profile에서 작성
+          default_image_id: defaultImageId,
           avatar_url: avatarUrl,
           provider: user.app_metadata?.provider || 'kakao',
           last_username_update: new Date(),
@@ -82,9 +89,9 @@ export const createOrUpdateUser = async (
       }
 
       console.log('✅ 신규 사용자 생성 완료:', newUser);
-      return newUser;
+      return { user: newUser, isNewUser: true };
     } else {
-      // 🔥 기존 사용자 업데이트 (프로필 이미지, provider만 업데이트)
+      // 🔥 기존 사용자 업데이트
       console.log('🔄 기존 사용자 업데이트 중...', existingUser.id);
 
       const { data: updatedUser, error: updateError } = await supabaseAuth
@@ -103,11 +110,10 @@ export const createOrUpdateUser = async (
       }
 
       console.log('✅ 기존 사용자 업데이트 완료:', updatedUser);
-      return updatedUser;
+      return { user: updatedUser, isNewUser: false };
     }
   } catch (error) {
     console.error('❌ createOrUpdateUser 에러:', error);
-    // 에러를 throw해서 상위에서 처리할 수 있게 함
     throw error;
   }
 };

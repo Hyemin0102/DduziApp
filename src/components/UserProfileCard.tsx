@@ -41,7 +41,6 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({user}) => {
     user.provider === 'kakao' ? (user.rawProfile as KakaoUserProfile) : null;
 
   const profileImageUrl = kakaoProfile?.picture;
-  console.log('ddddd', profileImageUrl);
   return (
     <View style={styles.container}>
       {/* 프로필 이미지 */}
@@ -53,23 +52,24 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({user}) => {
       ) : (
         <View style={styles.profileImagePlaceholder}>
           <Text style={styles.profileImagePlaceholderText}>
-            {user.name?.charAt(0) || user.nickname?.charAt(0) || '?'}
+            {user.nickname?.charAt(0) || '?'}
           </Text>
         </View>
       )}
 
       {/* 사용자 정보 */}
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>
-          {user.name || user.nickname || '이름 없음'}
-        </Text>
-
-        {user.email && <Text style={styles.email}>{user.email}</Text>}
+        <Text style={styles.name}>{user.nickname || '이름 없음'}</Text>
 
         {/* 로그인 제공자 뱃지 */}
-        <View
+        {/* <View
           style={[styles.providerBadge, {backgroundColor: getProviderColor()}]}>
           <Text style={styles.providerText}>{getProviderLabel()} 계정</Text>
+        </View> */}
+
+        {/* 자기소개 */}
+        <View>
+          <Text style={styles.providerText}>{user.bio}</Text>
         </View>
       </View>
     </View>

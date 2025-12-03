@@ -20,6 +20,7 @@ import {
 } from '../../@types/auth';
 import {supabaseAuth, supabaseLocalDB} from '../../lib/supabase';
 import {createOrUpdateUser} from '../../lib/auth/userService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KAKAO_SDK = Config.KAKAO_SDK || '';
 const NAVER_SCHEME = Config.NAVER_SCHEME || '';
@@ -190,122 +191,6 @@ const Login = () => {
           }
 
         case 'kakao':
-          // try {
-          //   // 1. 카카오 로그인 및 ID 토큰 획득
-          //   const result = await KakaoLogin();
-          //   if (!result) {
-          //     setError('카카오 로그인에 실패했습니다.');
-          //     return;
-          //   }
-
-          //   const kakaoToken = result.idToken;
-
-          //   // 2. 카카오 프로필 정보 가져오기
-          //   const profile = await KakaoGetProfile();
-
-          //   // 3. Edge Function 호출: 프로덕션 Supabase에 사용자 인증 정보 및 프로필 Provisioning
-          //   const {data: authData, error: authError} =
-          //     await supabaseAuth.functions.invoke('kakao-auth', {
-          //       body: {
-          //         kakaoId: profile.id,
-          //         email: profile.email || `kakao_${profile.id}@placeholder.com`,
-          //         username: profile.nickname || `user_${profile.id}`,
-          //         profileUrl:
-          //           profile.profileImageUrl || profile.thumbnailImageUrl,
-          //       },
-          //     });
-
-          //   if (authError) {
-          //     console.error('Edge Function 에러:', authError);
-          //     setError('사용자 정보 저장에 실패했습니다.');
-          //     return;
-          //   }
-
-          //   console.log('Edge Function 응답:', authData);
-
-          //   // 4. 카카오 idToken 사용해 Supabase 세션 설정 (JWT 교환)
-          //   const {data: supabaseAuthData, error: sessionError} =
-          //     await supabaseAuth.auth.signInWithIdToken({
-          //       provider: 'kakao',
-          //       token: kakaoToken,
-          //     });
-
-          //   if (sessionError) {
-          //     console.error('Supabase 세션 발급 에러:', sessionError);
-          //     setError('세션 발급에 실패했습니다.');
-          //     return;
-          //   }
-
-          //   // ⭐️ 세션 성공 블록 시작 ⭐️
-          //   if (supabaseAuthData.session) {
-          //     console.log('최종 Supabase 세션 성공:', supabaseAuthData.session);
-
-          //     const supabaseUserId = supabaseAuthData.session.user.id;
-          //     const userEmail =
-          //       profile.email || `kakao_${profile.id}@placeholder.com`;
-
-          //     // 5. 로컬 DB에서 최종 유저 정보 조회
-          //     const {data: profileData, error: profileError} =
-          //       await supabaseLocalDB
-          //         .from('users')
-          //         .select('*')
-          //         .eq('id', supabaseUserId)
-          //         .maybeSingle();
-
-          //     if (profileError) {
-          //       console.error('DB 프로필 조회 에러:', profileError);
-          //       await supabaseAuth.auth.signOut();
-          //       return;
-          //     }
-          //     console.log('DB 프로필', profileData);
-
-          //     // 6. finalUserProfile 객체 구성
-          //     if (profileData) {
-          //       // DB 데이터가 있는 경우
-          //       finalUserProfile = {
-          //         id: profileData.id,
-          //         email: userEmail,
-          //         name: profileData.username,
-          //         profileImage: profileData.avatar_url,
-          //         provider: 'kakao',
-          //         rawProfile: profile as KakaoUserProfile,
-          //         nickname: profileData.username,
-          //       };
-          //     } else {
-          //       // DB 데이터가 없는 경우 (대체 구성)
-          //       console.warn(
-          //         '⚠️ users DB 프로필이 없어 카카오 프로필로 구성합니다.',
-          //       );
-          //       finalUserProfile = {
-          //         id: supabaseUserId,
-          //         email: userEmail,
-          //         name: profile.nickname || `user_${profile.id}`,
-          //         profileImage:
-          //           profile.profileImageUrl || profile.thumbnailImageUrl,
-          //         provider: 'kakao',
-          //         rawProfile: profile as KakaoUserProfile,
-          //         nickname: profile.nickname || `user_${profile.id}`,
-          //       };
-          //     }
-
-          //     await login(
-          //       supabaseAuthData.session.access_token,
-          //       finalUserProfile,
-          //       'kakao',
-          //     );
-
-          //     console.log('로그인 성공:', supabaseAuthData.user);
-
-          //     return;
-          //   }
-
-          //   setError('로그인 세션을 확보하지 못했습니다.');
-          //   return;
-          // } catch (error) {
-          //   console.error('카카오 로그인 에러:', error);
-          //   setError('로그인 처리 중 오류가 발생했습니다.');
-          //   return;
-          // }
           try {
             const result = await KakaoLogin();
 
@@ -323,15 +208,26 @@ const Login = () => {
               });
               console.log('카카오 로그인 데이터', data);
 
-              //data의 session, user 담겨있음. 로컬DB 데이터 저장하고 배포했을때 프로드DB까지 저장.
               if (data.user) {
                 try {
-                  await createOrUpdateUser(data.user, {
+                  const result = await createOrUpdateUser(data.user, {
                     nickname: kakaoProfile?.nickname,
                     profileImageUrl:
                       kakaoProfile.profileImageUrl ||
                       kakaoProfile.thumbnailImageUrl,
                   });
+                  console.log(result);
+
+                  // 신규 사용자면 Profile 화면으로, 기존 사용자면 Home으로
+                  if (result.isNewUser) {
+                    console.log('🆕 신규 사용자 - Profile 화면으로 이동');
+                    // navigation.navigate('Profile', { user: result.user });
+                    // 또는 AsyncStorage에 플래그 저장
+                    await AsyncStorage.setItem('needsProfileSetup', 'true');
+                  } else {
+                    console.log('✅ 기존 사용자 - Home으로 이동');
+                    await AsyncStorage.removeItem('needsProfileSetup');
+                  }
                 } catch (userError) {
                   console.error(
                     '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
@@ -433,12 +329,12 @@ const Login = () => {
             </View>
           )}
 
-          <Button
+          {/* <Button
             title={isLoading ? '로그인 중...' : '네이버 로그인'}
             onPress={() => socialLoginHandle('naver')}
             disabled={isLoading}
             color="#03C75A"
-          />
+          /> */}
           <Button
             title={isLoading ? '로그인 중...' : '카카오 로그인'}
             onPress={() => socialLoginHandle('kakao')}

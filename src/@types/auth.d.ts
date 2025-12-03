@@ -62,6 +62,8 @@ export interface UserProfile {
   provider: string;
   profileImage?: string;
   nickname?: string;
+  defaultImageId?:number;
+  bio? :string;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | NaverUserProfile | GoogleUserProfile;
