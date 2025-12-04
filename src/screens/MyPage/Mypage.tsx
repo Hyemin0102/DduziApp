@@ -10,14 +10,16 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import UserProfileCard from '../../components/UserProfileCard';
-
-import NaverLogin from '@react-native-seoul/naver-login';
-import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {supabaseAuth} from '../../lib/supabase';
+import {useNavigation} from '@react-navigation/native';
+import {MyPageScreenNavigationProp} from '../../@types/navigation';
 
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
+  const navigation = useNavigation<MyPageScreenNavigationProp>();
+
+  const handleProfile = () => {
+    navigation.navigate('ProfileEdit');
+  };
 
   const handleLogout = async () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
@@ -66,7 +68,7 @@ const Mypage = () => {
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>계정</Text>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
             <Text style={styles.menuText}>프로필 편집</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>

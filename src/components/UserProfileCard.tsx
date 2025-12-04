@@ -37,18 +37,11 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({user}) => {
     return null; // 또는 로딩 상태
   }
 
-  const kakaoProfile =
-    user.provider === 'kakao' ? (user.rawProfile as KakaoUserProfile) : null;
-
-  const profileImageUrl = kakaoProfile?.picture;
   return (
     <View style={styles.container}>
       {/* 프로필 이미지 */}
-      {profileImageUrl ? (
-        <Image
-          source={{uri: normalizeImageUrl(profileImageUrl)}}
-          style={styles.profileImage}
-        />
+      {user.profileImage ? (
+        <Image source={{uri: user.profileImage}} style={styles.profileImage} />
       ) : (
         <View style={styles.profileImagePlaceholder}>
           <Text style={styles.profileImagePlaceholderText}>

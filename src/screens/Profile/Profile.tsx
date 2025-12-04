@@ -16,20 +16,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getDefaultImageById} from '../../lib/auth/userService';
 import {useAuth} from '../../contexts/AuthContext';
 import {supabaseAuth} from '../../lib/supabase';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../@types/route';
 import {ScrollView} from 'react-native-gesture-handler';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {MyPageScreenNavigationProp} from '../../@types/navigation';
 
 const ProfileScreen = () => {
-  const {user} = useAuth();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
+  const navigation = useNavigation<MyPageScreenNavigationProp>();
+  const route = useRoute();
 
-  //프로필 수정(bio, name)
-  const [nickname, setNickname] = useState(user?.nickname || '');
-  const [bio, setBio] = useState(user?.bio || '');
-  const [loading, setLoading] = useState(false);
+  // 최초 프로필 설정 모드인지 확인 (RootStack에서 온 경우), 프로필 편집은 ProfileEdit
+  const isInitialSetup = route.name === 'Profile';
 
   if (!user) {
     return (
@@ -39,13 +36,18 @@ const ProfileScreen = () => {
     );
   }
 
+  //프로필 수정
+  const [nickname, setNickname] = useState(user.nickname || '');
+  const [bio, setBio] = useState(user.bio || '');
+  const [loading, setLoading] = useState(false);
+
   const defaultImage = getDefaultImageById(user.defaultImageId || 1);
 
   const handleSave = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      // bio 업데이트
+      // DB 업데이트
       const {error} = await supabaseAuth
         .from('users')
         .update({
@@ -56,16 +58,23 @@ const ProfileScreen = () => {
 
       if (error) throw error;
 
-      // 프로필 설정 완료 플래그 제거
-      await AsyncStorage.removeItem('needsProfileSetup');
+      // AuthContext의 user 상태 업데이트
+      updateUserProfile({
+        nickname: nickname,
+        bio: bio,
+      });
 
-      console.log('✅ 프로필 설정 완료 - Home으로 이동');
-
-      // Home으로 이동 (Navigator가 자동으로 처리)
-      // navigation.reset({
-      //   index: 0,
-      //   routes: [{name: 'TabNavigator'}],
-      // });
+      if (isInitialSetup) {
+        // 최초 프로필 설정 완료
+        await AsyncStorage.removeItem('needsProfileSetup');
+        setNeedsProfileSetup(false); // Context 상태 업데이트
+        console.log('✅ 최초 프로필 설정 완료 - Home으로 자동 이동');
+        // needsProfileSetup false로 Navigator가 자동으로 TabNavigator로 전환
+      } else {
+        // 프로필 편집 완료 - 이전 화면으로 돌아가기
+        console.log('✅ 프로필 업데이트 완료 - 이전 화면으로 이동');
+        navigation.goBack();
+      }
     } catch (error) {
       console.error('프로필 저장 에러:', error);
     } finally {

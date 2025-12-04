@@ -1,7 +1,8 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import PostsScreen from '../../Posts/Posts';
+import {PostsStackParamList} from '../../../@types/navigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<PostsStackParamList>();
 const PostsStack = () => {
   return (
     <Stack.Navigator

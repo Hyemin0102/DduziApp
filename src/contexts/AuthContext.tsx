@@ -1,13 +1,7 @@
 import React, {createContext, useContext, useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  AuthContextType,
-  AuthProviderProps,
-  GoogleUserProfile,
-  UserProfile,
-} from '../@types/auth';
+import {AuthContextType, AuthProviderProps, UserProfile} from '../@types/auth';
 import {supabaseAuth} from '../lib/supabase';
-import {Linking} from 'react-native';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import NaverLogin from '@react-native-seoul/naver-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
@@ -19,40 +13,62 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [provider, setProvider] = useState<string>('');
+  const [needsProfileSetup, setNeedsProfileSetup] = useState<boolean>(false);
   console.log('✅ Authuser', user);
 
+  //supabaseAuth 테이블 + users 테이블
   const fetchUserWithProfile = async (session: any): Promise<UserProfile> => {
     const {data: dbUser, error} = await supabaseAuth
       .from('users')
       .select('*')
       .eq('id', session.user.id)
-      .single();
+      .maybeSingle();
+
+    console.log('🥳session', session);
 
     if (error) {
       console.error('❌ users 테이블 조회 에러:', error);
     }
 
+    const provider = session.user.app_metadata.provider;
+    const metadata = session.user.user_metadata;
+
+    // provider별 rawProfile 생성 (id만 저장, 나중에 필요하면 확장 가능)
+    let rawProfile: {id: string | number};
+
+    switch (provider) {
+      case 'kakao':
+        rawProfile = {
+          id: Number(metadata?.provider_id) || 0,
+        };
+        break;
+
+      case 'naver':
+        rawProfile = {
+          id: metadata?.provider_id || session.user.id,
+        };
+        break;
+
+      case 'google':
+      default:
+        rawProfile = {
+          id: session.user.id,
+        };
+        break;
+    }
+
+    //users 테이블
     return {
       id: session.user.id,
       email: session.user.email,
-      name:
-        session.user.user_metadata?.full_name ||
-        session.user.user_metadata?.name,
-      nickname: dbUser?.username || session.user.user_metadata?.name,
+      name: metadata?.full_name || metadata?.name,
+      nickname: dbUser?.username || metadata?.name,
       bio: dbUser?.bio || null,
       profileImage:
-        dbUser?.avatar_url ||
-        session.user.user_metadata?.avatar_url ||
-        session.user.user_metadata?.picture,
-      provider: session.user.app_metadata.provider || 'google',
+        dbUser?.avatar_url || metadata?.avatar_url || metadata?.picture,
+      provider: provider,
       defaultImageId: dbUser?.default_image_id,
-      rawProfile: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.user_metadata?.name,
-        picture: session.user.user_metadata?.picture,
-        verified_email: session.user.user_metadata?.email_verified,
-      } as GoogleUserProfile,
+      rawProfile: rawProfile as any,
     };
   };
 
@@ -60,15 +76,21 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     checkAuthStatus();
 
     const {data: authListener} = supabaseAuth.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          const userData = fetchUserWithProfile(session);
+      async event => {
+        // 로그아웃 감지 - 모든 상태 초기화를 여기서 일괄 처리
+        if (event === 'SIGNED_OUT') {
+          setIsLoggedIn(false);
+          setUser(null);
+          setProvider('');
+          setNeedsProfileSetup(false);
 
-          await login(
-            session.access_token,
-            userData,
-            session.user.app_metadata.provider,
-          );
+          // AsyncStorage 정리
+          await AsyncStorage.removeItem('authToken');
+          await AsyncStorage.removeItem('user');
+          await AsyncStorage.removeItem('provider');
+          await AsyncStorage.removeItem('needsProfileSetup');
+
+          console.log('✅ 로그아웃 상태 초기화 완료');
         }
       },
     );
@@ -84,22 +106,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         data: {session},
       } = await supabaseAuth.auth.getSession();
 
+      if (!supabaseAuth || !supabaseAuth.auth) {
+        console.error('❌ Supabase 클라이언트가 초기화되지 않음!');
+        setIsLoading(false);
+        return;
+      }
+
       if (session) {
-        console.log('✅ Supabase 세션 확인됨:', session.user);
-
-        // 🔥 users 테이블에서 추가 정보 조회
-        const {data: dbUser, error} = await supabaseAuth
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error('❌ users 테이블 조회 에러:', error);
-        }
-
-        console.log('dbUser', dbUser);
-
         const userData = await fetchUserWithProfile(session);
 
         setIsLoggedIn(true);
@@ -112,7 +125,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           'provider',
           session.user.app_metadata.provider || 'google',
         );
+
+        // needsProfileSetup 플래그 확인
+        const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
+        setNeedsProfileSetup(needsSetup === 'true');
       } else {
+        console.log('⚠️ 세션 없음, AsyncStorage 확인');
+
         // Supabase 세션이 없으면 기존 AsyncStorage 확인
         const authToken = await AsyncStorage.getItem('authToken');
         const storedUser = await AsyncStorage.getItem('user');
@@ -122,18 +141,24 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           setIsLoggedIn(true);
           setUser(JSON.parse(storedUser));
           setProvider(storedProvider || '');
+
+          // needsProfileSetup 플래그 확인
+          const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
+          setNeedsProfileSetup(needsSetup === 'true');
         } else {
+          console.log('❌ 로그인 정보 없음');
           setIsLoggedIn(false);
           setUser(null);
           setProvider('');
+          setNeedsProfileSetup(false);
         }
       }
     } catch (error) {
-      console.log('checkAuthStatus error:', error);
-      // 에러 발생 시 로그아웃 상태로
+      console.error('❌ checkAuthStatus error:', error);
       setIsLoggedIn(false);
       setUser(null);
       setProvider('');
+      setNeedsProfileSetup(false);
     } finally {
       setIsLoading(false);
     }
@@ -149,44 +174,51 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     setProvider(provider);
   };
 
+  // 사용자 프로필 업데이트 (로컬 상태만)
+  const updateUserProfile = (updates: Partial<UserProfile>) => {
+    if (!user) return;
+    const updatedUser = {...user, ...updates};
+    setUser(updatedUser);
+    // AsyncStorage도 업데이트
+    AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   //스토리지 상태 삭제
   const logout = async () => {
     try {
+      // provider별 로그아웃 처리
       switch (provider) {
         case 'kakao':
-          await supabaseAuth.auth.signOut();
           await KakaoLogout();
           break;
         case 'naver':
           await NaverLogin.logout();
           break;
         case 'google':
-          await supabaseAuth.auth.signOut();
           await GoogleSignin.signOut();
           break;
         default:
           break;
       }
 
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('provider');
-
-      setIsLoggedIn(false);
-      setUser(null);
-      setProvider('');
+      // Supabase 로그아웃 - 이후 onAuthStateChange에서 상태 초기화 처리
+      await supabaseAuth.auth.signOut();
 
       console.log('✅ 로그아웃 완료');
     } catch (error) {
       console.error('❌ 로그아웃 에러:', error);
+
+      // 에러 발생 시 강제로 상태 초기화
       setIsLoggedIn(false);
       setUser(null);
       setProvider('');
+      setNeedsProfileSetup(false);
 
       try {
         await AsyncStorage.removeItem('authToken');
         await AsyncStorage.removeItem('user');
         await AsyncStorage.removeItem('provider');
+        await AsyncStorage.removeItem('needsProfileSetup');
       } catch (storageError) {
         console.error('❌ AsyncStorage 정리 실패:', storageError);
       }
@@ -203,6 +235,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         logout,
         checkAuthStatus,
         provider,
+        needsProfileSetup,
+        updateUserProfile,
+        setNeedsProfileSetup,
       }}>
       {children}
     </AuthContext.Provider>

@@ -1,35 +1,11 @@
+// 라이브러리에서 제공하는 타입 재사용
+import type { KakaoProfile } from '@react-native-seoul/kakao-login';
+import type { User as GoogleUser } from '@react-native-google-signin/google-signin';
 
+export type KakaoUserProfile = KakaoProfile;
 
-// 카카오 사용자 프로필 (실제 SDK 응답 형식)
-export interface KakaoUserProfile {
-  id: number;
-  nickname?: string | null;
-  profileImageUrl?: string | null;
-  thumbnailImageUrl?: string | null;
-  email?: string | null;
-  name?: string | null;
-  ageRange?: string | null;
-  birthday?: string | null;
-  birthyear?: string | null;
-  gender?: string | null;
-  phoneNumber?: string | null;
-  isEmailValid?: boolean | null;
-  isEmailVerified?: boolean | null;
-  isKorean?: boolean | null;
-  birthdayType?: string | null;
-  // Needs agreement fields
-  profileNeedsAgreement?: boolean | null;
-  emailNeedsAgreement?: boolean | null;
-  ageRangeNeedsAgreement?: boolean | null;
-  birthdayNeedsAgreement?: boolean | null;
-  birthyearNeedsAgreement?: boolean | null;
-  genderNeedsAgreement?: boolean | null;
-  phoneNumberNeedsAgreement?: boolean | null;
-  isKoreanNeedsAgreement?: boolean | null;
-  picture?: string | null;
-}
+export type GoogleUserProfile = GoogleUser['user'];
 
-// 네이버 사용자 프로필
 export interface NaverUserProfile {
   id: string;
   nickname?: string | null;
@@ -42,16 +18,6 @@ export interface NaverUserProfile {
   birthyear?: number | null;
   mobile?: string | null;
   mobile_e164?: string | null;
-}
-
-// 구글 사용자 프로필
-export interface GoogleUserProfile {
-  id: string;
-  name?: string;
-  email?: string;
-  photo?: string;
-  familyName?: string;
-  givenName?: string;
 }
 
 // 통합 사용자 프로필 (공통 필드)
@@ -71,17 +37,27 @@ export interface UserProfile {
 
 // Auth Context 타입
 export interface AuthContextType {
+  //로그인 여부
   isLoggedIn: boolean;
+  //유저 정보
   user: UserProfile | null;
   isLoading: boolean;
+  //가입 경로
   provider: string;
+  //신규 유저 확인
+  needsProfileSetup: boolean;
   login: (
     token: string,
     userData: UserProfile,
     provider: string,
   ) => Promise<void>;
   logout: () => Promise<void>;
+  //supabase Auth 세션 확인
   checkAuthStatus: () => Promise<void>;
+  //로컬 유저 프로필 업데이트
+  updateUserProfile: (updates: Partial<UserProfile>) => void;
+  //프로필 업데이트 상태 관리
+  setNeedsProfileSetup: (needs: boolean) => void;
 }
 
 // Auth Provider Props

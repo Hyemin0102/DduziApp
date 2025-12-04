@@ -1,7 +1,8 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import DiscoverScreen from '../../Discover/Discover';
+import {DiscoverStackParamList} from '../../../@types/navigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<DiscoverStackParamList>();
 
 const DiscoverStack = () => {
   //탐색에서 사용하는 네비게이터

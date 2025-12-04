@@ -1,6 +1,13 @@
 //users DB 관련 함수
 
 import { supabaseAuth } from "../supabase";
+import {
+  UserProfile,
+  KakaoUserProfile,
+  GoogleUserProfile,
+  NaverUserProfile,
+} from '../../@types/auth';
+
 
 
 const DEFAULT_IMAGES = {
@@ -8,6 +15,14 @@ const DEFAULT_IMAGES = {
   2:require('../../assets/images/app_icon.png'),
   3:require('../../assets/images/app_icon.png'),
 };
+
+// 🔥 Supabase Auth 데이터 + DB 데이터로 UserProfile 생성
+interface CreateUserProfileParams {
+  supabaseUser: any; // Supabase Auth User 객체
+  dbUser: any; // users 테이블 데이터
+  provider: 'kakao' | 'google' | 'naver';
+  rawProfile: KakaoUserProfile | GoogleUserProfile | NaverUserProfile;
+}
 
 export const getDefaultImageById = (id: number) => {
   return DEFAULT_IMAGES[id as keyof typeof DEFAULT_IMAGES] || DEFAULT_IMAGES[1];
@@ -38,7 +53,6 @@ export const createOrUpdateUser = async (
   }
 ): Promise<{ user: any; isNewUser: boolean }> => {
   try {
-    console.log('👤 사용자 정보 저장 시작...', user.id);
 
     // 1. 기존 사용자 확인
     const { data: existingUser, error: fetchError } = await supabaseAuth
@@ -52,32 +66,33 @@ export const createOrUpdateUser = async (
       throw fetchError;
     }
 
-    const avatarUrl =
+    //프로필 url
+    const profileImage =
       profile?.profileImageUrl ||
-      user.user_metadata?.avatar_url ||
+      user.user_metadata?.profile_image ||
       user.user_metadata?.picture ||
       user.user_metadata?.profile_image;
 
     if (!existingUser) {
       // 🔥 신규 사용자 생성
-      const username = generateUsername(
-        profile?.nickname || user.user_metadata?.name,
-        user.id
-      );
+      // const username = generateUsername(
+      //   profile?.nickname || user.user_metadata?.name,
+      //   user.id
+      // );
       
       const defaultImageId = getRandomDefaultImageId();
 
-      console.log('🆕 신규 사용자 생성 중...', { username, defaultImageId });
 
+      //테이블 insert
       const { data: newUser, error: insertError } = await supabaseAuth
         .from('users')
         .insert({
           id: user.id,
-          username: username,
-          bio: null, // 최초엔 null, Profile에서 작성
+          username:  profile?.nickname || user.user_metadata?.name,
+          bio: null, 
           default_image_id: defaultImageId,
-          avatar_url: avatarUrl,
-          provider: user.app_metadata?.provider || 'kakao',
+          profile_image: profileImage,
+          provider: user.app_metadata?.provider,
           last_username_update: new Date(),
         })
         .select()
@@ -92,12 +107,10 @@ export const createOrUpdateUser = async (
       return { user: newUser, isNewUser: true };
     } else {
       // 🔥 기존 사용자 업데이트
-      console.log('🔄 기존 사용자 업데이트 중...', existingUser.id);
-
       const { data: updatedUser, error: updateError } = await supabaseAuth
         .from('users')
         .update({
-          avatar_url: avatarUrl,
+          profile_image: profileImage,
           provider: user.app_metadata?.provider || existingUser.provider,
         })
         .eq('id', user.id)
@@ -115,6 +128,56 @@ export const createOrUpdateUser = async (
   } catch (error) {
     console.error('❌ createOrUpdateUser 에러:', error);
     throw error;
+  }
+};
+
+// 🔥 UserProfile 객체 재구성
+export const createUserProfile = ({
+  supabaseUser,
+  dbUser,
+  provider,
+  rawProfile,
+}: CreateUserProfileParams): UserProfile => {
+  const baseProfile = {
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    nickname: dbUser.username || '',
+    bio: dbUser.bio || null,
+    defaultImageId: dbUser.default_image_id,
+    provider,
+  };
+
+  if (provider === 'kakao') {
+    const kakaoProfile = rawProfile as KakaoUserProfile;
+
+    
+    return {
+      ...baseProfile,
+      name: supabaseUser.user_metadata?.name,
+      profileImage:
+        dbUser.profile_image ||
+        kakaoProfile.profileImageUrl ||
+        kakaoProfile.thumbnailImageUrl,
+      rawProfile: { id: kakaoProfile.id } as KakaoUserProfile,
+    };
+  } else if (provider === 'google') {
+    const googleProfile = rawProfile as GoogleUserProfile;
+    console.log('googleProfile',googleProfile);
+    return {
+      ...baseProfile,
+      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name,
+      profileImage: dbUser.profile_image ||  supabaseUser.user_metadata?.picture,
+      rawProfile: { id: googleProfile.id } as GoogleUserProfile,
+    };
+  } else {
+    // Naver
+    const naverProfile = rawProfile as NaverUserProfile;
+    return {
+      ...baseProfile,
+      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name,
+      profileImage: dbUser.profile_image || naverProfile.profile_image || supabaseUser.user_metadata?.picture,
+      rawProfile: { id: naverProfile.id } as NaverUserProfile,
+    };
   }
 };
 

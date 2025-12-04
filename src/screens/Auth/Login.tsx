@@ -3,8 +3,10 @@ import React, {useEffect, useState} from 'react';
 import {Button, Linking, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
-import {login as KakaoLogin} from '@react-native-seoul/kakao-login';
-import {getProfile as KakaoGetProfile} from '@react-native-seoul/kakao-login';
+import {
+  login as KakaoLogin,
+  getProfile as KakaoGetProfile,
+} from '@react-native-seoul/kakao-login';
 import {
   GoogleSignin,
   statusCodes,
@@ -12,14 +14,15 @@ import {
 
 import Config from 'react-native-config';
 import {initializeKakaoSDK} from '@react-native-kakao/core';
-import {
-  UserProfile,
-  KakaoUserProfile,
-  NaverUserProfile,
-  GoogleUserProfile,
-} from '../../@types/auth';
+// 라이브러리 타입을 직접 사용
+import type {KakaoProfile} from '@react-native-seoul/kakao-login';
+import type {User as GoogleUser} from '@react-native-google-signin/google-signin';
 import {supabaseAuth, supabaseLocalDB} from '../../lib/supabase';
-import {createOrUpdateUser} from '../../lib/auth/userService';
+import {
+  createOrUpdateUser,
+  createUserProfile,
+} from '../../lib/auth/userService';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KAKAO_SDK = Config.KAKAO_SDK || '';
@@ -31,7 +34,7 @@ const GOOGLE_IOS_CLIENT_ID = Config.GOOGLE_IOS_CLIENT_ID || '';
 const APP_NAME = Config.APP_NAME || '';
 
 const Login = () => {
-  const {login} = useAuth();
+  const {login, setNeedsProfileSetup} = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +56,7 @@ const Login = () => {
       webClientId: GOOGLE_WEB_CLIENT_ID,
       iosClientId: GOOGLE_IOS_CLIENT_ID,
       offlineAccess: true,
+      forceCodeForRefreshToken: true,
     });
   }, []);
 
@@ -61,135 +65,7 @@ const Login = () => {
     setError(null);
 
     try {
-      let finalUserProfile;
-
       switch (loginType) {
-        case 'naver':
-          try {
-            // 1. 네이버 로그인 및 Access Token 획득 (SDK 사용)
-            const {failureResponse, successResponse} = await NaverLogin.login();
-
-            if (!successResponse) {
-              setError(
-                `네이버 로그인 실패: ${
-                  failureResponse?.message || '알 수 없는 오류'
-                }`,
-              );
-              console.log('네이버 로그인 실패:', failureResponse);
-              return;
-            }
-
-            const naverAccessToken = successResponse.accessToken;
-
-            // 2. 네이버 프로필 정보 가져오기 (SDK로 프로필 정보 미리 확보)
-            const profileResult = await NaverLogin.getProfile(naverAccessToken);
-            const naverProfile = profileResult.response as NaverUserProfile;
-
-            // 3. Edge Function 호출: Supabase DB 동기화 및 Custom JWT 발급 요청
-            const {data: authData, error: authError} =
-              await supabaseAuth.functions.invoke('naver-auth', {
-                body: {
-                  naverAccessToken: naverAccessToken, // ⭐️ Access Token 전달 ⭐️
-                },
-              });
-
-            if (authError) {
-              console.error('Edge Function 에러:', authError);
-              setError('사용자 정보 저장 및 토큰 발급에 실패했습니다.');
-              return;
-            }
-
-            console.log('Edge Function 응답:', authData);
-            const customJwt = authData.custom_jwt;
-
-            if (!customJwt) {
-              setError('인증 토큰 발급에 실패했습니다.');
-              return;
-            }
-
-            // 4. Custom JWT를 사용해 Supabase 세션 설정
-            const {data: supabaseAuthData, error: sessionError} =
-              await supabaseAuth.auth.signInWithIdToken({
-                provider: 'kakao', // ⚠️ Custom JWT 사용 시 충돌 방지용 (이전 논의 참조)
-                token: customJwt,
-              });
-
-            if (sessionError) {
-              console.error('Supabase 세션 발급 에러:', sessionError);
-              setError('세션 발급에 실패했습니다.');
-              return;
-            }
-
-            // ⭐️ 세션 성공 블록 시작 ⭐️
-            if (supabaseAuthData.session) {
-              console.log('최종 Supabase 세션 성공:', supabaseAuthData.session);
-
-              const supabaseUserId = supabaseAuthData.session.user.id;
-              const userEmail = naverProfile.email;
-
-              // 5. 로컬 DB에서 최종 유저 정보 조회
-              const {data: profileData, error: profileError} =
-                await supabaseLocalDB
-                  .from('users')
-                  .select('*')
-                  .eq('id', supabaseUserId)
-                  .maybeSingle();
-
-              if (profileError) {
-                console.error('DB 프로필 조회 에러:', profileError);
-                await supabaseAuth.auth.signOut();
-                return;
-              }
-              console.log('DB 프로필', profileData);
-
-              // 6. finalUserProfile 객체 구성 (토큰, userProfile 변수 할당 제거)
-              if (profileData) {
-                // DB 데이터가 있는 경우
-                finalUserProfile = {
-                  id: profileData.id,
-                  email: userEmail,
-                  name: profileData.username,
-                  profileImage: profileData.avatar_url,
-                  provider: 'naver', // ⭐️ Provider 명시 ⭐️
-                  rawProfile: naverProfile as NaverUserProfile,
-                  nickname: profileData.username,
-                };
-              } else {
-                // DB 데이터가 없는 경우 (대체 구성)
-                console.warn(
-                  '⚠️ users DB 프로필이 없어 네이버 프로필로 구성합니다.',
-                );
-                finalUserProfile = {
-                  id: supabaseUserId,
-                  email: userEmail,
-                  name: naverProfile.nickname || naverProfile.name,
-                  profileImage: naverProfile.profile_image,
-                  provider: 'naver',
-                  rawProfile: naverProfile as NaverUserProfile,
-                  nickname: naverProfile.nickname || naverProfile.name,
-                };
-              }
-
-              // ⭐️ 7. 로그인 성공 처리 (모든 변수가 유효한 이 블록 안에서 호출) ⭐️
-              await login(
-                supabaseAuthData.session.access_token,
-                finalUserProfile,
-                'naver', // loginType은 'naver'
-              );
-
-              // 8. 로그인 성공 로그
-              console.log('로그인 성공:', supabaseAuthData.user);
-              return; // 성공했으므로 여기서 함수를 종료합니다.
-            } // ⭐️ if (supabaseAuthData.session) { 블록이 여기서 닫힙니다. ⭐️
-
-            setError('로그인 세션을 확보하지 못했습니다.');
-            return;
-          } catch (error) {
-            console.error('네이버 로그인 에러:', error);
-            setError('로그인 처리 중 오류가 발생했습니다.');
-            return;
-          }
-
         case 'kakao':
           try {
             const result = await KakaoLogin();
@@ -206,27 +82,38 @@ const Login = () => {
                 provider: 'kakao',
                 token: kakaoToken,
               });
-              console.log('카카오 로그인 데이터', data);
 
-              if (data.user) {
+              if (data.user && data.session) {
                 try {
+                  //DB 저장(auth에서 받은 유저데이터, 카카오에서 받은 프로필 보냄)
+                  //삽입한 user테이블 데이터, 신규 유저 여부 리턴
                   const result = await createOrUpdateUser(data.user, {
                     nickname: kakaoProfile?.nickname,
                     profileImageUrl:
                       kakaoProfile.profileImageUrl ||
                       kakaoProfile.thumbnailImageUrl,
                   });
-                  console.log(result);
+                  console.log('카카오 로그인 결과', result);
+
+                  // UserProfile 객체 구성
+                  const userProfile = createUserProfile({
+                    supabaseUser: data.user,
+                    dbUser: result.user,
+                    provider: 'kakao',
+                    rawProfile: kakaoProfile as KakaoProfile,
+                  });
+
+                  // login 함수 호출
+                  await login(data.session.access_token, userProfile, 'kakao');
 
                   // 신규 사용자면 Profile 화면으로, 기존 사용자면 Home으로
                   if (result.isNewUser) {
                     console.log('🆕 신규 사용자 - Profile 화면으로 이동');
-                    // navigation.navigate('Profile', { user: result.user });
-                    // 또는 AsyncStorage에 플래그 저장
                     await AsyncStorage.setItem('needsProfileSetup', 'true');
+                    setNeedsProfileSetup(true);
                   } else {
-                    console.log('✅ 기존 사용자 - Home으로 이동');
                     await AsyncStorage.removeItem('needsProfileSetup');
+                    setNeedsProfileSetup(false);
                   }
                 } catch (userError) {
                   console.error(
@@ -239,7 +126,7 @@ const Login = () => {
               throw new Error('no ID token present!');
             }
           } catch (error: any) {
-            console.log('카카오', error);
+            console.log('카카오 error', error);
           }
           break;
 
@@ -254,14 +141,36 @@ const Login = () => {
                 provider: 'google',
                 token: userInfo.data?.idToken,
               });
-              console.log(error, data);
 
-              if (data.user) {
+              if (data.user && data.session) {
                 try {
-                  await createOrUpdateUser(data.user, {
+                  const result = await createOrUpdateUser(data.user, {
                     nickname: data.user?.user_metadata.full_name,
                     profileImageUrl: data.user?.user_metadata.picture,
                   });
+                  console.log('구글 로그인 결과', result);
+
+                  // UserProfile 객체 구성
+                  const userProfile = createUserProfile({
+                    supabaseUser: data.user,
+                    dbUser: result.user,
+                    provider: 'google',
+                    rawProfile: {
+                      id: data.user.id,
+                    } as GoogleUser['user'],
+                  });
+
+                  // login 함수 호출
+                  await login(data.session.access_token, userProfile, 'google');
+
+                  if (result.isNewUser) {
+                    console.log('🆕 신규 사용자 - Profile 화면으로 이동');
+                    await AsyncStorage.setItem('needsProfileSetup', 'true');
+                    setNeedsProfileSetup(true);
+                  } else {
+                    await AsyncStorage.removeItem('needsProfileSetup');
+                    setNeedsProfileSetup(false);
+                  }
                 } catch (userError) {
                   console.error(
                     '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
@@ -273,23 +182,12 @@ const Login = () => {
               throw new Error('no ID token present!');
             }
           } catch (error: any) {
-            console.log('구글', error);
-
-            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-              // user cancelled the login flow
-            } else if (error.code === statusCodes.IN_PROGRESS) {
-              // operation (e.g. sign in) is in progress already
-            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-              // play services not available or outdated
-            } else {
-              // some other error happened
-            }
+            console.log('구글 error', error);
           }
           break;
 
         default:
           setError('지원하지 않는 로그인 방식입니다.');
-          console.error('지원하지 않는 로그인', loginType);
           return;
       }
     } catch (error: any) {

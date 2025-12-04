@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import {SvgProps} from 'react-native-svg';
 import {JSX} from 'react';
+import {TabParamList} from '../../@types/navigation';
 
 interface TabIconComponent {
   (props: SvgProps): JSX.Element;
@@ -32,7 +33,7 @@ interface TabIconWithLabelProps {
   inactiveColor?: string;
 }
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
   icon: Icon,

@@ -1,34 +1,29 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
 import TabNavigator from './TabNavigator';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import AuthStack from './AuthStack';
+import AuthStack from './stacks/AuthStack';
 import {useAuth} from '../../contexts/AuthContext';
-import {useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ProfileScreen from '../Profile/Profile';
-//import ProfileScreen from '../Profile/Profile';
+import {useRef} from 'react';
+import {RootStackParamList} from '../../@types/navigation';
 
-const RootStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 //루트 네비게이터
 const Navigator = () => {
-  const {isLoggedIn, user} = useAuth();
-  const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
-
-  useEffect(() => {
-    const checkProfileSetup = async () => {
-      const flag = await AsyncStorage.getItem('needsProfileSetup');
-      setNeedsProfileSetup(flag === 'true');
-    };
-
-    if (isLoggedIn) {
-      checkProfileSetup();
-    }
-  }, [isLoggedIn]);
+  const {isLoggedIn, needsProfileSetup} = useAuth();
+  const navigationRef = useRef<any>(null);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onStateChange={() => {
+        const currentRoute = navigationRef.current?.getCurrentRoute();
+        console.log('🧭 현재 라우터:', {
+          name: currentRoute?.name,
+          params: currentRoute?.params,
+        });
+      }}>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
         {!isLoggedIn ? (
           <RootStack.Screen name="Auth" component={AuthStack} />

@@ -1,7 +1,8 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from '../../Home/Home';
+import {HomeStackParamList} from '../../../@types/navigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 const HomeStack = () => {
   //홈에서 사용하는 네비게이터

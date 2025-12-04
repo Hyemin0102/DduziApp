@@ -7,6 +7,7 @@ const localSupabaseAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
 const prodSupabaseUrl = 'https://aaeqoryqxtkcovplmpyx.supabase.co' // Kakao 설정된 프로젝트
 const prodSupabaseAnonKey = 'sb_publishable_y99DR55KcQ_qNT6WgJDZeg_MaN-VvdI'
 
+
 //DB작업(일반 사용자 권한)
 export const supabaseLocalDB = createClient(localSupabaseUrl, localSupabaseAnonKey, {
   auth: {
@@ -23,5 +24,6 @@ export const supabaseAuth = createClient(prodSupabaseUrl, prodSupabaseAnonKey, {
     detectSessionInUrl: false,
   }
 })
+
 
 
