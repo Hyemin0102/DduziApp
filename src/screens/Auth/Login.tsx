@@ -17,7 +17,7 @@ import {initializeKakaoSDK} from '@react-native-kakao/core';
 // 라이브러리 타입을 직접 사용
 import type {KakaoProfile} from '@react-native-seoul/kakao-login';
 import type {User as GoogleUser} from '@react-native-google-signin/google-signin';
-import {supabaseAuth, supabaseLocalDB} from '../../lib/supabase';
+import {supabase, supabaseLocalDB} from '../../lib/supabase';
 import {
   createOrUpdateUser,
   createUserProfile,
@@ -78,7 +78,7 @@ const Login = () => {
             const kakaoProfile = await KakaoGetProfile();
 
             if (kakaoToken) {
-              const {data, error} = await supabaseAuth.auth.signInWithIdToken({
+              const {data, error} = await supabase.auth.signInWithIdToken({
                 provider: 'kakao',
                 token: kakaoToken,
               });
@@ -108,7 +108,6 @@ const Login = () => {
 
                   // 신규 사용자면 Profile 화면으로, 기존 사용자면 Home으로
                   if (result.isNewUser) {
-                    console.log('🆕 신규 사용자 - Profile 화면으로 이동');
                     await AsyncStorage.setItem('needsProfileSetup', 'true');
                     setNeedsProfileSetup(true);
                   } else {
@@ -137,7 +136,7 @@ const Login = () => {
             const userInfo = await GoogleSignin.signIn();
 
             if (userInfo.data?.idToken) {
-              const {data, error} = await supabaseAuth.auth.signInWithIdToken({
+              const {data, error} = await supabase.auth.signInWithIdToken({
                 provider: 'google',
                 token: userInfo.data?.idToken,
               });
@@ -164,7 +163,6 @@ const Login = () => {
                   await login(data.session.access_token, userProfile, 'google');
 
                   if (result.isNewUser) {
-                    console.log('🆕 신규 사용자 - Profile 화면으로 이동');
                     await AsyncStorage.setItem('needsProfileSetup', 'true');
                     setNeedsProfileSetup(true);
                   } else {

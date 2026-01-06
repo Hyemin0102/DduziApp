@@ -1,7 +1,6 @@
 import React from 'react';
 import {View, Text, Image, StyleSheet} from 'react-native';
-import {KakaoUserProfile, UserProfile} from '../@types/auth';
-import {normalizeImageUrl} from '../lib/auth/authHelpers';
+import {UserProfile} from '../@types/auth';
 
 interface UserProfileCardProps {
   user: UserProfile;
@@ -86,6 +85,8 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: 1,
+    borderColor: '#DDE1E9',
     marginRight: 16,
   },
   profileImagePlaceholder: {

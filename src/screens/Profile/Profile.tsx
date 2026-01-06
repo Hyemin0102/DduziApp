@@ -13,12 +13,17 @@ import {
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getDefaultImageById} from '../../lib/auth/userService';
 import {useAuth} from '../../contexts/AuthContext';
-import {supabaseAuth} from '../../lib/supabase';
+import {supabase} from '../../lib/supabase';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {MyPageScreenNavigationProp} from '../../@types/navigation';
+import {
+  ImagePickerResponse,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
+import {uploadImage} from '@/lib/uploadImage';
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
@@ -40,19 +45,96 @@ const ProfileScreen = () => {
   const [nickname, setNickname] = useState(user.nickname || '');
   const [bio, setBio] = useState(user.bio || '');
   const [loading, setLoading] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  console.log('이미지', imageUri);
 
-  const defaultImage = getDefaultImageById(user.defaultImageId || 1);
+  const displayImage = imageUri || user.profileImage;
+
+  const selectImage = async () => {
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 0.8,
+        selectionLimit: 1,
+      });
+
+      if (result.didCancel) {
+        console.log('사용자가 취소했습니다.');
+        return;
+      }
+
+      if (result.errorCode) {
+        console.log('에러:', result.errorMessage);
+        return;
+      }
+
+      if (result.assets && result.assets[0]) {
+        setImageUri(result.assets[0].uri || null);
+      }
+    } catch (error) {
+      console.error('이미지 선택 에러:', error);
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const result = await launchCamera({
+        mediaType: 'photo',
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 0.8,
+        cameraType: 'back',
+        saveToPhotos: true,
+      });
+
+      if (result.didCancel) {
+        console.log('사용자가 취소했습니다.');
+        return;
+      }
+
+      if (result.errorCode) {
+        console.log('에러:', result.errorMessage);
+        return;
+      }
+
+      if (result.assets && result.assets[0]) {
+        setImageUri(result.assets[0].uri || null);
+      }
+    } catch (error) {
+      console.error('카메라 에러:', error);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
     setLoading(true);
     try {
+      let profileImageUrl = user.profileImage;
+
+      // 🔥 새 이미지를 선택했으면 업로드
+      if (imageUri) {
+        console.log('📤 이미지 업로드 중...');
+        const uploadedUrl = await uploadImage(imageUri, 'profile', user.id);
+
+        if (uploadedUrl) {
+          profileImageUrl = uploadedUrl;
+          console.log('✅ 이미지 업로드 완료:', uploadedUrl);
+        } else {
+          console.log('✅ 이미지 업로드 실패');
+          setLoading(false);
+          return;
+        }
+      }
+
       // DB 업데이트
-      const {error} = await supabaseAuth
+      const {error} = await supabase
         .from('users')
         .update({
           username: nickname,
           bio: bio,
+          profile_image: profileImageUrl,
         })
         .eq('id', user.id);
 
@@ -62,7 +144,10 @@ const ProfileScreen = () => {
       updateUserProfile({
         nickname: nickname,
         bio: bio,
+        profileImage: profileImageUrl,
       });
+
+      console.log('⭐️ Context 업데이트 완료, 현재 user:', user);
 
       if (isInitialSetup) {
         // 최초 프로필 설정 완료
@@ -98,15 +183,33 @@ const ProfileScreen = () => {
           keyboardShouldPersistTaps="handled">
           <Text style={{fontSize: 24, marginBottom: 20}}>프로필 설정</Text>
 
-          <Image
-            source={defaultImage}
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              marginBottom: 20,
-            }}
-          />
+          <View
+            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            {displayImage ? (
+              <Image
+                source={{uri: displayImage}}
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  marginBottom: 20,
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  backgroundColor: '#ddd',
+                  marginBottom: 20,
+                }}
+              />
+            )}
+
+            <Button title="갤러리에서 선택" onPress={selectImage} />
+            <Button title="카메라로 촬영" onPress={takePhoto} />
+          </View>
 
           {/* 닉네임 입력 */}
           <Text

@@ -1,7 +1,7 @@
 import React, {createContext, useContext, useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {AuthContextType, AuthProviderProps, UserProfile} from '../@types/auth';
-import {supabaseAuth} from '../lib/supabase';
+import {supabase} from '../lib/supabase';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import NaverLogin from '@react-native-seoul/naver-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
@@ -16,9 +16,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [needsProfileSetup, setNeedsProfileSetup] = useState<boolean>(false);
   console.log('✅ Authuser', user);
 
-  //supabaseAuth 테이블 + users 테이블
+  //supabase 테이블 + users 테이블
   const fetchUserWithProfile = async (session: any): Promise<UserProfile> => {
-    const {data: dbUser, error} = await supabaseAuth
+    const {data: dbUser, error} = await supabase
       .from('users')
       .select('*')
       .eq('id', session.user.id)
@@ -64,10 +64,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       name: metadata?.full_name || metadata?.name,
       nickname: dbUser?.username || metadata?.name,
       bio: dbUser?.bio || null,
-      profileImage:
-        dbUser?.avatar_url || metadata?.avatar_url || metadata?.picture,
+      profileImage: dbUser?.profile_image || null,
       provider: provider,
-      defaultImageId: dbUser?.default_image_id,
       rawProfile: rawProfile as any,
     };
   };
@@ -75,7 +73,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   useEffect(() => {
     checkAuthStatus();
 
-    const {data: authListener} = supabaseAuth.auth.onAuthStateChange(
+    const {data: authListener} = supabase.auth.onAuthStateChange(
       async event => {
         // 로그아웃 감지 - 모든 상태 초기화를 여기서 일괄 처리
         if (event === 'SIGNED_OUT') {
@@ -89,8 +87,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           await AsyncStorage.removeItem('user');
           await AsyncStorage.removeItem('provider');
           await AsyncStorage.removeItem('needsProfileSetup');
-
-          console.log('✅ 로그아웃 상태 초기화 완료');
         }
       },
     );
@@ -104,9 +100,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     try {
       const {
         data: {session},
-      } = await supabaseAuth.auth.getSession();
+      } = await supabase.auth.getSession();
 
-      if (!supabaseAuth || !supabaseAuth.auth) {
+      if (!supabase || !supabase.auth) {
         console.error('❌ Supabase 클라이언트가 초기화되지 않음!');
         setIsLoading(false);
         return;
@@ -130,8 +126,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
         setNeedsProfileSetup(needsSetup === 'true');
       } else {
-        console.log('⚠️ 세션 없음, AsyncStorage 확인');
-
         // Supabase 세션이 없으면 기존 AsyncStorage 확인
         const authToken = await AsyncStorage.getItem('authToken');
         const storedUser = await AsyncStorage.getItem('user');
@@ -146,7 +140,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
           setNeedsProfileSetup(needsSetup === 'true');
         } else {
-          console.log('❌ 로그인 정보 없음');
           setIsLoggedIn(false);
           setUser(null);
           setProvider('');
@@ -154,7 +147,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         }
       }
     } catch (error) {
-      console.error('❌ checkAuthStatus error:', error);
+      console.error('checkAuthStatus error:', error);
       setIsLoggedIn(false);
       setUser(null);
       setProvider('');
@@ -175,12 +168,17 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   };
 
   // 사용자 프로필 업데이트 (로컬 상태만)
-  const updateUserProfile = (updates: Partial<UserProfile>) => {
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return;
     const updatedUser = {...user, ...updates};
+
     setUser(updatedUser);
     // AsyncStorage도 업데이트
-    AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    try {
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error('AsyncStorage 업데이트 실패:', error);
+    }
   };
 
   //스토리지 상태 삭제
@@ -202,7 +200,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       }
 
       // Supabase 로그아웃 - 이후 onAuthStateChange에서 상태 초기화 처리
-      await supabaseAuth.auth.signOut();
+      await supabase.auth.signOut();
 
       console.log('✅ 로그아웃 완료');
     } catch (error) {

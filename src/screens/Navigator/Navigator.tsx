@@ -19,10 +19,7 @@ const Navigator = () => {
       ref={navigationRef}
       onStateChange={() => {
         const currentRoute = navigationRef.current?.getCurrentRoute();
-        console.log('🧭 현재 라우터:', {
-          name: currentRoute?.name,
-          params: currentRoute?.params,
-        });
+        console.log('🧭 현재 라우터:', currentRoute?.name);
       }}>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
         {!isLoggedIn ? (

@@ -1,6 +1,6 @@
 //users DB 관련 함수
 
-import { supabaseAuth } from "../supabase";
+import { supabase } from "../supabase";
 import {
   UserProfile,
   KakaoUserProfile,
@@ -10,11 +10,7 @@ import {
 
 
 
-const DEFAULT_IMAGES = {
-  1: require('../../assets/images/app_icon.png'),
-  2:require('../../assets/images/app_icon.png'),
-  3:require('../../assets/images/app_icon.png'),
-};
+const DEFAULT_IMAGE_COUNT = 5;
 
 // 🔥 Supabase Auth 데이터 + DB 데이터로 UserProfile 생성
 interface CreateUserProfileParams {
@@ -24,13 +20,15 @@ interface CreateUserProfileParams {
   rawProfile: KakaoUserProfile | GoogleUserProfile | NaverUserProfile;
 }
 
-export const getDefaultImageById = (id: number) => {
-  return DEFAULT_IMAGES[id as keyof typeof DEFAULT_IMAGES] || DEFAULT_IMAGES[1];
-};
+//기본 이미지 중 랜덤 지정
+export const getRandomDefaultImageUrl = (): string => {
+  const randomNum = Math.floor(Math.random() * DEFAULT_IMAGE_COUNT) + 1;
+  
+  const {data} = supabase.storage
+    .from('profile')
+    .getPublicUrl(`default/profile_${randomNum}.png`);
 
-// 랜덤 기본 이미지 ID 생성 (1~10)
-export const getRandomDefaultImageId = (): number => {
-  return Math.floor(Math.random() * 10) + 1;
+  return data.publicUrl;
 };
 
 // dduzi + 닉네임 생성
@@ -55,7 +53,7 @@ export const createOrUpdateUser = async (
   try {
 
     // 1. 기존 사용자 확인
-    const { data: existingUser, error: fetchError } = await supabaseAuth
+    const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
@@ -80,18 +78,16 @@ export const createOrUpdateUser = async (
       //   user.id
       // );
       
-      const defaultImageId = getRandomDefaultImageId();
-
+      const defaultImageUrl = getRandomDefaultImageUrl();
 
       //테이블 insert
-      const { data: newUser, error: insertError } = await supabaseAuth
+      const { data: newUser, error: insertError } = await supabase
         .from('users')
         .insert({
           id: user.id,
           username:  profile?.nickname || user.user_metadata?.name,
           bio: null, 
-          default_image_id: defaultImageId,
-          profile_image: profileImage,
+          profile_image: defaultImageUrl,
           provider: user.app_metadata?.provider,
           last_username_update: new Date(),
         })
@@ -107,7 +103,7 @@ export const createOrUpdateUser = async (
       return { user: newUser, isNewUser: true };
     } else {
       // 🔥 기존 사용자 업데이트
-      const { data: updatedUser, error: updateError } = await supabaseAuth
+      const { data: updatedUser, error: updateError } = await supabase
         .from('users')
         .update({
           profile_image: profileImage,
@@ -143,7 +139,6 @@ export const createUserProfile = ({
     email: supabaseUser.email || '',
     nickname: dbUser.username || '',
     bio: dbUser.bio || null,
-    defaultImageId: dbUser.default_image_id,
     provider,
   };
 
@@ -184,7 +179,7 @@ export const createUserProfile = ({
 // 🔥 사용자 정보 조회
 export const getUserById = async (userId: string) => {
   try {
-    const { data, error } = await supabaseAuth
+    const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
@@ -205,7 +200,7 @@ export const getUserById = async (userId: string) => {
 // 🔥 사용자 이름 업데이트
 export const updateUsername = async (userId: string, newUsername: string) => {
   try {
-    const { data, error } = await supabaseAuth
+    const { data, error } = await supabase
       .from('users')
       .update({
         username: newUsername,
