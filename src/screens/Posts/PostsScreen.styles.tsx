@@ -9,7 +9,10 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 양쪽 여백 16 + 중간 간격 
 export const Container = styled.View`
   flex: 1;
   background-color: #f8f9fa;
+  padding: 16px;
 `;
+
+export const ProfileSection = styled.View``;
 
 export const LoadingContainer = styled.View`
   flex: 1;
@@ -47,7 +50,7 @@ export const EmptySubText = styled.Text`
   color: #999;
 `;
 
-export const PostCard = styled.Pressable`
+export const PostCard = styled.TouchableOpacity`
   width: ${CARD_WIDTH}px;
   background-color: #ffffff;
   border-radius: 12px;

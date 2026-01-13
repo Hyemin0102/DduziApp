@@ -9,29 +9,27 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  View,
+  Text,
+  StyleSheet,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import * as S from './Posts.styles';
+import * as S from './PostsScreen.styles';
 import {PostListItem} from '@/@types/post';
 import {supabase} from '@/lib/supabase';
+import {useAuth} from '@/contexts/AuthContext';
+import UserProfileCard from '@/components/UserProfileCard';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {POST_ROUTES} from '@/constants/navigation.constant';
+import {PostsStackNavigationProp} from '@/@types/navigation';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
-type PostsStackParamList = {
-  PostsMain: undefined;
-  CreatePost: undefined;
-  PostDetail: {postId: string};
-};
-
-type NavigationProp = NativeStackNavigationProp<
-  PostsStackParamList,
-  'PostsMain'
->;
-
 export default function PostsScreen() {
-  const navigation = useNavigation<NavigationProp>();
+  const {navigation} = useCommonNavigation<PostsStackNavigationProp>();
+  const {user} = useAuth();
   const [posts, setPosts] = useState<PostListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -110,17 +108,25 @@ export default function PostsScreen() {
   };
 
   const handleCreatePost = () => {
-    navigation.navigate('CreatePost');
+    navigation.navigate(POST_ROUTES.CREATE_POST);
   };
 
   //포스트 상세 이동
   const handlePostPress = (postId: string) => {
-    navigation.navigate('PostDetail', {postId});
+    navigation.navigate(POST_ROUTES.POST_DETAIL, {
+      postId,
+    });
   };
 
   const renderPost = ({item}: {item: PostListItem}) => {
     return (
-      <S.PostCard>
+      <S.PostCard
+        onPress={() =>
+          navigation.navigate(POST_ROUTES.POST_DETAIL, {
+            postId: item.id,
+          })
+        }
+        activeOpacity={0.8}>
         {/* 이미지 가로 스크롤 */}
         {item.images.length > 0 ? (
           <S.ImageContainer>
@@ -175,6 +181,12 @@ export default function PostsScreen() {
 
   return (
     <S.Container>
+      {/* 사용자 프로필 카드 */}
+      {user && (
+        <S.ProfileSection>
+          <UserProfileCard user={user} />
+        </S.ProfileSection>
+      )}
       <FlatList
         data={posts}
         renderItem={renderPost}

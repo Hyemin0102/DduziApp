@@ -132,7 +132,7 @@ const TabNavigator = () => {
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel
               icon={SvgMyPageTab}
-              label="포스트"
+              label="내 뜨개"
               focused={focused}
             />
           ),
@@ -145,7 +145,7 @@ const TabNavigator = () => {
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel
               icon={SvgMyPageTab}
-              label="마이페이지"
+              label="설정"
               focused={focused}
             />
           ),

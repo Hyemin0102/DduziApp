@@ -2,6 +2,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MyPageScreen from '../../MyPage/Mypage';
 import ProfileScreen from '../../Profile/Profile';
 import {MyPageStackParamList} from '../../../@types/navigation';
+import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
 const MyPageStack = () => {
@@ -17,12 +18,12 @@ const MyPageStack = () => {
         },
       }}>
       <Stack.Screen
-        name="MyPageMain"
+        name={MY_PAGE_ROUTES.MY_PAGE_MAIN}
         component={MyPageScreen}
         options={{title: '마이페이지'}}
       />
       <Stack.Screen
-        name="ProfileEdit"
+        name={MY_PAGE_ROUTES.PROFILE_EDIT}
         component={ProfileScreen}
         options={{title: '프로필 편집'}}
       />

@@ -2,12 +2,15 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import PostsScreen from '@/screens/Posts/Posts';
-import CreatePost from '@/screens/CreatePost/CreatePost';
-//import PostDetailScreen from '@/screens/PostDetail/PostDetail';
+import PostsScreen from '@/screens/Posts/PostsScreen';
+import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
+import PostCreateScreen from '@/screens/PostCreate/PostCreateScreen';
+import {PostsStackParamList} from '@/@types/navigation';
+import {POST_ROUTES} from '@/constants/navigation.constant';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<PostsStackParamList>();
 
+//내 뜨개, 프로젝트 작성, 프로젝트 상세
 const PostsStack = () => {
   return (
     <Stack.Navigator
@@ -21,23 +24,23 @@ const PostsStack = () => {
         },
       }}>
       <Stack.Screen
-        name="PostsMain"
+        name={POST_ROUTES.POSTS_MAIN}
         component={PostsScreen}
         options={{title: '포스트'}}
       />
       <Stack.Screen
-        name="CreatePost"
-        component={CreatePost}
+        name={POST_ROUTES.CREATE_POST}
+        component={PostCreateScreen}
         options={{
           title: '프로젝트 작성',
           headerShown: false,
         }}
       />
-      {/* <Stack.Screen
-        name="PostDetail"
+      <Stack.Screen
+        name={POST_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '프로젝트 상세'}}
-      /> */}
+      />
     </Stack.Navigator>
   );
 };

@@ -1,6 +1,8 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import DiscoverScreen from '../../Discover/Discover';
 import {DiscoverStackParamList} from '../../../@types/navigation';
+import {DISCOVER_ROUTES, HOME_ROUTES} from '@/constants/navigation.constant';
+import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 
 const Stack = createNativeStackNavigator<DiscoverStackParamList>();
 
@@ -19,9 +21,14 @@ const DiscoverStack = () => {
         },
       }}>
       <Stack.Screen
-        name="DiscoverMain"
+        name={DISCOVER_ROUTES.DISCOVER_MAIN}
         component={DiscoverScreen}
         options={{title: '탐색'}}
+      />
+      <Stack.Screen
+        name={DISCOVER_ROUTES.POST_DETAIL}
+        component={PostDetailScreen}
+        options={{title: '프로젝트 상세'}}
       />
     </Stack.Navigator>
   );

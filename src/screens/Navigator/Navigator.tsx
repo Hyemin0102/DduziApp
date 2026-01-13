@@ -6,6 +6,7 @@ import {useAuth} from '../../contexts/AuthContext';
 import ProfileScreen from '../Profile/Profile';
 import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
+import {ROOT_ROUTES} from '../../constants/navigation.constant';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -23,11 +24,20 @@ const Navigator = () => {
       }}>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
         {!isLoggedIn ? (
-          <RootStack.Screen name="Auth" component={AuthStack} />
+          //비회원
+          <RootStack.Screen name={ROOT_ROUTES.AUTH} component={AuthStack} />
         ) : needsProfileSetup ? (
-          <RootStack.Screen name="Profile" component={ProfileScreen} />
+          // 최초 로그인
+          <RootStack.Screen
+            name={ROOT_ROUTES.PROFILE}
+            component={ProfileScreen}
+          />
         ) : (
-          <RootStack.Screen name="TabNavigator" component={TabNavigator} />
+          // 일반 로그인
+          <RootStack.Screen
+            name={ROOT_ROUTES.TAB_NAVIGATOR}
+            component={TabNavigator}
+          />
         )}
       </RootStack.Navigator>
     </NavigationContainer>

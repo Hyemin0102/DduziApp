@@ -16,7 +16,7 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useNavigation} from '@react-navigation/native';
 
-import * as S from './CreatePost.styles.tsx';
+import * as S from './PostCreateScreen.styles.tsx';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {supabase} from '@/lib/supabase.ts';
 import {uploadMultipleImages} from '@/lib/uploadImage.tsx';
@@ -27,7 +27,7 @@ interface KnittingLog {
   content: string;
 }
 
-export default function CreatePost() {
+export default function PostCreateScreen() {
   const navigation = useNavigation();
 
   // 폼 데이터

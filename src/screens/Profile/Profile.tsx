@@ -17,7 +17,7 @@ import {useAuth} from '../../contexts/AuthContext';
 import {supabase} from '../../lib/supabase';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {MyPageScreenNavigationProp} from '../../@types/navigation';
+import {MyPageStackNavigationProp} from '../../@types/navigation';
 import {
   ImagePickerResponse,
   launchCamera,
@@ -27,7 +27,7 @@ import {uploadImage} from '@/lib/uploadImage';
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
-  const navigation = useNavigation<MyPageScreenNavigationProp>();
+  const navigation = useNavigation<MyPageStackNavigationProp>();
   const route = useRoute();
 
   // 최초 프로필 설정 모드인지 확인 (RootStack에서 온 경우), 프로필 편집은 ProfileEdit

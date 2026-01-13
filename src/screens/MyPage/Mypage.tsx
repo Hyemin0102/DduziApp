@@ -11,11 +11,11 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import UserProfileCard from '../../components/UserProfileCard';
 import {useNavigation} from '@react-navigation/native';
-import {MyPageScreenNavigationProp} from '../../@types/navigation';
+import {MyPageStackNavigationProp} from '../../@types/navigation';
 
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
-  const navigation = useNavigation<MyPageScreenNavigationProp>();
+  const navigation = useNavigation<MyPageStackNavigationProp>();
 
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');
