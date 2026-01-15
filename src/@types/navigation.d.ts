@@ -37,6 +37,7 @@ export type TabParamList = {
 export type HomeStackParamList = {
   [HOME_ROUTES.HOME_MAIN]: undefined;
   [HOME_ROUTES.POST_DETAIL]: {postId: string};
+  [POST_ROUTES.CREATE_POST]: undefined;
 };
 
 // Discover Stack

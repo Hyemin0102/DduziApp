@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   Text,
   View,
@@ -6,8 +6,12 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  ScrollViewComponent,
+  Dimensions,
+  FlatList,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import * as S from './Home.style';
 import {useAuth} from '../../contexts/AuthContext';
 import UserProfileCard from '../../components/UserProfileCard';
@@ -30,7 +34,10 @@ interface Post {
   username: string;
   profile_image: string;
   images: PostImage[];
+  content: string;
 }
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const Home = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -49,6 +56,7 @@ const Home = () => {
         title,
         created_at,
         pattern_url,
+        content,
        users!posts_user_id_fkey!inner(
           username,
           profile_image
@@ -67,8 +75,6 @@ const Home = () => {
         throw postsError;
       }
 
-      console.log('✅ 조회된 데이터:', postsData);
-
       const allPosts: Post[] = postsData
         ? (postsData as any[]).map((post: any) => ({
             id: post.id,
@@ -80,6 +86,7 @@ const Home = () => {
             images: (post.post_images || []).sort(
               (a: any, b: any) => a.display_order - b.display_order,
             ),
+            content: post.content,
           }))
         : [];
 
@@ -91,9 +98,11 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, []),
+  );
 
   return (
     <S.Container>
@@ -106,31 +115,57 @@ const Home = () => {
             <S.ContentText>게시물이 없습니다.</S.ContentText>
           ) : (
             posts.map(post => (
-              <TouchableOpacity
-                key={post.id}
-                onPress={() =>
-                  navigation.navigate(HOME_ROUTES.POST_DETAIL, {
-                    postId: post.id,
-                  })
-                }
-                style={{marginBottom: 20}}>
-                <View key={post.id} style={{marginBottom: 20}}>
-                  <Text style={{fontWeight: 'bold'}}>{post.username}</Text>
+              <View key={post.id} style={{marginBottom: 20}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 4,
+                    alignItems: 'flex-end',
+                    marginBottom: 8,
+                  }}>
                   <Image
                     source={{uri: post.profile_image}}
                     style={{width: 48, height: 48, borderRadius: '50%'}}
                     resizeMode="cover"
                   />
-                  <Text>{post.title}</Text>
-                  <Text>{new Date(post.createdAt).toLocaleDateString()}</Text>
-                  {post.images[0] && (
-                    <Image
-                      source={{uri: post.images[0].image_url}}
-                      style={{width: '100%', height: 200}}
-                    />
-                  )}
+                  <Text style={{fontWeight: 'bold'}}>{post.username}</Text>
                 </View>
-              </TouchableOpacity>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}>
+                  {post.images.map((iamge, index) => (
+                    <View key={index} style={{width: SCREEN_WIDTH * 0.9}}>
+                      <Image
+                        source={{uri: iamge.image_url}}
+                        resizeMode="cover"
+                        style={{width: '100%', height: 200}}
+                      />
+                      <S.ImageCounter>
+                        {index + 1} / {post.images.length}
+                      </S.ImageCounter>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                <TouchableOpacity
+                  key={post.id}
+                  onPress={() =>
+                    navigation.navigate(HOME_ROUTES.POST_DETAIL, {
+                      postId: post.id,
+                    })
+                  }
+                  style={{marginBottom: 20}}>
+                  <View>
+                    <Text style={{fontWeight: '700', fontSize: 16}}>
+                      {post.title}
+                    </Text>
+
+                    <Text>{post.content}</Text>
+                    <Text>{new Date(post.createdAt).toLocaleDateString()}</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
             ))
           )}
         </S.ContentSection>

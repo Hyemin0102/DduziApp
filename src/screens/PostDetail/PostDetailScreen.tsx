@@ -1,7 +1,14 @@
 import {supabase} from '@/lib/supabase';
-import {RouteProp, useRoute} from '@react-navigation/native';
-import {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView, Text, View} from 'react-native';
+import {RouteProp, useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {useState, useCallback} from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
 
 interface PostImage {
@@ -10,8 +17,15 @@ interface PostImage {
   display_order: number;
 }
 
+interface KnittingLog {
+  id: string;
+  content: string;
+  created_at: string;
+}
+
 interface PostDetail {
   id: string;
+  user_id: string;
   title: string;
   content: string;
   yarn_info: string;
@@ -23,6 +37,7 @@ interface PostDetail {
   username: string;
   profile_image: string | null;
   images: PostImage[];
+  knitting_logs: KnittingLog[];
 }
 
 type RouteParams = {
@@ -33,14 +48,23 @@ type RouteParams = {
 
 export default function PostDetailScreen() {
   const route = useRoute<RouteProp<RouteParams, 'PostDetail'>>();
+  const navigation = useNavigation<any>();
+  const {user} = useAuth();
   const {postId} = route.params;
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchPostDetail();
-  }, [postId]);
+  // 내 게시물인지 확인
+  const isMyPost = post && user && post.user_id === user.id;
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPostDetail();
+    }, [postId]),
+  );
 
   const fetchPostDetail = async () => {
     try {
@@ -51,6 +75,7 @@ export default function PostDetailScreen() {
         .select(
           `
         id,
+        user_id,
         title,
         content,
         yarn_info,
@@ -67,6 +92,11 @@ export default function PostDetailScreen() {
           id,
           image_url,
           display_order
+        ),
+         knitting_logs (
+          id,
+          content,
+          created_at
         )
       `,
         )
@@ -80,6 +110,7 @@ export default function PostDetailScreen() {
 
       const postDetail: PostDetail = {
         id: (postData as any).id,
+        user_id: (postData as any).user_id,
         title: (postData as any).title,
         content: (postData as any).content,
         yarn_info: (postData as any).yarn_info,
@@ -93,6 +124,10 @@ export default function PostDetailScreen() {
         images: ((postData as any).post_images || []).sort(
           (a: any, b: any) => a.display_order - b.display_order,
         ),
+        knitting_logs: ((postData as any).knitting_logs || []).sort(
+          (a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        ), // 최신순 정렬
       };
 
       setPost(postDetail);
@@ -101,6 +136,46 @@ export default function PostDetailScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 게시물 삭제
+  const handleDelete = () => {
+    Alert.alert('게시물 삭제', '정말 이 게시물을 삭제하시겠습니까?', [
+      {text: '취소', style: 'cancel'},
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setIsDeleting(true);
+
+            // 관련 데이터 삭제 (cascade 설정이 없다면 수동 삭제)
+            await supabase.from('knitting_logs').delete().eq('post_id', postId);
+            await supabase.from('post_images').delete().eq('post_id', postId);
+            await supabase.from('posts').delete().eq('id', postId);
+
+            Alert.alert('삭제 완료', '게시물이 삭제되었습니다.', [
+              {text: '확인', onPress: () => navigation.goBack()},
+            ]);
+          } catch (error) {
+            console.error('❌ 게시물 삭제 실패:', error);
+            Alert.alert('오류', '게시물 삭제에 실패했습니다.');
+          } finally {
+            setIsDeleting(false);
+            setShowActionSheet(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  // 게시물 수정 화면으로 이동
+  const handleEdit = () => {
+    setShowActionSheet(false);
+    navigation.navigate('CreatePost', {
+      mode: 'edit',
+      postData: post,
+    });
   };
 
   console.log('✅ 게시물 상세???', post?.images.length);
@@ -148,6 +223,12 @@ export default function PostDetailScreen() {
               </S.Date>
             </S.AuthorTextContainer>
           </S.AuthorInfo>
+          {/* 내 게시물일 때 더보기 버튼 */}
+          {isMyPost && (
+            <TouchableOpacity onPress={() => setShowActionSheet(true)}>
+              <S.MoreButton>⋯</S.MoreButton>
+            </TouchableOpacity>
+          )}
         </S.AuthorSection>
 
         {/* 이미지 갤러리 */}
@@ -213,8 +294,73 @@ export default function PostDetailScreen() {
               </S.PatternSection>
             </>
           )}
+          {/* 뜨개 로그 */}
+          {post.knitting_logs && post.knitting_logs.length > 0 && (
+            <>
+              <S.Divider />
+              <S.LogSection>
+                <S.LogTitle>🧶 뜨개 일지</S.LogTitle>
+                <S.Timeline>
+                  {post.knitting_logs.map((log, index) => (
+                    <S.TimelineItem key={log.id}>
+                      {/* 타임라인 점 */}
+                      <S.TimelineDot isFirst={index === 0} />
+
+                      {/* 타임라인 선 */}
+                      {index !== post.knitting_logs.length - 1 && (
+                        <S.TimelineLine />
+                      )}
+
+                      {/* 로그 내용 */}
+                      <S.LogContent>
+                        <S.LogDate>
+                          {new Date(log.created_at).toLocaleDateString(
+                            'ko-KR',
+                            {
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            },
+                          )}
+                        </S.LogDate>
+                        <S.LogText>{log.content}</S.LogText>
+                      </S.LogContent>
+                    </S.TimelineItem>
+                  ))}
+                </S.Timeline>
+              </S.LogSection>
+            </>
+          )}
         </S.ContentSection>
       </ScrollView>
+
+      {/* 액션시트 (수정/삭제) */}
+      <Modal
+        visible={showActionSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowActionSheet(false)}>
+        <S.ActionSheetOverlay onPress={() => setShowActionSheet(false)}>
+          <S.ActionSheetContainer>
+            <S.ActionSheetHandle />
+            <S.ActionSheetButton onPress={handleEdit}>
+              <S.ActionSheetIcon>✏️</S.ActionSheetIcon>
+              <S.ActionSheetButtonText>수정하기</S.ActionSheetButtonText>
+            </S.ActionSheetButton>
+            <S.ActionSheetDivider />
+            <S.ActionSheetButton onPress={handleDelete}>
+              <S.ActionSheetIcon>🗑️</S.ActionSheetIcon>
+              <S.ActionSheetButtonText isDestructive>
+                삭제하기
+              </S.ActionSheetButtonText>
+            </S.ActionSheetButton>
+            <S.ActionSheetCancelButton onPress={() => setShowActionSheet(false)}>
+              <S.ActionSheetCancelText>취소</S.ActionSheetCancelText>
+            </S.ActionSheetCancelButton>
+          </S.ActionSheetContainer>
+        </S.ActionSheetOverlay>
+      </Modal>
     </S.Container>
   );
 }

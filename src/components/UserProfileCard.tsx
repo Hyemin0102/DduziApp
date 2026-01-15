@@ -71,14 +71,8 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({user}) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 20,
+
     alignItems: 'center',
   },
   profileImage: {

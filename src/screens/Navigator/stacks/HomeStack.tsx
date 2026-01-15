@@ -3,6 +3,7 @@ import HomeScreen from '../../Home/Home';
 import PostDetailScreen from '../../PostDetail/PostDetailScreen';
 import {HomeStackParamList} from '../../../@types/navigation';
 import {HOME_ROUTES} from '../../../constants/navigation.constant';
+import PostCreateScreen from '@/screens/PostCreate/PostCreateScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -29,6 +30,14 @@ const HomeStack = () => {
         name={HOME_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '프로젝트 상세'}}
+      />
+      <Stack.Screen
+        name={HOME_ROUTES.CREATE_POST}
+        component={PostCreateScreen}
+        options={{
+          title: '프로젝트 작성',
+          headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );

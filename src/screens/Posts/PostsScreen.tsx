@@ -191,7 +191,7 @@ export default function PostsScreen() {
         data={posts}
         renderItem={renderPost}
         keyExtractor={item => item.id}
-        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 16}}
+        contentContainerStyle={{paddingBottom: 100, paddingTop: 20, gap: 16}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }

@@ -31,11 +31,21 @@ export const AuthorSection = styled.View`
   padding: 16px;
   border-bottom-width: 1px;
   border-bottom-color: #eeeeee;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 export const AuthorInfo = styled.View`
   flex-direction: row;
   align-items: center;
+  flex: 1;
+`;
+
+export const MoreButton = styled.Text`
+  font-size: 24px;
+  color: #666666;
+  padding: 8px;
 `;
 
 export const ProfileImage = styled.Image`
@@ -100,12 +110,7 @@ export const ImageCounter = styled.Text`
   background-color: rgba(0, 0, 0, 0.6);
   padding: 6px 12px;
   border-radius: 16px;
-`;
-
-export const ImageCounterText = styled.Text`
   color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
 `;
 
 // 콘텐츠 섹션
@@ -168,4 +173,133 @@ export const PatternImage = styled.Image`
   height: ${SCREEN_WIDTH * 1.2}px;
   background-color: #f5f5f5;
   border-radius: 8px;
+`;
+
+// 뜨개질 일지 섹션
+export const LogSection = styled.View`
+  margin-top: 24px;
+`;
+
+export const LogTitle = styled.Text`
+  font-size: 18px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 20px;
+`;
+
+// 타임라인
+export const Timeline = styled.View`
+  padding-left: 4px;
+`;
+
+export const TimelineItem = styled.View`
+  position: relative;
+  padding-left: 32px;
+  padding-bottom: 24px;
+`;
+
+export const TimelineDot = styled.View<{isFirst: boolean}>`
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  background-color: ${props => (props.isFirst ? '#4F46E5' : '#9CA3AF')};
+  border: 2px solid ${props => (props.isFirst ? '#4F46E5' : '#D1D5DB')};
+`;
+
+export const TimelineLine = styled.View`
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: -8px;
+  width: 2px;
+  background-color: #e5e7eb;
+`;
+
+// 로그 내용
+export const LogContent = styled.View`
+  background-color: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+`;
+
+export const LogDate = styled.Text`
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  font-weight: 600;
+`;
+
+export const LogText = styled.Text`
+  font-size: 14px;
+  color: #374151;
+  line-height: 20px;
+`;
+
+// 액션시트 (바텀시트)
+export const ActionSheetOverlay = styled.Pressable`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: flex-end;
+`;
+
+export const ActionSheetContainer = styled.View`
+  background-color: #ffffff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding-bottom: 34px;
+`;
+
+export const ActionSheetHandle = styled.View`
+  width: 40px;
+  height: 4px;
+  background-color: #dddddd;
+  border-radius: 2px;
+  align-self: center;
+  margin-top: 12px;
+  margin-bottom: 8px;
+`;
+
+export const ActionSheetButton = styled.TouchableOpacity<{
+  isDestructive?: boolean;
+}>`
+  padding: 16px 20px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+export const ActionSheetButtonText = styled.Text<{isDestructive?: boolean}>`
+  font-size: 17px;
+  color: ${props => (props.isDestructive ? '#FF3B30' : '#000000')};
+  margin-left: 12px;
+`;
+
+export const ActionSheetIcon = styled.Text`
+  font-size: 20px;
+`;
+
+export const ActionSheetDivider = styled.View`
+  height: 1px;
+  background-color: #eeeeee;
+  margin: 0 20px;
+`;
+
+export const ActionSheetCancelButton = styled.TouchableOpacity`
+  padding: 16px 20px;
+  align-items: center;
+  border-top-width: 8px;
+  border-top-color: #f5f5f5;
+`;
+
+export const ActionSheetCancelText = styled.Text`
+  font-size: 17px;
+  color: #007aff;
+  font-weight: 600;
 `;

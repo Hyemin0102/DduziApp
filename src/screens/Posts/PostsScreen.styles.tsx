@@ -51,7 +51,7 @@ export const EmptySubText = styled.Text`
 `;
 
 export const PostCard = styled.TouchableOpacity`
-  width: ${CARD_WIDTH}px;
+  //width: ${CARD_WIDTH}px;
   background-color: #ffffff;
   border-radius: 12px;
   overflow: hidden;
@@ -60,7 +60,6 @@ export const PostCard = styled.TouchableOpacity`
   shadow-opacity: 0.08;
   shadow-radius: 8px;
   elevation: 3;
-  border: 1px solid;
 `;
 
 export const ImageContainer = styled.View`

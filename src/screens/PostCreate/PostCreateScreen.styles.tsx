@@ -60,6 +60,7 @@ export const TextArea = styled.TextInput`
 
 export const ImageSection = styled.View`
   margin-top: 8px;
+  flex-direction: row;
 `;
 
 export const ImageUploadButton = styled.TouchableOpacity`
@@ -69,7 +70,6 @@ export const ImageUploadButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
   background-color: #fafafa;
 `;
 
@@ -83,7 +83,6 @@ export const ImagePreview = styled.View`
   width: 100px;
   height: 100px;
   border-radius: 8px;
-  margin-right: 12px;
   position: relative;
   overflow: hidden;
 `;
@@ -176,4 +175,33 @@ export const LogInput = styled.TextInput`
 
 export const BottomSpace = styled.View`
   height: 40px;
+`;
+
+// 기존 로그 (읽기 전용)
+export const ExistingLogItem = styled.View`
+  padding: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  margin-bottom: 12px;
+`;
+
+export const ExistingLogDate = styled.Text`
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+`;
+
+export const ExistingLogContent = styled.Text`
+  font-size: 14px;
+  color: #333;
+  line-height: 20px;
+`;
+
+export const NewLogLabel = styled.Text`
+  font-size: 13px;
+  color: #0070f3;
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 8px;
 `;

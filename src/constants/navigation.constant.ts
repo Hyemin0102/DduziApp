@@ -25,6 +25,7 @@ export const TAB_ROUTES = {
 export const HOME_ROUTES = {
   HOME_MAIN: 'HomeMain',
   POST_DETAIL: 'PostDetail',
+  CREATE_POST: 'CreatePost',
 } as const;
 
 // ============= Discover Stack Routes =============
