@@ -10,35 +10,7 @@ import {
 } from 'react-native';
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
-
-interface PostImage {
-  id: string;
-  image_url: string;
-  display_order: number;
-}
-
-interface KnittingLog {
-  id: string;
-  content: string;
-  created_at: string;
-}
-
-interface PostDetail {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  yarn_info: string;
-  pattern_info: string;
-  pattern_url: string | null;
-  needleInfo: string;
-  created_at: string;
-  updated_at: string;
-  username: string;
-  profile_image: string | null;
-  images: PostImage[];
-  knitting_logs: KnittingLog[];
-}
+import { PostDetail } from '@/@types/post';
 
 type RouteParams = {
   PostDetail: {
@@ -178,7 +150,6 @@ export default function PostDetailScreen() {
     });
   };
 
-  console.log('✅ 게시물 상세???', post?.images.length);
 
   if (loading) {
     return (

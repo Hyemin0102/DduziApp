@@ -2,20 +2,13 @@
 import React, {useState, useCallback, useEffect} from 'react';
 import {
   FlatList,
-  TouchableOpacity,
   Image,
   RefreshControl,
   ActivityIndicator,
   ScrollView,
-  Alert,
   Dimensions,
-  View,
-  Text,
-  StyleSheet,
 } from 'react-native';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-
+import { useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
 import {PostListItem} from '@/@types/post';
 import {supabase} from '@/lib/supabase';
@@ -23,12 +16,9 @@ import {useAuth} from '@/contexts/AuthContext';
 import UserProfileCard from '@/components/UserProfileCard';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
-import {PostsStackNavigationProp} from '@/@types/navigation';
-
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 export default function PostsScreen() {
-  const {navigation} = useCommonNavigation<PostsStackNavigationProp>();
+  const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
   const [posts, setPosts] = useState<PostListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +97,7 @@ export default function PostsScreen() {
     fetchPosts();
   };
 
+  //포스트 작성 이동
   const handleCreatePost = () => {
     navigation.navigate(POST_ROUTES.CREATE_POST);
   };

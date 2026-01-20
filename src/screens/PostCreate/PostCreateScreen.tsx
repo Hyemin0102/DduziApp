@@ -7,7 +7,6 @@ import {
   Alert,
 } from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 
 import * as S from './PostCreateScreen.styles.tsx';
@@ -28,9 +27,9 @@ type RouteParams = {
     };
   };
 };
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {supabase} from '@/lib/supabase.ts';
 import {uploadMultipleImages} from '@/lib/uploadImage.tsx';
+import KeyboardAvoid from '@/components/common/KeyboardAvoid.tsx';
 
 interface KnittingLog {
   id: string;
@@ -75,7 +74,6 @@ export default function PostCreateScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
 
   // 수정 모드일 때 기존 데이터 로드
   React.useEffect(() => {
@@ -320,7 +318,8 @@ export default function PostCreateScreen() {
           <S.SubmitText>{isSubmitting ? '저장 중...' : '완료'}</S.SubmitText>
         </TouchableOpacity>
       </S.Header>
-      <KeyboardAwareScrollView>
+      <KeyboardAvoid >
+          
         {/* 제목 */}
         <S.Section>
           <S.Label>프로젝트 제목 *</S.Label>
@@ -376,6 +375,7 @@ export default function PostCreateScreen() {
               </S.ImagePreview>
             ))}
           </ScrollView>
+          
         </S.Section>
 
         {/* 프로젝트 설명 */}
@@ -506,8 +506,7 @@ export default function PostCreateScreen() {
           ))}
         </S.Section>
 
-        <S.BottomSpace />
-      </KeyboardAwareScrollView>
+      </KeyboardAvoid>
     </S.Container>
   );
 }

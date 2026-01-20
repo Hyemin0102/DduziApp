@@ -11,11 +11,11 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import UserProfileCard from '../../components/UserProfileCard';
 import {useNavigation} from '@react-navigation/native';
-import {MyPageStackNavigationProp} from '../../@types/navigation';
+
 
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
-  const navigation = useNavigation<MyPageStackNavigationProp>();
+  const navigation = useNavigation<any>();
 
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');
@@ -59,8 +59,7 @@ const Mypage = () => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>마이페이지</Text>
-
+       
         {/* 사용자 프로필 카드 */}
         <UserProfileCard user={user} />
 
@@ -83,19 +82,6 @@ const Mypage = () => {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>로그아웃</Text>
         </TouchableOpacity>
-
-        {/* 디버그 정보 (개발용) */}
-        {__DEV__ && (
-          <View style={styles.debugSection}>
-            <Text style={styles.debugTitle}>디버그 정보</Text>
-            <Text style={styles.debugText}>Provider: {provider || '없음'}</Text>
-            <Text style={styles.debugText}>User Nickname: {user.nickname}</Text>
-            <Text style={styles.debugText}>User ID: {user.id}</Text>
-            <Text style={styles.debugText} numberOfLines={10}>
-              Raw Profile: {JSON.stringify(user.rawProfile, null, 2)}
-            </Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );

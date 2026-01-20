@@ -59,29 +59,6 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
 };
 
-// ============= Navigation Props =============
-
-// Root Stack Navigation (최상위 - 모든 화면에 접근 가능)
-export type RootStackNavigationProp =
-  NativeStackNavigationProp<RootStackParamList>;
-
-// Auth Stack Navigation
-export type AuthStackNavigationProp =
-  NativeStackNavigationProp<AuthStackParamList>;
-
-// Tab Navigation Props
-export type HomeStackNavigationProp =
-  NativeStackNavigationProp<HomeStackParamList>;
-
-export type DiscoverStackNavigationProp =
-  NativeStackNavigationProp<DiscoverStackParamList>;
-
-export type PostsStackNavigationProp =
-  NativeStackNavigationProp<PostsStackParamList>;
-
-export type MyPageStackNavigationProp =
-  NativeStackNavigationProp<MyPageStackParamList>;
-
 // ============= Global Navigation Declaration =============
 // React Navigation 타입 자동 완성을 위한 글로벌 선언
 declare global {

@@ -12,8 +12,8 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		97AD99BE164948D5866B8639 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 573BA360A6A7432893457340 /* BootSplash.storyboard */; };
-		ABE51EDBF12D29EA5271DA03 /* libPods-dduziApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D6060E3E0C1AC158669C6C33 /* libPods-dduziApp.a */; };
 		AF566B93A2904D9B8E8D819F /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 720133E177CE48289FC9FEC7 /* Colors.xcassets */; };
+		FCA945D011425FAE5E74AD5D /* libPods-dduziApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 44E86C87FD08F09DFEAF851D /* libPods-dduziApp.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,13 +21,13 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = dduziApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = dduziApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = dduziApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		44E86C87FD08F09DFEAF851D /* libPods-dduziApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-dduziApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		573BA360A6A7432893457340 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = dduziApp/BootSplash.storyboard; sourceTree = "<group>"; };
+		617E724388C0C9EF262ECB7B /* Pods-dduziApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dduziApp.debug.xcconfig"; path = "Target Support Files/Pods-dduziApp/Pods-dduziApp.debug.xcconfig"; sourceTree = "<group>"; };
 		720133E177CE48289FC9FEC7 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = dduziApp/Colors.xcassets; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = dduziApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = dduziApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		D6060E3E0C1AC158669C6C33 /* libPods-dduziApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-dduziApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DB480A4A7D62B7F82342BB22 /* Pods-dduziApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dduziApp.debug.xcconfig"; path = "Target Support Files/Pods-dduziApp/Pods-dduziApp.debug.xcconfig"; sourceTree = "<group>"; };
-		E566D72E9D78EEC533903C57 /* Pods-dduziApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dduziApp.release.xcconfig"; path = "Target Support Files/Pods-dduziApp/Pods-dduziApp.release.xcconfig"; sourceTree = "<group>"; };
+		B1AFB2ECD55B60EC1CAF8B18 /* Pods-dduziApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dduziApp.release.xcconfig"; path = "Target Support Files/Pods-dduziApp/Pods-dduziApp.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -36,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ABE51EDBF12D29EA5271DA03 /* libPods-dduziApp.a in Frameworks */,
+				FCA945D011425FAE5E74AD5D /* libPods-dduziApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,7 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				D6060E3E0C1AC158669C6C33 /* libPods-dduziApp.a */,
+				44E86C87FD08F09DFEAF851D /* libPods-dduziApp.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -98,8 +98,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				DB480A4A7D62B7F82342BB22 /* Pods-dduziApp.debug.xcconfig */,
-				E566D72E9D78EEC533903C57 /* Pods-dduziApp.release.xcconfig */,
+				617E724388C0C9EF262ECB7B /* Pods-dduziApp.debug.xcconfig */,
+				B1AFB2ECD55B60EC1CAF8B18 /* Pods-dduziApp.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -111,13 +111,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "dduziApp" */;
 			buildPhases = (
-				B3F3C6701D07C8E2EDC28CAA /* [CP] Check Pods Manifest.lock */,
+				AE9965007A019F07BCAF3530 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				925AACBBE8248540532E3A38 /* [CP] Embed Pods Frameworks */,
-				8EBF769DDC0CDB6E821BAE28 /* [CP] Copy Pods Resources */,
+				FBA08EF9BDE41A2F442D0EAE /* [CP] Embed Pods Frameworks */,
+				F2D23E39F7EEDAD5A4FE2ED4 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -191,41 +191,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		8EBF769DDC0CDB6E821BAE28 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		925AACBBE8248540532E3A38 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B3F3C6701D07C8E2EDC28CAA /* [CP] Check Pods Manifest.lock */ = {
+		AE9965007A019F07BCAF3530 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -247,6 +213,40 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		F2D23E39F7EEDAD5A4FE2ED4 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FBA08EF9BDE41A2F442D0EAE /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -263,7 +263,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DB480A4A7D62B7F82342BB22 /* Pods-dduziApp.debug.xcconfig */;
+			baseConfigurationReference = 617E724388C0C9EF262ECB7B /* Pods-dduziApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -292,7 +292,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E566D72E9D78EEC533903C57 /* Pods-dduziApp.release.xcconfig */;
+			baseConfigurationReference = B1AFB2ECD55B60EC1CAF8B18 /* Pods-dduziApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

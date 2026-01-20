@@ -64,12 +64,6 @@ export const createOrUpdateUser = async (
       throw fetchError;
     }
 
-    //프로필 url
-    const profileImage =
-      profile?.profileImageUrl ||
-      user.user_metadata?.profile_image ||
-      user.user_metadata?.picture ||
-      user.user_metadata?.profile_image;
 
     if (!existingUser) {
       // 🔥 신규 사용자 생성
@@ -103,10 +97,20 @@ export const createOrUpdateUser = async (
       return { user: newUser, isNewUser: true };
     } else {
       // 🔥 기존 사용자 업데이트
+
+      const profileImageToUse = existingUser.profile_image 
+      ? existingUser.profile_image  // 기존 이미지가 있으면 덮어쓰지 않음
+      : (profile?.profileImageUrl ||  // 없을 때만 카카오 프로필 사용
+         user.user_metadata?.profile_image ||
+         user.user_metadata?.picture);
+      console.log('profileImageToUse',profileImageToUse);
+      
+
+
       const { data: updatedUser, error: updateError } = await supabase
         .from('users')
         .update({
-          profile_image: profileImage,
+          profile_image: profileImageToUse,
           provider: user.app_metadata?.provider || existingUser.provider,
         })
         .eq('id', user.id)

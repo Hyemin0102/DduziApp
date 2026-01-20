@@ -25,7 +25,7 @@ const DiscoverStack = () => {
         component={DiscoverScreen}
         options={{title: '탐색'}}
       />
-      <Stack.Screen
+        <Stack.Screen
         name={DISCOVER_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '프로젝트 상세'}}

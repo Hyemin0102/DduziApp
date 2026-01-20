@@ -17,17 +17,18 @@ import {useAuth} from '../../contexts/AuthContext';
 import {supabase} from '../../lib/supabase';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {MyPageStackNavigationProp} from '../../@types/navigation';
+
 import {
   ImagePickerResponse,
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
 import {uploadImage} from '@/lib/uploadImage';
+import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
-  const navigation = useNavigation<MyPageStackNavigationProp>();
+  const navigation = useNavigation<any>();
   const route = useRoute();
 
   // 최초 프로필 설정 모드인지 확인 (RootStack에서 온 경우), 프로필 편집은 ProfileEdit
@@ -128,6 +129,9 @@ const ProfileScreen = () => {
         }
       }
 
+      console.log('profileImageUrl???',profileImageUrl);
+      
+
       // DB 업데이트
       const {error} = await supabase
         .from('users')
@@ -168,19 +172,15 @@ const ProfileScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{flex: 1}}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={{
+<KeyboardAvoid>
+        <View
+          style={{
             flexGrow: 1,
             alignItems: 'center',
             justifyContent: 'center',
             padding: 20,
           }}
-          keyboardShouldPersistTaps="handled">
+       >
           <Text style={{fontSize: 24, marginBottom: 20}}>프로필 설정</Text>
 
           <View
@@ -210,6 +210,7 @@ const ProfileScreen = () => {
             <Button title="갤러리에서 선택" onPress={selectImage} />
             <Button title="카메라로 촬영" onPress={takePhoto} />
           </View>
+
 
           {/* 닉네임 입력 */}
           <Text
@@ -258,9 +259,9 @@ const ProfileScreen = () => {
             onPress={handleSave}
             disabled={loading || !nickname.trim() || !bio.trim()}
           />
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+     
+        </View>
+        </KeyboardAvoid>
   );
 };
 

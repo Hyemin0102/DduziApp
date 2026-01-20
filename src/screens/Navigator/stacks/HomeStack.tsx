@@ -26,18 +26,10 @@ const HomeStack = () => {
         component={HomeScreen}
         options={{title: '홈'}}
       />
-      <Stack.Screen
+       <Stack.Screen
         name={HOME_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '프로젝트 상세'}}
-      />
-      <Stack.Screen
-        name={HOME_ROUTES.CREATE_POST}
-        component={PostCreateScreen}
-        options={{
-          title: '프로젝트 작성',
-          headerShown: false,
-        }}
       />
     </Stack.Navigator>
   );
