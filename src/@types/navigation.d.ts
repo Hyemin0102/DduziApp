@@ -5,7 +5,6 @@ import {
   ROOT_ROUTES,
   TAB_ROUTES,
   HOME_ROUTES,
-  DISCOVER_ROUTES,
   POST_ROUTES,
   MY_PAGE_ROUTES,
   AUTH_ROUTES,
@@ -43,11 +42,6 @@ export type HomeStackParamList = {
   [POST_ROUTES.CREATE_POST]: undefined;
 };
 
-// Discover Stack
-export type DiscoverStackParamList = {
-  [DISCOVER_ROUTES.DISCOVER_MAIN]: undefined;
-  [DISCOVER_ROUTES.POST_DETAIL]: {postId: string};
-};
 
 // Posts Stack
 export type PostsStackParamList = {

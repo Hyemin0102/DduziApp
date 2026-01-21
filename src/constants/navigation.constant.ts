@@ -29,12 +29,6 @@ export const HOME_ROUTES = {
   SEARCH: 'Search',
 } as const;
 
-// ============= Discover Stack Routes =============
-export const DISCOVER_ROUTES = {
-  DISCOVER_MAIN: 'DiscoverMain',
-  POST_DETAIL: 'PostDetail',
-} as const;
-
 // ============= Posts Stack Routes =============
 export const POST_ROUTES = {
   POSTS_MAIN: 'PostsMain',

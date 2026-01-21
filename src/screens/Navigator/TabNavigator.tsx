@@ -1,6 +1,5 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeStack from './stacks/HomeStack';
-import DiscoverStack from './stacks/DiscoverStack';
 import MyPageStack from './stacks/MyPageStack';
 import PostsStack from './stacks/PostsStack';
 
