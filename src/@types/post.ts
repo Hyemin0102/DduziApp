@@ -24,6 +24,7 @@ export interface KnittingLog {
   created_at: string;
 }
 
+
 // 게시물 기본 타입
 export interface Post {
   id: string;
@@ -43,17 +44,29 @@ export interface Post {
   };
   post_images: Array<{
     id: string;
-    post_id: string;
     image_url: string;
     display_order: number;
-    created_at: string;
   }>;
+  is_completed: boolean;
+  visibility: 'public' | 'private';
 }
 
-// 게시물 리스트용 타입 (사용자 정보 + 이미지 포함)
+export interface MyPost {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  post_images: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
+  is_completed: boolean;
+}
+
+// 게시물 리스트용 타입 (사용자 정보 추가)
 export interface PostListItem extends Post {
   user: Pick<User, 'username' | 'profile_image'> | null;
-  images: PostImage[];
 }
 
 // 게시물 상세용 타입 (모든 정보 포함)
@@ -72,6 +85,8 @@ export interface PostDetail {
   profile_image: string | null;
   images: PostImage[];
   knitting_logs: KnittingLog[];
+  is_completed: boolean;
+  visibility: 'public' | 'private';
 }
 
 // 게시물 작성용 타입

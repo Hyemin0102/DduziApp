@@ -18,6 +18,7 @@ export type RootStackParamList = {
   [ROOT_ROUTES.AUTH]: NavigatorScreenParams<AuthStackParamList>;
   [ROOT_ROUTES.PROFILE]: undefined;
   [ROOT_ROUTES.TAB_NAVIGATOR]: NavigatorScreenParams<TabParamList>;
+  PostCreate: undefined;
 };
 
 // Auth Stack
@@ -28,15 +29,17 @@ export type AuthStackParamList = {
 // Tab Navigator
 export type TabParamList = {
   [TAB_ROUTES.HOME_TAB]: NavigatorScreenParams<HomeStackParamList>;
-  [TAB_ROUTES.DISCOVER_TAB]: NavigatorScreenParams<DiscoverStackParamList>;
   [TAB_ROUTES.POST_TAB]: NavigatorScreenParams<PostsStackParamList>;
   [TAB_ROUTES.MY_PAGE_TAB]: NavigatorScreenParams<MyPageStackParamList>;
+  [TAB_ROUTES.POST_CREATE_TAB]: NavigatorScreenParams<PostsStackParamList>;
+  PostCreatePlaceholder: undefined;
 };
 
 // Home Stack
 export type HomeStackParamList = {
   [HOME_ROUTES.HOME_MAIN]: undefined;
   [HOME_ROUTES.POST_DETAIL]: {postId: string};
+  [HOME_ROUTES.SEARCH]: undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
 };
 

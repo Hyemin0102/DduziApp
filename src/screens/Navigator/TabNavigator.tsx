@@ -18,6 +18,8 @@ import {
 import {SvgProps} from 'react-native-svg';
 import {JSX} from 'react';
 import {TabParamList} from '../../@types/navigation';
+import PostCreateScreen from '../PostCreate/PostCreateScreen';
+import { useNavigation } from '@react-navigation/native';
 
 interface TabIconComponent {
   (props: SvgProps): JSX.Element;
@@ -72,6 +74,7 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
 };
 
 const TabNavigator = () => {
+  const navigation = useNavigation<any>();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -109,20 +112,26 @@ const TabNavigator = () => {
         options={{
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel icon={SvgHomeTab} label="홈" focused={focused} />
-          ),
+          )
         }}
       />
       <Tab.Screen
-        name="DiscoverTab"
-        component={DiscoverStack}
+        name="PostCreatePlaceholder"
+        component={EmptyComponent}
         options={{
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel
               icon={SvgDiscoverTab}
-              label="탐색"
-              focused={focused}
+              label="뜨개 추가"
+              focused={false}
             />
           ),
+        }}
+        listeners={{ 
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('PostCreate');
+          },
         }}
       />
       <Tab.Screen
@@ -155,4 +164,5 @@ const TabNavigator = () => {
   );
 };
 
+const EmptyComponent = () => null;
 export default TabNavigator;

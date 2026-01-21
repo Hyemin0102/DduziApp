@@ -7,6 +7,7 @@ import ProfileScreen from '../Profile/Profile';
 import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
+import PostCreateScreen from '../PostCreate/PostCreateScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -33,11 +34,22 @@ const Navigator = () => {
             component={ProfileScreen}
           />
         ) : (
-          // 일반 로그인
+          <>
           <RootStack.Screen
             name={ROOT_ROUTES.TAB_NAVIGATOR}
             component={TabNavigator}
           />
+          <RootStack.Screen
+              name="PostCreate"
+              component={PostCreateScreen}
+              options={{
+                headerShown: false,
+                title: '뜨개 추가',
+                animation: 'slide_from_right',
+
+              }}
+            />
+          </>
         )}
       </RootStack.Navigator>
     </NavigationContainer>

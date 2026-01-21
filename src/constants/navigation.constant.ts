@@ -16,7 +16,7 @@ export const AUTH_ROUTES = {
 // ============= Tab Routes (탭 네비게이터) =============
 export const TAB_ROUTES = {
   HOME_TAB: 'HomeTab',
-  DISCOVER_TAB: 'DiscoverTab',
+  POST_CREATE_TAB: 'PostCreateTap',
   POST_TAB: 'PostTab',
   MY_PAGE_TAB: 'MyPageTab',
 } as const;
@@ -26,6 +26,7 @@ export const HOME_ROUTES = {
   HOME_MAIN: 'HomeMain',
   POST_DETAIL: 'PostDetail',
   CREATE_POST: 'CreatePost',
+  SEARCH: 'Search',
 } as const;
 
 // ============= Discover Stack Routes =============

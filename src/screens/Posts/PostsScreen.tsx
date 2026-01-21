@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
-import {PostListItem} from '@/@types/post';
+import {MyPost, PostListItem} from '@/@types/post';
 import {supabase} from '@/lib/supabase';
 import {useAuth} from '@/contexts/AuthContext';
 import UserProfileCard from '@/components/UserProfileCard';
@@ -20,10 +20,10 @@ import {POST_ROUTES} from '@/constants/navigation.constant';
 export default function PostsScreen() {
   const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
-  const [posts, setPosts] = useState<PostListItem[]>([]);
+  const [posts, setPosts] = useState<MyPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);  
 
   // 현재 로그인한 사용자 확인
   useEffect(() => {
@@ -52,11 +52,13 @@ export default function PostsScreen() {
           id,
           title,
           created_at,
+          updated_at,
           post_images (
             id,
             image_url,
             display_order
-          )
+          ),
+          is_completed
         `,
         )
         .eq('user_id', currentUser) // 내 게시물만
@@ -67,15 +69,9 @@ export default function PostsScreen() {
         throw postsError;
       }
 
-      // 데이터 변환
-      const myPosts: any[] = (postsData || []).map(post => ({
-        ...post,
-        images: (post.post_images || []).sort(
-          (a, b) => a.display_order - b.display_order,
-        ),
-      }));
-
-      setPosts(myPosts);
+      console.log('데이터 불러옴',postsData);
+      
+      setPosts(postsData);
     } catch (error) {
       console.error('❌ 게시물 로드 실패:', error);
     } finally {
@@ -102,31 +98,19 @@ export default function PostsScreen() {
     navigation.navigate(POST_ROUTES.CREATE_POST);
   };
 
-  //포스트 상세 이동
-  const handlePostPress = (postId: string) => {
-    navigation.navigate(POST_ROUTES.POST_DETAIL, {
-      postId,
-    });
-  };
 
-  const renderPost = ({item}: {item: PostListItem}) => {
+  const renderPost = ({item}: {item: MyPost}) => {
     return (
-      <S.PostCard
-        onPress={() =>
-          navigation.navigate(POST_ROUTES.POST_DETAIL, {
-            postId: item.id,
-          })
-        }
-        activeOpacity={0.8}>
+      <S.PostCard>
         {/* 이미지 가로 스크롤 */}
-        {item.images.length > 0 ? (
+        {item.post_images.length > 0 ? (
           <S.ImageContainer>
             <ScrollView
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               style={{width: '100%', height: 200}}>
-              {item.images.map((image, index) => (
+              {item.post_images.map((image, index) => (
                 <S.PostImage key={image.id}>
                   <Image
                     source={{uri: image.image_url}}
@@ -137,9 +121,9 @@ export default function PostsScreen() {
               ))}
             </ScrollView>
             {/* 이미지 개수 표시 */}
-            {item.images.length > 1 && (
+            {item.post_images.length > 1 && (
               <S.ImageCountBadge>
-                <S.ImageCountText>{item.images.length}장</S.ImageCountText>
+                <S.ImageCountText>{item.post_images.length}장</S.ImageCountText>
               </S.ImageCountBadge>
             )}
           </S.ImageContainer>
@@ -151,7 +135,14 @@ export default function PostsScreen() {
         )}
 
         {/* 제목과 날짜 */}
-        <S.PostInfo>
+        <S.PostInfo
+        onPress={() =>
+          navigation.navigate(POST_ROUTES.POST_DETAIL, {
+            postId: item.id,
+          })
+        }
+        activeOpacity={0.8}
+        >
           <S.PostTitle numberOfLines={2}>{item.title}</S.PostTitle>
           <S.PostDate>{item.created_at}</S.PostDate>
         </S.PostInfo>

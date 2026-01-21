@@ -50,7 +50,7 @@ export const EmptySubText = styled.Text`
   color: #999;
 `;
 
-export const PostCard = styled.TouchableOpacity`
+export const PostCard = styled.View`
   //width: ${CARD_WIDTH}px;
   background-color: #ffffff;
   border-radius: 12px;
@@ -103,7 +103,7 @@ export const ImageCountText = styled.Text`
   color: #ffffff;
 `;
 
-export const PostInfo = styled.View`
+export const PostInfo = styled.TouchableOpacity`
   padding: 12px;
   gap: 8px;
 `;

@@ -6,11 +6,15 @@ import {
   Alert,
   Modal,
   ScrollView,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
 import { PostDetail } from '@/@types/post';
+import { completePost } from '@/lib/post/postUtils';
+import CompletePostModal from '@/components/modal/CompletePostModal';
 
 type RouteParams = {
   PostDetail: {
@@ -28,7 +32,9 @@ export default function PostDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  console.log('상세???' , post);
+  
   // 내 게시물인지 확인
   const isMyPost = post && user && post.user_id === user.id;
 
@@ -69,7 +75,9 @@ export default function PostDetailScreen() {
           id,
           content,
           created_at
-        )
+        ),
+        is_completed,
+        visibility
       `,
         )
         .eq('id', postId)
@@ -93,6 +101,8 @@ export default function PostDetailScreen() {
         updated_at: (postData as any).updated_at,
         username: (postData as any).users.username,
         profile_image: (postData as any).users.profile_image,
+        is_completed: (postData as any).is_completed,
+        visibility: (postData as any).visibility,
         images: ((postData as any).post_images || []).sort(
           (a: any, b: any) => a.display_order - b.display_order,
         ),
@@ -148,6 +158,52 @@ export default function PostDetailScreen() {
       mode: 'edit',
       postData: post,
     });
+  };
+
+  // 완료 버튼 클릭
+  const handleCompletePress = () => {
+    setModalVisible(true);
+  };
+
+  const handleConfirmComplete = async (visibility: 'public' | 'private') => {
+    if (!post) return;
+
+    setLoading(true);
+
+    try {
+      const result = await completePost(post.id, visibility);
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setPost({
+          ...post,
+          is_completed: true,
+          visibility: visibility,
+        });
+
+        setModalVisible(false);
+
+        Alert.alert(
+          '완료',
+          visibility === 'public'
+            ? '프로젝트가 공개로 완료되었습니다.'
+            : '프로젝트가 비공개로 완료되었습니다.',
+          [
+            {
+              text: '확인',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('완료 처리 에러:', error);
+      Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -304,6 +360,44 @@ export default function PostDetailScreen() {
             </>
           )}
         </S.ContentSection>
+
+        {!post?.is_completed && isMyPost && (
+        <TouchableOpacity
+          onPress={handleCompletePress}
+          style={{
+            backgroundColor: '#007AFF',
+            padding: 16,
+            margin: 16,
+            borderRadius: 12,
+            alignItems: 'center',
+          }}>
+          <Text style={{color: '#fff', fontSize: 16, fontWeight: '600'}}>
+            프로젝트 완료하기
+          </Text>
+        </TouchableOpacity>
+      )}
+{post?.is_completed && isMyPost && (
+        <View
+          style={{
+            backgroundColor: '#F0F8FF',
+            padding: 16,
+            margin: 16,
+            borderRadius: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+          <View>
+            <Text style={{fontSize: 16, fontWeight: '600', color: '#007AFF'}}>
+              완료된 프로젝트
+            </Text>
+            <Text style={{fontSize: 13, color: '#666', marginTop: 4}}>
+              {post.visibility === 'public' ? '공개' : '비공개'}
+            </Text>
+          </View>
+          <Text style={{fontSize: 24}}>✓</Text>
+        </View>
+      )}
       </ScrollView>
 
       {/* 액션시트 (수정/삭제) */}
@@ -332,6 +426,13 @@ export default function PostDetailScreen() {
           </S.ActionSheetContainer>
         </S.ActionSheetOverlay>
       </Modal>
+
+      <CompletePostModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onConfirm={handleConfirmComplete}
+        loading={loading}
+      />
     </S.Container>
   );
 }
