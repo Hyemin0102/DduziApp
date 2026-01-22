@@ -1,10 +1,7 @@
 // ============= Root Routes (최상위 네비게이터) =============
 export const ROOT_ROUTES = {
-  // Auth Stack
   AUTH: 'Auth',
-  // Profile Screen
   PROFILE: 'Profile',
-  // Tab Navigator
   TAB_NAVIGATOR: 'TabNavigator',
 } as const;
 

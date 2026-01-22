@@ -15,6 +15,7 @@ import * as S from './PostDetailScreen.styles';
 import { PostDetail } from '@/@types/post';
 import { completePost } from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 type RouteParams = {
   PostDetail: {
@@ -24,7 +25,7 @@ type RouteParams = {
 
 export default function PostDetailScreen() {
   const route = useRoute<RouteProp<RouteParams, 'PostDetail'>>();
-  const navigation = useNavigation<any>();
+  const {navigation} = useCommonNavigation();
   const {user} = useAuth();
   const {postId} = route.params;
 

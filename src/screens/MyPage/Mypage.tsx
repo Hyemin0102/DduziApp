@@ -9,13 +9,14 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
-import UserProfileCard from '../../components/UserProfileCard';
+import UserProfileCard from '../../components/common/UserProfileCard';
 import {useNavigation} from '@react-navigation/native';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
-  const navigation = useNavigation<any>();
+  const {navigation} = useCommonNavigation();
 
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');

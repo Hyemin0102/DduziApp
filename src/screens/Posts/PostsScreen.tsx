@@ -13,9 +13,20 @@ import * as S from './PostsScreen.styles';
 import {MyPost, PostListItem} from '@/@types/post';
 import {supabase} from '@/lib/supabase';
 import {useAuth} from '@/contexts/AuthContext';
-import UserProfileCard from '@/components/UserProfileCard';
+import UserProfileCard from '@/components/common/UserProfileCard';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
+import Icon from 'react-native-vector-icons/Feather';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY_IN_PROGRESS = '@view_mode_in_progress';
+const STORAGE_KEY_COMPLETED = '@view_mode_completed';
+type TabType = 'inProgress' | 'completed';
+type ViewMode = 'list' | 'grid';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const GRID_ITEM_SIZE = (SCREEN_WIDTH) / 3; 
+
 
 export default function PostsScreen() {
   const {navigation} = useCommonNavigation<any>();
@@ -24,6 +35,51 @@ export default function PostsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);  
+  const [activeTab, setActiveTab] = useState<TabType>('inProgress');
+  const [viewModes, setViewModes] = useState<Record<TabType, ViewMode>>({
+    inProgress: 'list',
+    completed: 'list',
+  });
+  
+  useEffect(() => {
+    loadViewModes();
+  }, []);
+
+  const loadViewModes = async () => {
+    try {
+      const [inProgress, completed] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY_IN_PROGRESS),
+        AsyncStorage.getItem(STORAGE_KEY_COMPLETED),
+      ]);
+
+      setViewModes({
+        inProgress: (inProgress as ViewMode) || 'list',
+        completed: (completed as ViewMode) || 'list',
+      });
+    } catch (error) {
+      console.error('보기 방식 불러오기 실패:', error);
+    }
+  };
+
+  const handleViewModeChange = async (mode: ViewMode) => {
+    setViewModes(prev => ({
+      ...prev,
+      [activeTab]: mode,
+    }));
+
+    try {
+      const storageKey =
+        activeTab === 'inProgress'
+          ? STORAGE_KEY_IN_PROGRESS
+          : STORAGE_KEY_COMPLETED;
+      await AsyncStorage.setItem(storageKey, mode);
+    } catch (error) {
+      console.error('보기 방식 저장 실패:', error);
+    }
+  };
+
+  const currentViewMode = viewModes[activeTab];
+
 
   // 현재 로그인한 사용자 확인
   useEffect(() => {
@@ -53,6 +109,8 @@ export default function PostsScreen() {
           title,
           created_at,
           updated_at,
+          is_completed,
+          visibility,
           post_images (
             id,
             image_url,
@@ -98,8 +156,20 @@ export default function PostsScreen() {
     navigation.navigate(POST_ROUTES.CREATE_POST);
   };
 
+  //탭에 따라 필터링
+  const filteredPosts = posts.filter(post => {
+    if (activeTab === 'inProgress') {
+      return !post.is_completed;
+    } else {
+      return post.is_completed;
+    }
+  });
 
-  const renderPost = ({item}: {item: MyPost}) => {
+  const inProgressCount = posts.filter(p => !p.is_completed).length;
+  const completedCount = posts.filter(p => p.is_completed).length;
+
+
+  const renderListItem = ({item}: {item: MyPost}) => {
     return (
       <S.PostCard>
         {/* 이미지 가로 스크롤 */}
@@ -150,6 +220,38 @@ export default function PostsScreen() {
     );
   };
 
+  const renderGridItem = ({item}: {item: MyPost}) => {
+    const firstImage = item.post_images[0]?.image_url;
+    
+
+    return (
+      <S.GridItem
+      style={{width: GRID_ITEM_SIZE, height: GRID_ITEM_SIZE}}
+        onPress={() =>
+          navigation.navigate(POST_ROUTES.POST_DETAIL, {
+            postId: item.id,
+          })
+        }
+        activeOpacity={0.8}>
+        {firstImage ? (
+          <>
+            <S.GridImage source={{uri: firstImage}} resizeMode="cover" />
+            {/* 여러 이미지가 있으면 아이콘 표시 */}
+            {item.post_images.length > 1 && (
+              <S.MultipleImageIcon>
+                <Icon name="layers" size={16} color="#fff" />
+              </S.MultipleImageIcon>
+            )}
+          </>
+        ) : (
+          <S.GridNoImage>
+            <S.GridNoImageText>📝</S.GridNoImageText>
+          </S.GridNoImage>
+        )}
+      </S.GridItem>
+    );
+  };
+
   if (loading) {
     return (
       <S.Container>
@@ -169,19 +271,76 @@ export default function PostsScreen() {
           <UserProfileCard user={user} />
         </S.ProfileSection>
       )}
+        {/* 🔥 탭 네비게이션 */}
+        <S.TabContainer>
+        <S.Tab
+          active={activeTab === 'inProgress'}
+          onPress={() => setActiveTab('inProgress')}>
+          <S.TabText active={activeTab === 'inProgress'}>
+            진행중 ({inProgressCount})
+          </S.TabText>
+          {activeTab === 'inProgress' && <S.TabIndicator />}
+        </S.Tab>
+
+        <S.Tab
+          active={activeTab === 'completed'}
+          onPress={() => setActiveTab('completed')}>
+          <S.TabText active={activeTab === 'completed'}>
+            완료 ({completedCount})
+          </S.TabText>
+          {activeTab === 'completed' && <S.TabIndicator />}
+        </S.Tab>
+
+        </S.TabContainer>
+      <S.ViewModeToggle>
+          <S.ViewModeButton
+              onPress={() => handleViewModeChange('list')}
+            active={currentViewMode === 'list'}>
+            <Icon
+              name="list"
+              size={20}
+              color={currentViewMode === 'list' ? '#007AFF' : '#999'}
+            />
+          </S.ViewModeButton>
+          <S.ViewModeButton
+             onPress={() => handleViewModeChange('grid')}
+            active={currentViewMode === 'grid'}>
+            <Icon
+              name="grid"
+              size={20}
+              color={currentViewMode === 'grid' ? '#007AFF' : '#999'}
+            />
+          </S.ViewModeButton>
+        </S.ViewModeToggle>
+
       <FlatList
-        data={posts}
-        renderItem={renderPost}
+        data={filteredPosts}
+        renderItem={currentViewMode === 'list' ? renderListItem : renderGridItem}
         keyExtractor={item => item.id}
-        contentContainerStyle={{paddingBottom: 100, paddingTop: 20, gap: 16}}
+        key={`${activeTab}-${currentViewMode}`} 
+        numColumns={currentViewMode === 'grid' ? 3 : 1}
+        contentContainerStyle={  
+          currentViewMode === 'list'
+            ? {paddingHorizontal: 16, paddingVertical: 20, gap: 16}
+            : undefined
+        }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
           <S.EmptyContainer>
             <S.EmptyIcon>📝</S.EmptyIcon>
-            <S.EmptyText>아직 작성된 프로젝트가 없어요</S.EmptyText>
-            <S.EmptySubText>첫 프로젝트를 시작해보세요! 🧶</S.EmptySubText>
+            <S.EmptyText>
+            {activeTab === 'inProgress'
+                ? '진행 중인 프로젝트가 없어요'
+                : '완료된 프로젝트가 없어요'}
+                </S.EmptyText>
+           <S.EmptySubText>
+              {activeTab === 'inProgress'
+                ? '첫 프로젝트를 시작해보세요! 🧶'
+                : '프로젝트를 완료해보세요!'}
+
+            </S.EmptySubText>
           </S.EmptyContainer>
         }
       />

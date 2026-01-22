@@ -1,21 +1,18 @@
 import React from 'react';
 import {Image, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/Feather';
 import HomeScreen from '../../Home/Home';
 import PostDetailScreen from '../../PostDetail/PostDetailScreen';
 import SearchScreen from '../../Search/Search';
 import {HomeStackParamList} from '../../../@types/navigation';
 import {HOME_ROUTES} from '../../../constants/navigation.constant';
-import { Keyboard } from 'react-native';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 const HomeHeader = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const {navigation} = useCommonNavigation();
 
   return (
     <View style={styles.headerContainer}>

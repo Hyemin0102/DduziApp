@@ -2,20 +2,18 @@ import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  InteractionManager,
   Keyboard,
-  TextInput,
 } from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
 import {Post} from '@/@types/post';
 import * as S from './Search.style';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 const Search = () => {
-  const navigation = useNavigation();
+  const {navigation} = useCommonNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);

@@ -19,6 +19,7 @@ import {JSX} from 'react';
 import {TabParamList} from '../../@types/navigation';
 import PostCreateScreen from '../PostCreate/PostCreateScreen';
 import { useNavigation } from '@react-navigation/native';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 interface TabIconComponent {
   (props: SvgProps): JSX.Element;
@@ -73,7 +74,7 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
 };
 
 const TabNavigator = () => {
-  const navigation = useNavigation<any>();
+  const {navigation} = useCommonNavigation();
   return (
     <Tab.Navigator
       screenOptions={{

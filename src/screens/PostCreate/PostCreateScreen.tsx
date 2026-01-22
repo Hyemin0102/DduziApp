@@ -30,6 +30,7 @@ type RouteParams = {
 import {supabase} from '@/lib/supabase.ts';
 import {uploadMultipleImages} from '@/lib/uploadImage.tsx';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid.tsx';
+import useCommonNavigation from '@/hooks/useCommonNavigation.ts';
 
 interface KnittingLog {
   id: string;
@@ -38,7 +39,7 @@ interface KnittingLog {
 }
 
 export default function PostCreateScreen() {
-  const navigation = useNavigation();
+  const {navigation} = useCommonNavigation();
   const route = useRoute<RouteProp<RouteParams, 'CreatePost'>>();
 
   // 수정 모드 파라미터

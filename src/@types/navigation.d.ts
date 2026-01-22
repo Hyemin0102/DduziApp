@@ -48,6 +48,7 @@ export type PostsStackParamList = {
   [POST_ROUTES.POSTS_MAIN]: undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
+  [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
 };
 
 // MyPage Stack
@@ -55,6 +56,11 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.MY_PAGE_MAIN]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
 };
+
+// ============= Navigation Props =============
+
+// Root Stack Navigation Prop (다른 스택 간 이동에 사용)
+export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // ============= Global Navigation Declaration =============
 // React Navigation 타입 자동 완성을 위한 글로벌 선언

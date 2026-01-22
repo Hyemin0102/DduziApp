@@ -62,6 +62,7 @@ export interface MyPost {
     display_order: number;
   }>;
   is_completed: boolean;
+  visibility: 'public' | 'private';
 }
 
 // 게시물 리스트용 타입 (사용자 정보 추가)

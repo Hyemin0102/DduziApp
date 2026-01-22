@@ -9,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import { HOME_ROUTES, POST_ROUTES, TAB_ROUTES } from '@/constants/navigation.constant';
 import styled from '@emotion/native';
 import { Post } from '@/@types/post';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 interface PostCardProps {
   post: Post;
@@ -19,7 +20,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 //홈, 탐색 페이지에서 사용
 const PostCard: React.FC<PostCardProps> = ({post}) => {
-  const navigation = useNavigation<any>();
+  const {navigation} = useCommonNavigation();
 
 
   return (

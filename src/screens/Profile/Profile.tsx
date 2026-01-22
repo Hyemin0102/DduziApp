@@ -25,10 +25,11 @@ import {
 } from 'react-native-image-picker';
 import {uploadImage} from '@/lib/uploadImage';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
-  const navigation = useNavigation<any>();
+  const {navigation} = useCommonNavigation();
   const route = useRoute();
 
   // 최초 프로필 설정 모드인지 확인 (RootStack에서 온 경우), 프로필 편집은 ProfileEdit

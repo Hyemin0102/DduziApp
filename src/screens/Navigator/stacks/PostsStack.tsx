@@ -6,7 +6,8 @@ import PostsScreen from '@/screens/Posts/PostsScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import PostCreateScreen from '@/screens/PostCreate/PostCreateScreen';
 import {PostsStackParamList} from '@/@types/navigation';
-import {POST_ROUTES} from '@/constants/navigation.constant';
+import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import ProfileScreen from '@/screens/Profile/Profile';
 
 const Stack = createNativeStackNavigator<PostsStackParamList>();
 
@@ -40,6 +41,11 @@ const PostsStack = () => {
         name={POST_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '프로젝트 상세'}}
+      />
+            <Stack.Screen
+        name={MY_PAGE_ROUTES.PROFILE_EDIT}
+        component={ProfileScreen}
+        options={{title: '프로필 편집'}}
       />
     </Stack.Navigator>
   );
