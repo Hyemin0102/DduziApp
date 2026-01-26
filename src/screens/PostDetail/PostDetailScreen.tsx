@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
-import { PostDetail } from '@/@types/post';
+import { PostDetail } from '@/@types/database';
 import { completePost } from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -60,11 +60,13 @@ export default function PostDetailScreen() {
         yarn_info,
         pattern_info,
         pattern_url,
-        needleInfo,
+        needle_info,
         created_at,
         updated_at,
+        is_completed,
+        visibility,
         users!posts_user_id_fkey!inner(
-          username,
+          nickname,
           profile_image
         ),
         post_images (
@@ -72,13 +74,11 @@ export default function PostDetailScreen() {
           image_url,
           display_order
         ),
-         knitting_logs (
+        knitting_logs (
           id,
           content,
           created_at
-        ),
-        is_completed,
-        visibility
+        )
       `,
         )
         .eq('id', postId)
@@ -97,10 +97,10 @@ export default function PostDetailScreen() {
         yarn_info: (postData as any).yarn_info,
         pattern_info: (postData as any).pattern_info,
         pattern_url: (postData as any).pattern_url,
-        needleInfo: (postData as any).needleInfo,
+        needle_info: (postData as any).needle_info,
         created_at: (postData as any).created_at,
         updated_at: (postData as any).updated_at,
-        username: (postData as any).users.username,
+        nickname: (postData as any).users.nickname,
         profile_image: (postData as any).users.profile_image,
         is_completed: (postData as any).is_completed,
         visibility: (postData as any).visibility,
@@ -236,12 +236,12 @@ export default function PostDetailScreen() {
             ) : (
               <S.ProfilePlaceholder>
                 <S.ProfilePlaceholderText>
-                  {post.username.charAt(0)}
+                  {post.nickname.charAt(0)}
                 </S.ProfilePlaceholderText>
               </S.ProfilePlaceholder>
             )}
             <S.AuthorTextContainer>
-              <S.Username>{post.username}</S.Username>
+              <S.Username>{post.nickname}</S.Username>
               <S.Date>
                 {new Date(post.created_at).toLocaleDateString('ko-KR', {
                   year: 'numeric',
@@ -298,7 +298,7 @@ export default function PostDetailScreen() {
 
             <S.InfoRow>
               <S.InfoLabel>바늘 정보</S.InfoLabel>
-              <S.InfoText>{post.needleInfo}</S.InfoText>
+              <S.InfoText>{post.needle_info}</S.InfoText>
             </S.InfoRow>
 
             {post.pattern_info && (

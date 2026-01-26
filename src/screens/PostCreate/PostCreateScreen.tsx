@@ -21,7 +21,7 @@ type RouteParams = {
       yarn_info: string;
       pattern_info: string;
       pattern_url: string | null;
-      needleInfo: string;
+      needle_info: string;
       images: Array<{id: string; image_url: string; display_order: number}>;
       knitting_logs: Array<{id: string; content: string; created_at: string}>;
     };
@@ -82,7 +82,7 @@ export default function PostCreateScreen() {
       setTitle(postData.title || '');
       setContent(postData.content || '');
       setYarnInfo(postData.yarn_info || '');
-      setNeedleInfo(postData.needleInfo || '');
+      setNeedleInfo(postData.needle_info || '');
       setPatternInfo(postData.pattern_info || '');
       setPatternUrl(postData.pattern_url || '');
       setExistingImages(postData.images || []);
@@ -193,7 +193,7 @@ export default function PostCreateScreen() {
             title: title.trim(),
             content: content.trim() || null,
             yarn_info: yarnInfo.trim() || null,
-            needleInfo: needleInfo.trim() || null,
+            needle_info: needleInfo.trim() || null,
             pattern_info: patternInfo.trim() || null,
             pattern_url: patternUrl.trim() || null,
             updated_at: new Date().toISOString(),
@@ -223,7 +223,7 @@ export default function PostCreateScreen() {
             title: title.trim(),
             content: content.trim() || null,
             yarn_info: yarnInfo.trim() || null,
-            needleInfo: needleInfo.trim() || null,
+            needle_info: needleInfo.trim() || null,
             pattern_info: patternInfo.trim() || null,
             pattern_url: patternUrl.trim() || null,
           })

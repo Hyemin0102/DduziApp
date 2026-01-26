@@ -24,6 +24,7 @@ export const HOME_ROUTES = {
   POST_DETAIL: 'PostDetail',
   CREATE_POST: 'CreatePost',
   SEARCH: 'Search',
+  POSTS_MAIN: 'PostsMain'
 } as const;
 
 // ============= Posts Stack Routes =============

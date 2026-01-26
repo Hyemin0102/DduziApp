@@ -23,12 +23,11 @@ export interface NaverUserProfile {
 // 통합 사용자 프로필 (공통 필드)
 export interface UserProfile {
   id: string;
-  name?: string;
   email?: string;
   provider: string;
-  profileImage?: string;
-  nickname?: string;
-  bio? :string;
+  profile_image?: string;
+  nickname?: string;  // 사용자 표시 이름 (DB users.nickname과 매핑)
+  bio?: string;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | NaverUserProfile | GoogleUserProfile;

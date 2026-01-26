@@ -18,6 +18,9 @@ const Mypage = () => {
   const {user, provider, logout} = useAuth();
   const {navigation} = useCommonNavigation();
 
+  console.log('auth!!!', user);
+  
+
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');
   };
@@ -60,9 +63,6 @@ const Mypage = () => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}>
-       
-        {/* 사용자 프로필 카드 */}
-        <UserProfileCard user={user} />
 
         {/* 메뉴 섹션 */}
         <View style={styles.menuSection}>

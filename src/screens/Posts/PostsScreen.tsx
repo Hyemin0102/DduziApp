@@ -8,9 +8,9 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { useFocusEffect} from '@react-navigation/native';
+import { RouteProp, useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
-import {MyPost, PostListItem} from '@/@types/post';
+import { Post, PostItem} from '@/@types/database';
 import {supabase} from '@/lib/supabase';
 import {useAuth} from '@/contexts/AuthContext';
 import UserProfileCard from '@/components/common/UserProfileCard';
@@ -18,6 +18,7 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PostsStackParamList } from '@/@types/navigation';
 
 const STORAGE_KEY_IN_PROGRESS = '@view_mode_in_progress';
 const STORAGE_KEY_COMPLETED = '@view_mode_completed';
@@ -27,19 +28,33 @@ type ViewMode = 'list' | 'grid';
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const GRID_ITEM_SIZE = (SCREEN_WIDTH) / 3; 
 
+type PostsScreenRouteProp = RouteProp<PostsStackParamList, typeof POST_ROUTES.POSTS_MAIN>;
 
-export default function PostsScreen() {
+
+interface PostsScreenProps {
+  route: PostsScreenRouteProp;
+}
+
+
+export default function PostsScreen({ route }:PostsScreenProps) {
   const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
-  const [posts, setPosts] = useState<MyPost[]>([]);
+  const [posts, setPosts] = useState<PostItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);  
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);  
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
   const [viewModes, setViewModes] = useState<Record<TabType, ViewMode>>({
     inProgress: 'list',
     completed: 'list',
   });
+
+  //route로 넘어온 userId 우선
+  const targetUserId = route.params?.userId;
+  //route 유저가 없거나 현재 로그인한 auth user와 route 정보가 일치하면 내 페이지
+  const isMyPage = !targetUserId || targetUserId === currentUserId;
+
+  
   
   useEffect(() => {
     loadViewModes();
@@ -87,40 +102,48 @@ export default function PostsScreen() {
       const {
         data: {user},
       } = await supabase.auth.getUser();
-      setCurrentUser(user?.id || null);
+      setCurrentUserId(user?.id || null);
     };
     getCurrentUser();
   }, []);
 
+  //포스트 정보
   const fetchPosts = async () => {
     try {
-      if (!currentUser) {
+      if (!currentUserId) {
         console.log('❌ 로그인 필요');
         setLoading(false);
         return;
       }
 
-      // 내 게시물만 가져오기
-      const {data: postsData, error: postsError} = await supabase
-        .from('posts')
-        .select(
-          `
+      const displayUserId = targetUserId || currentUserId;
+
+      let query = supabase
+      .from('posts')
+      .select(`
+        id,
+        title,
+        created_at,
+        updated_at,
+        is_completed,
+        visibility,
+        post_images (
           id,
-          title,
-          created_at,
-          updated_at,
-          is_completed,
-          visibility,
-          post_images (
-            id,
-            image_url,
-            display_order
-          ),
-          is_completed
-        `,
+          image_url,
+          display_order
         )
-        .eq('user_id', currentUser) // 내 게시물만
-        .order('created_at', {ascending: false});
+      `)
+      .eq('user_id', displayUserId);
+
+        if (!isMyPage) {
+          query = query
+            .eq('is_completed', true)
+            .eq('visibility', 'public');
+        }
+
+        query = query.order('created_at', {ascending: false});
+
+        const {data: postsData, error: postsError} = await query;
 
       if (postsError) {
         console.error('❌ posts 조회 실패:', postsError);
@@ -138,12 +161,13 @@ export default function PostsScreen() {
     }
   };
 
+
   useFocusEffect(
     useCallback(() => {
-      if (currentUser) {
+      if (currentUserId) {
         fetchPosts();
       }
-    }, [currentUser]),
+    }, [currentUserId, targetUserId]),
   );
 
   const handleRefresh = () => {
@@ -156,20 +180,22 @@ export default function PostsScreen() {
     navigation.navigate(POST_ROUTES.CREATE_POST);
   };
 
-  //탭에 따라 필터링
-  const filteredPosts = posts.filter(post => {
-    if (activeTab === 'inProgress') {
-      return !post.is_completed;
-    } else {
-      return post.is_completed;
-    }
-  });
+  //탭에 따라 필터링 (내 페이지가 아니면 필터링 없이 전체 반환)
+  const filteredPosts = isMyPage
+    ? posts.filter(post => {
+        if (activeTab === 'inProgress') {
+          return !post.is_completed;
+        } else {
+          return post.is_completed;
+        }
+      })
+    : posts;
 
   const inProgressCount = posts.filter(p => !p.is_completed).length;
   const completedCount = posts.filter(p => p.is_completed).length;
 
 
-  const renderListItem = ({item}: {item: MyPost}) => {
+  const renderListItem = ({item}: {item: PostItem}) => {
     return (
       <S.PostCard>
         {/* 이미지 가로 스크롤 */}
@@ -220,7 +246,7 @@ export default function PostsScreen() {
     );
   };
 
-  const renderGridItem = ({item}: {item: MyPost}) => {
+  const renderGridItem = ({item}: {item: PostItem}) => {
     const firstImage = item.post_images[0]?.image_url;
     
 
@@ -266,32 +292,40 @@ export default function PostsScreen() {
   return (
     <S.Container>
       {/* 사용자 프로필 카드 */}
-      {user && (
+   
         <S.ProfileSection>
-          <UserProfileCard user={user} />
+          <UserProfileCard
+          userId={isMyPage ? currentUserId : targetUserId}
+          isMyPage={isMyPage} />
         </S.ProfileSection>
-      )}
+
         {/* 🔥 탭 네비게이션 */}
-        <S.TabContainer>
-        <S.Tab
-          active={activeTab === 'inProgress'}
-          onPress={() => setActiveTab('inProgress')}>
-          <S.TabText active={activeTab === 'inProgress'}>
-            진행중 ({inProgressCount})
-          </S.TabText>
-          {activeTab === 'inProgress' && <S.TabIndicator />}
-        </S.Tab>
 
-        <S.Tab
-          active={activeTab === 'completed'}
-          onPress={() => setActiveTab('completed')}>
-          <S.TabText active={activeTab === 'completed'}>
-            완료 ({completedCount})
-          </S.TabText>
-          {activeTab === 'completed' && <S.TabIndicator />}
-        </S.Tab>
+        {
+          isMyPage && (
+            <S.TabContainer>
+            <S.Tab
+              active={activeTab === 'inProgress'}
+              onPress={() => setActiveTab('inProgress')}>
+              <S.TabText active={activeTab === 'inProgress'}>
+                진행중 ({inProgressCount})
+              </S.TabText>
+              {activeTab === 'inProgress' && <S.TabIndicator />}
+            </S.Tab>
+    
+            <S.Tab
+              active={activeTab === 'completed'}
+              onPress={() => setActiveTab('completed')}>
+              <S.TabText active={activeTab === 'completed'}>
+                완료 ({completedCount})
+              </S.TabText>
+              {activeTab === 'completed' && <S.TabIndicator />}
+            </S.Tab>
+    
+            </S.TabContainer>
+          )
+        }
 
-        </S.TabContainer>
       <S.ViewModeToggle>
           <S.ViewModeButton
               onPress={() => handleViewModeChange('list')}
@@ -322,7 +356,7 @@ export default function PostsScreen() {
         contentContainerStyle={  
           currentViewMode === 'list'
             ? {paddingHorizontal: 16, paddingVertical: 20, gap: 16}
-            : undefined
+            : {paddingVertical: 20}
         }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -331,14 +365,20 @@ export default function PostsScreen() {
           <S.EmptyContainer>
             <S.EmptyIcon>📝</S.EmptyIcon>
             <S.EmptyText>
-            {activeTab === 'inProgress'
-                ? '진행 중인 프로젝트가 없어요'
-                : '완료된 프로젝트가 없어요'}
+            {isMyPage 
+    ? (activeTab === 'inProgress'
+        ? '진행 중인 프로젝트가 없어요'
+        : '완료된 프로젝트가 없어요')
+    : '작성한 프로젝트가 없어요'
+  }
                 </S.EmptyText>
            <S.EmptySubText>
-              {activeTab === 'inProgress'
-                ? '첫 프로젝트를 시작해보세요! 🧶'
-                : '프로젝트를 완료해보세요!'}
+           {isMyPage 
+    ? (activeTab === 'inProgress'
+        ? '첫 프로젝트를 시작해보세요! 🧶'
+        : '프로젝트를 완료해보세요!')
+    : ''
+  }
 
             </S.EmptySubText>
           </S.EmptyContainer>

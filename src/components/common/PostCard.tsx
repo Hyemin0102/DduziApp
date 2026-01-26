@@ -8,7 +8,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import { HOME_ROUTES, POST_ROUTES, TAB_ROUTES } from '@/constants/navigation.constant';
 import styled from '@emotion/native';
-import { Post } from '@/@types/post';
+import { Post } from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 interface PostCardProps {
@@ -21,17 +21,20 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 //홈, 탐색 페이지에서 사용
 const PostCard: React.FC<PostCardProps> = ({post}) => {
   const {navigation} = useCommonNavigation();
-
-
+  
   return (
     <S.CardContainer>
       {/* 프로필 영역 */}
-      <S.ProfileSection>
+      <S.ProfileSection 
+      onPress={() =>
+        navigation.navigate(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
+      }
+      >
         <S.ProfileImage
           source={{uri: post.users.profile_image}}
           resizeMode="cover"
         />
-        <S.Username>{post.users.username}</S.Username>
+        <S.Username>{post.users.nickname}</S.Username>
       </S.ProfileSection>
 
       {/* 이미지 슬라이더 */}
@@ -77,7 +80,7 @@ const S = {
     margin-bottom: 20px;
     border: 1px solid;
   `,
-  ProfileSection: styled.View`
+  ProfileSection: styled.TouchableOpacity`
     flex-direction: row;
     gap: 8px;
     align-items: center;

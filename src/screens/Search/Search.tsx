@@ -8,7 +8,7 @@ import {RefreshControl} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
-import {Post} from '@/@types/post';
+import {Post} from '@/@types/database';
 import * as S from './Search.style';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 
@@ -55,7 +55,7 @@ const Search = () => {
           post_images (*),
           users (
             id,
-            username,
+            nickname,
             profile_image
           )
         `,

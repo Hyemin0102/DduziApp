@@ -40,12 +40,13 @@ export type HomeStackParamList = {
   [HOME_ROUTES.POST_DETAIL]: {postId: string};
   [HOME_ROUTES.SEARCH]: undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
+  [POST_ROUTES.POSTS_MAIN]: { userId?: string } | undefined;
 };
 
 
 // Posts Stack
 export type PostsStackParamList = {
-  [POST_ROUTES.POSTS_MAIN]: undefined;
+  [POST_ROUTES.POSTS_MAIN]: { userId?: string } | undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;

@@ -179,9 +179,10 @@ export const TabRow= styled.View`
 `;
 
 export const  ViewModeToggle= styled.View`
-
 flex-direction: row;
 gap: 8px;
+justify-content: flex-end;
+margin-top: 4px;
 `;
 
 export const  ViewModeButton= styled.TouchableOpacity<{active: boolean}>`

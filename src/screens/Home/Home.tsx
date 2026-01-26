@@ -4,7 +4,7 @@ import {RefreshControl} from 'react-native-gesture-handler';
 import * as S from './Home.style';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
-import {Post} from '@/@types/post';
+import {Post} from '@/@types/database';
 
 const Home = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -23,11 +23,12 @@ const Home = () => {
           post_images (*),
           users (
             id,
-            username,
+            nickname,
             profile_image
           )
         `,
         )
+        .eq('is_completed', true)
         .eq('visibility', 'public') //공개 게시물만
         .order('created_at', {ascending: false});
 

@@ -2,7 +2,7 @@ import styled from '@emotion/native';
 
 export const Container = styled.View`
     flex-direction: row;
-      
+    position: relative;
 `;
 
 export const Wrapper = styled.View`
@@ -73,9 +73,9 @@ export const EditProfileButton = styled.TouchableOpacity`
   border-width: 1px;
   border-color: #dde1e9;
   background-color: #fff;
-  justify-content: center;
-  align-items: center;
-  align-self: center;
+  position: absolute;
+  top: 0;
+  right: 0;
 `;
 
 export const EditProfileButtonText = styled.Text`

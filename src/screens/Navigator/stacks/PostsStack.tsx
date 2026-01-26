@@ -23,11 +23,14 @@ const PostsStack = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+                
       }}>
       <Stack.Screen
         name={POST_ROUTES.POSTS_MAIN}
         component={PostsScreen}
-        options={{title: '포스트'}}
+        options={({ route }) => ({
+          title: route.params?.userId ? '프로필' : '내 포스트',
+        })}
       />
       <Stack.Screen
         name={POST_ROUTES.CREATE_POST}

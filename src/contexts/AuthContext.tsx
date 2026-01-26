@@ -61,10 +61,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     return {
       id: session.user.id,
       email: session.user.email,
-      name: metadata?.full_name || metadata?.name,
-      nickname: dbUser?.username || metadata?.name,
+      nickname: dbUser?.nickname || metadata?.name,  // DB에 저장된 닉네임 또는 OAuth 이름(최초 로그인 시)
       bio: dbUser?.bio || null,
-      profileImage: dbUser?.profile_image || null,
+      profile_image: dbUser?.profile_image || null,
       provider: provider,
       rawProfile: rawProfile as any,
     };

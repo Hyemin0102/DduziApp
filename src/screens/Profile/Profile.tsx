@@ -6,16 +6,11 @@ import {
   Image,
   TextInput,
   Button,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Platform,
-  Keyboard,
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../../contexts/AuthContext';
 import {supabase} from '../../lib/supabase';
-import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation, useRoute} from '@react-navigation/native';
 
 import {
@@ -48,9 +43,9 @@ const ProfileScreen = () => {
   const [bio, setBio] = useState(user.bio || '');
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
-  console.log('이미지', imageUri);
 
-  const displayImage = imageUri || user.profileImage;
+
+  const displayImage = imageUri || user.profile_image;
 
   const selectImage = async () => {
     try {
@@ -113,16 +108,14 @@ const ProfileScreen = () => {
     if (!user) return;
     setLoading(true);
     try {
-      let profileImageUrl = user.profileImage;
+      let profileImageUrl = user.profile_image;
 
       // 🔥 새 이미지를 선택했으면 업로드
       if (imageUri) {
-        console.log('📤 이미지 업로드 중...');
         const uploadedUrl = await uploadImage(imageUri, 'profile', user.id);
 
         if (uploadedUrl) {
           profileImageUrl = uploadedUrl;
-          console.log('✅ 이미지 업로드 완료:', uploadedUrl);
         } else {
           console.log('✅ 이미지 업로드 실패');
           setLoading(false);
@@ -130,15 +123,13 @@ const ProfileScreen = () => {
         }
       }
 
-      console.log('profileImageUrl???',profileImageUrl);
-      
 
       // DB 업데이트
       const {error} = await supabase
         .from('users')
         .update({
-          username: nickname,
-          bio: bio,
+          nickname,
+          bio,
           profile_image: profileImageUrl,
         })
         .eq('id', user.id);
@@ -149,15 +140,14 @@ const ProfileScreen = () => {
       updateUserProfile({
         nickname: nickname,
         bio: bio,
-        profileImage: profileImageUrl,
+        profile_image: profileImageUrl,
       });
 
-      console.log('⭐️ Context 업데이트 완료, 현재 user:', user);
 
       if (isInitialSetup) {
         // 최초 프로필 설정 완료
         await AsyncStorage.removeItem('needsProfileSetup');
-        setNeedsProfileSetup(false); // Context 상태 업데이트
+        setNeedsProfileSetup(false); 
         console.log('✅ 최초 프로필 설정 완료 - Home으로 자동 이동');
         // needsProfileSetup false로 Navigator가 자동으로 TabNavigator로 전환
       } else {

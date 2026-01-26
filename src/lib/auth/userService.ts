@@ -8,8 +8,6 @@ import {
   NaverUserProfile,
 } from '../../@types/auth';
 
-
-
 const DEFAULT_IMAGE_COUNT = 5;
 
 // 🔥 Supabase Auth 데이터 + DB 데이터로 UserProfile 생성
@@ -31,16 +29,6 @@ export const getRandomDefaultImageUrl = (): string => {
   return data.publicUrl;
 };
 
-// dduzi + 닉네임 생성
-export const generateUsername = (nickname: string | undefined, userId: string): string => {
-  if (nickname) {
-    // 특수문자 제거하고 dduzi 붙이기
-    const cleanNickname = nickname.replace(/[^a-zA-Z0-9가-힣]/g, '');
-    return `dduzi${cleanNickname}`;
-  }
-  // 닉네임 없으면 userId 일부 사용
-  return `dduzi${userId.substring(0, 8)}`;
-};
 
 // 🔥 users 테이블에 데이터 저장/업데이트
 export const createOrUpdateUser = async (
@@ -65,13 +53,7 @@ export const createOrUpdateUser = async (
     }
 
 
-    if (!existingUser) {
-      // 🔥 신규 사용자 생성
-      // const username = generateUsername(
-      //   profile?.nickname || user.user_metadata?.name,
-      //   user.id
-      // );
-      
+    if (!existingUser) {      
       const defaultImageUrl = getRandomDefaultImageUrl();
 
       //테이블 insert
@@ -79,11 +61,11 @@ export const createOrUpdateUser = async (
         .from('users')
         .insert({
           id: user.id,
-          username:  profile?.nickname || user.user_metadata?.name,
-          bio: null, 
+          nickname: profile?.nickname || user.user_metadata?.name,
+          bio: null,
           profile_image: defaultImageUrl,
           provider: user.app_metadata?.provider,
-          last_username_update: new Date(),
+          last_nickname_update: new Date(),
         })
         .select()
         .single();
@@ -103,9 +85,6 @@ export const createOrUpdateUser = async (
       : (profile?.profileImageUrl ||  // 없을 때만 카카오 프로필 사용
          user.user_metadata?.profile_image ||
          user.user_metadata?.picture);
-      console.log('profileImageToUse',profileImageToUse);
-      
-
 
       const { data: updatedUser, error: updateError } = await supabase
         .from('users')
@@ -141,7 +120,7 @@ export const createUserProfile = ({
   const baseProfile = {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
-    nickname: dbUser.username || '',
+    nickname: dbUser.nickname || '',  // DB에 저장된 닉네임
     bio: dbUser.bio || null,
     provider,
   };
@@ -149,11 +128,9 @@ export const createUserProfile = ({
   if (provider === 'kakao') {
     const kakaoProfile = rawProfile as KakaoUserProfile;
 
-    
     return {
       ...baseProfile,
-      name: supabaseUser.user_metadata?.name,
-      profileImage:
+      profile_image:
         dbUser.profile_image ||
         kakaoProfile.profileImageUrl ||
         kakaoProfile.thumbnailImageUrl,
@@ -161,11 +138,10 @@ export const createUserProfile = ({
     };
   } else if (provider === 'google') {
     const googleProfile = rawProfile as GoogleUserProfile;
-    console.log('googleProfile',googleProfile);
+    
     return {
       ...baseProfile,
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name,
-      profileImage: dbUser.profile_image ||  supabaseUser.user_metadata?.picture,
+      profile_image: dbUser.profile_image || supabaseUser.user_metadata?.picture,
       rawProfile: { id: googleProfile.id } as GoogleUserProfile,
     };
   } else {
@@ -173,8 +149,7 @@ export const createUserProfile = ({
     const naverProfile = rawProfile as NaverUserProfile;
     return {
       ...baseProfile,
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name,
-      profileImage: dbUser.profile_image || naverProfile.profile_image || supabaseUser.user_metadata?.picture,
+      profile_image: dbUser.profile_image || naverProfile.profile_image || supabaseUser.user_metadata?.picture,
       rawProfile: { id: naverProfile.id } as NaverUserProfile,
     };
   }
@@ -201,27 +176,27 @@ export const getUserById = async (userId: string) => {
   }
 };
 
-// 🔥 사용자 이름 업데이트
-export const updateUsername = async (userId: string, newUsername: string) => {
+// 🔥 사용자 닉네임 업데이트
+export const updateNickname = async (userId: string, newNickname: string) => {
   try {
     const { data, error } = await supabase
       .from('users')
       .update({
-        username: newUsername,
-        last_username_update: new Date().toISOString(),
+        nickname: newNickname,
+        last_nickname_update: new Date().toISOString(),
       })
       .eq('id', userId)
       .select()
       .single();
 
     if (error) {
-      console.error('사용자 이름 업데이트 에러:', error);
+      console.error('닉네임 업데이트 에러:', error);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error('updateUsername 에러:', error);
+    console.error('updateNickname 에러:', error);
     throw error;
   }
 };

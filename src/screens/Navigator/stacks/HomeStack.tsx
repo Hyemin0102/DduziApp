@@ -6,8 +6,9 @@ import HomeScreen from '../../Home/Home';
 import PostDetailScreen from '../../PostDetail/PostDetailScreen';
 import SearchScreen from '../../Search/Search';
 import {HomeStackParamList} from '../../../@types/navigation';
-import {HOME_ROUTES} from '../../../constants/navigation.constant';
+import {HOME_ROUTES, POST_ROUTES} from '../../../constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import PostsScreen from '@/screens/Posts/PostsScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -41,6 +42,7 @@ const HomeStack = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        
       }}>
       <Stack.Screen
         name={HOME_ROUTES.HOME_MAIN}
@@ -62,6 +64,14 @@ const HomeStack = () => {
           title: '',
           headerShown: false,
         }}  
+      />
+      <Stack.Screen
+        name={HOME_ROUTES.POSTS_MAIN}
+        component={PostsScreen}
+        options={({ route }) => ({
+          title: route.params?.userId ? '' : '내 포스트',
+          headerBackTitleVisible: false,
+        })}
       />
     </Stack.Navigator>
   );
