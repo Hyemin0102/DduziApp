@@ -8,6 +8,7 @@ import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
 import PostCreateScreen from '../PostCreate/PostCreateScreen';
+import {Title} from '../PostDetail/PostDetailScreen.styles';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -35,18 +36,17 @@ const Navigator = () => {
           />
         ) : (
           <>
-          <RootStack.Screen
-            name={ROOT_ROUTES.TAB_NAVIGATOR}
-            component={TabNavigator}
-          />
-          <RootStack.Screen
+            <RootStack.Screen
+              name={ROOT_ROUTES.TAB_NAVIGATOR}
+              component={TabNavigator}
+            />
+            <RootStack.Screen
               name="PostCreate"
               component={PostCreateScreen}
               options={{
                 headerShown: false,
                 title: '뜨개 추가',
                 animation: 'slide_from_right',
-
               }}
             />
           </>

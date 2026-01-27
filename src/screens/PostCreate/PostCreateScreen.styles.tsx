@@ -32,6 +32,11 @@ export const Section = styled.View`
   border-bottom-color: #f0f0f0;
 `;
 
+export const LabelWrapper = styled.View`
+  flex-direction: row;
+  gap: 8px;
+`;
+
 export const Label = styled.Text`
   font-size: 14px;
   font-weight: 600;

@@ -1,12 +1,6 @@
 // screens/Profile.tsx
 import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TextInput,
-  Button,
-} from 'react-native';
+import {View, Text, Image, TextInput, Button} from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../../contexts/AuthContext';
@@ -21,6 +15,7 @@ import {
 import {uploadImage} from '@/lib/uploadImage';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
@@ -43,7 +38,6 @@ const ProfileScreen = () => {
   const [bio, setBio] = useState(user.bio || '');
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
-
 
   const displayImage = imageUri || user.profile_image;
 
@@ -123,7 +117,6 @@ const ProfileScreen = () => {
         }
       }
 
-
       // DB 업데이트
       const {error} = await supabase
         .from('users')
@@ -143,11 +136,10 @@ const ProfileScreen = () => {
         profile_image: profileImageUrl,
       });
 
-
       if (isInitialSetup) {
         // 최초 프로필 설정 완료
         await AsyncStorage.removeItem('needsProfileSetup');
-        setNeedsProfileSetup(false); 
+        setNeedsProfileSetup(false);
         console.log('✅ 최초 프로필 설정 완료 - Home으로 자동 이동');
         // needsProfileSetup false로 Navigator가 자동으로 TabNavigator로 전환
       } else {
@@ -163,15 +155,15 @@ const ProfileScreen = () => {
   };
 
   return (
-<KeyboardAvoid>
+    <SafeAreaView style={{flex: 1}}>
+      <KeyboardAvoid>
         <View
           style={{
             flexGrow: 1,
             alignItems: 'center',
             justifyContent: 'center',
             padding: 20,
-          }}
-       >
+          }}>
           <Text style={{fontSize: 24, marginBottom: 20}}>프로필 설정</Text>
 
           <View
@@ -201,7 +193,6 @@ const ProfileScreen = () => {
             <Button title="갤러리에서 선택" onPress={selectImage} />
             <Button title="카메라로 촬영" onPress={takePhoto} />
           </View>
-
 
           {/* 닉네임 입력 */}
           <Text
@@ -250,9 +241,9 @@ const ProfileScreen = () => {
             onPress={handleSave}
             disabled={loading || !nickname.trim() || !bio.trim()}
           />
-     
         </View>
-        </KeyboardAvoid>
+      </KeyboardAvoid>
+    </SafeAreaView>
   );
 };
 

@@ -23,12 +23,11 @@ const PostsStack = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-                
       }}>
       <Stack.Screen
         name={POST_ROUTES.POSTS_MAIN}
         component={PostsScreen}
-        options={({ route }) => ({
+        options={({route}) => ({
           title: route.params?.userId ? '프로필' : '내 포스트',
         })}
       />
@@ -45,7 +44,7 @@ const PostsStack = () => {
         component={PostDetailScreen}
         options={{title: '프로젝트 상세'}}
       />
-            <Stack.Screen
+      <Stack.Screen
         name={MY_PAGE_ROUTES.PROFILE_EDIT}
         component={ProfileScreen}
         options={{title: '프로필 편집'}}

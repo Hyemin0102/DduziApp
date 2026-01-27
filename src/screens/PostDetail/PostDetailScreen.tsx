@@ -1,5 +1,10 @@
 import {supabase} from '@/lib/supabase';
-import {RouteProp, useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {useState, useCallback} from 'react';
 import {
   ActivityIndicator,
@@ -12,8 +17,8 @@ import {
 } from 'react-native';
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
-import { PostDetail } from '@/@types/database';
-import { completePost } from '@/lib/post/postUtils';
+import {PostDetail} from '@/@types/database';
+import {completePost} from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 
@@ -34,8 +39,8 @@ export default function PostDetailScreen() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  console.log('상세???' , post);
-  
+  console.log('상세???', post);
+
   // 내 게시물인지 확인
   const isMyPost = post && user && post.user_id === user.id;
 
@@ -194,7 +199,7 @@ export default function PostDetailScreen() {
               text: '확인',
               onPress: () => navigation.goBack(),
             },
-          ]
+          ],
         );
       } else {
         Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
@@ -206,7 +211,6 @@ export default function PostDetailScreen() {
       setLoading(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -363,42 +367,42 @@ export default function PostDetailScreen() {
         </S.ContentSection>
 
         {!post?.is_completed && isMyPost && (
-        <TouchableOpacity
-          onPress={handleCompletePress}
-          style={{
-            backgroundColor: '#007AFF',
-            padding: 16,
-            margin: 16,
-            borderRadius: 12,
-            alignItems: 'center',
-          }}>
-          <Text style={{color: '#fff', fontSize: 16, fontWeight: '600'}}>
-            프로젝트 완료하기
-          </Text>
-        </TouchableOpacity>
-      )}
-{post?.is_completed && isMyPost && (
-        <View
-          style={{
-            backgroundColor: '#F0F8FF',
-            padding: 16,
-            margin: 16,
-            borderRadius: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-          <View>
-            <Text style={{fontSize: 16, fontWeight: '600', color: '#007AFF'}}>
-              완료된 프로젝트
+          <TouchableOpacity
+            onPress={handleCompletePress}
+            style={{
+              backgroundColor: '#007AFF',
+              padding: 16,
+              margin: 16,
+              borderRadius: 12,
+              alignItems: 'center',
+            }}>
+            <Text style={{color: '#fff', fontSize: 16, fontWeight: '600'}}>
+              프로젝트 완료하기
             </Text>
-            <Text style={{fontSize: 13, color: '#666', marginTop: 4}}>
-              {post.visibility === 'public' ? '공개' : '비공개'}
-            </Text>
+          </TouchableOpacity>
+        )}
+        {post?.is_completed && isMyPost && (
+          <View
+            style={{
+              backgroundColor: '#F0F8FF',
+              padding: 16,
+              margin: 16,
+              borderRadius: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <View>
+              <Text style={{fontSize: 16, fontWeight: '600', color: '#007AFF'}}>
+                완료된 프로젝트
+              </Text>
+              <Text style={{fontSize: 13, color: '#666', marginTop: 4}}>
+                {post.visibility === 'public' ? '공개' : '비공개'}
+              </Text>
+            </View>
+            <Text style={{fontSize: 24}}>✓</Text>
           </View>
-          <Text style={{fontSize: 24}}>✓</Text>
-        </View>
-      )}
+        )}
       </ScrollView>
 
       {/* 액션시트 (수정/삭제) */}
@@ -421,7 +425,8 @@ export default function PostDetailScreen() {
                 삭제하기
               </S.ActionSheetButtonText>
             </S.ActionSheetButton>
-            <S.ActionSheetCancelButton onPress={() => setShowActionSheet(false)}>
+            <S.ActionSheetCancelButton
+              onPress={() => setShowActionSheet(false)}>
               <S.ActionSheetCancelText>취소</S.ActionSheetCancelText>
             </S.ActionSheetCancelButton>
           </S.ActionSheetContainer>

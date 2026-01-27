@@ -1,11 +1,6 @@
 // screens/CreatePost/CreatePost.tsx
 import React, {useState} from 'react';
-import {
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Alert,
-} from 'react-native';
+import {ScrollView, TouchableOpacity, Image, Alert, View} from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 
@@ -31,6 +26,7 @@ import {supabase} from '@/lib/supabase.ts';
 import {uploadMultipleImages} from '@/lib/uploadImage.tsx';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid.tsx';
 import useCommonNavigation from '@/hooks/useCommonNavigation.ts';
+import Icon from 'react-native-vector-icons/Feather';
 
 interface KnittingLog {
   id: string;
@@ -74,7 +70,6 @@ export default function PostCreateScreen() {
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-
 
   // 수정 모드일 때 기존 데이터 로드
   React.useEffect(() => {
@@ -209,10 +204,7 @@ export default function PostCreateScreen() {
 
         // 삭제된 이미지 처리
         if (deletedImageIds.length > 0) {
-          await supabase
-            .from('post_images')
-            .delete()
-            .in('id', deletedImageIds);
+          await supabase.from('post_images').delete().in('id', deletedImageIds);
         }
       } else {
         // 생성 모드: INSERT
@@ -319,29 +311,21 @@ export default function PostCreateScreen() {
           <S.SubmitText>{isSubmitting ? '저장 중...' : '완료'}</S.SubmitText>
         </TouchableOpacity>
       </S.Header>
-      <KeyboardAvoid >
-          
-        {/* 제목 */}
-        <S.Section>
-          <S.Label>프로젝트 제목 *</S.Label>
-          <S.Input
-            placeholder="예: 아기 담요 만들기"
-            value={title}
-            onChangeText={setTitle}
-            placeholderTextColor="#999"
-          />
-        </S.Section>
-
+      <KeyboardAvoid>
         {/* 이미지 업로드 */}
         <S.Section>
-          <S.Label>프로젝트 사진</S.Label>
+          <S.LabelWrapper>
+            <S.Label>프로젝트 사진</S.Label>
+            {/* <Icon name="plus-circle" size={16} /> */}
+          </S.LabelWrapper>
+
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{flexDirection: 'row', gap: 12}}>
             {/* 업로드 버튼 */}
             <S.ImageUploadButton onPress={handleSelectImages}>
-              {/* <Icon name="Camera" size={32} color="#999" /> */}
+              <Icon name="camera" size={32} color="#999" />
               <S.ImageUploadText>
                 {existingImages.length + images.length}/10
               </S.ImageUploadText>
@@ -356,7 +340,7 @@ export default function PostCreateScreen() {
                 />
                 <S.ImageRemoveButton
                   onPress={() => handleRemoveExistingImage(image.id)}>
-                  {/* <Icon name="Close" size={16} color="#fff" /> */}
+                  <Icon name="x" size={16} color={'#fff'} />
                 </S.ImageRemoveButton>
                 <S.ImageOrder>{index + 1}</S.ImageOrder>
               </S.ImagePreview>
@@ -370,13 +354,22 @@ export default function PostCreateScreen() {
                   style={{width: '100%', height: '100%', borderRadius: 8}}
                 />
                 <S.ImageRemoveButton onPress={() => handleRemoveImage(index)}>
-                  {/* <Icon name="Close" size={16} color="#fff" /> */}
+                  <Icon name="x" size={16} color={'#fff'} />
                 </S.ImageRemoveButton>
                 <S.ImageOrder>{existingImages.length + index + 1}</S.ImageOrder>
               </S.ImagePreview>
             ))}
           </ScrollView>
-          
+        </S.Section>
+        {/* 제목 */}
+        <S.Section>
+          <S.Label>프로젝트 제목 *</S.Label>
+          <S.Input
+            placeholder="프로젝트 제목을 입력해주세요"
+            value={title}
+            onChangeText={setTitle}
+            placeholderTextColor="#999"
+          />
         </S.Section>
 
         {/* 프로젝트 설명 */}
@@ -483,9 +476,7 @@ export default function PostCreateScreen() {
           {knittingLogs.map((log, index) => (
             <S.LogItem key={log.id}>
               <S.LogHeader>
-                <S.LogNumber>
-                  {isEditMode ? '새 로그' : index + 1}
-                </S.LogNumber>
+                <S.LogNumber>{isEditMode ? '새 로그' : index + 1}</S.LogNumber>
 
                 <S.DateButton>
                   {/* <Icon name="Calendar" size={16} color="#666" /> */}
@@ -506,7 +497,6 @@ export default function PostCreateScreen() {
             </S.LogItem>
           ))}
         </S.Section>
-
       </KeyboardAvoid>
     </S.Container>
   );
