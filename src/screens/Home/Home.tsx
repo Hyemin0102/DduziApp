@@ -94,7 +94,6 @@ const Home = () => {
         renderItem={renderItem}
         ListEmptyComponent={renderEmptyComponent}
         contentContainerStyle={{
-          paddingHorizontal: 16,
           paddingVertical: 16,
           flexGrow: 1,
         }}

@@ -9,11 +9,10 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 양쪽 여백 16 + 중간 간격 
 export const Container = styled.View`
   flex: 1;
   background-color: #f8f9fa;
-
 `;
 
 export const ProfileSection = styled.View`
- padding: 16px;
+  padding: 16px;
 `;
 
 export const LoadingContainer = styled.View`
@@ -53,27 +52,19 @@ export const EmptySubText = styled.Text`
 `;
 
 export const PostCard = styled.View`
-    background-color: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    shadow-color: #000;
-    shadow-offset: 0px 2px;
-    shadow-opacity: 0.1;
-    shadow-radius: 4px;
-    elevation: 3;
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.1;
+  shadow-radius: 4px;
+  elevation: 3;
 `;
 
 export const ImageContainer = styled.View`
-  width: 100%;
   height: 200px;
-  background-color: #f0f0f0;
   position: relative;
-`;
-
-export const PostImage = styled.View`
-  //width: ${CARD_WIDTH}px;
-  width: 200px;
-  height: 200px;
 `;
 
 export const NoImageContainer = styled.View`
@@ -121,6 +112,22 @@ export const PostDate = styled.Text`
   color: #999;
 `;
 
+export const PostImage = styled.Image`
+  width: 100%;
+  height: 100%;
+`;
+
+export const ImageCounter = styled.Text`
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 6px 12px;
+  border-radius: 16px;
+  color: #ffffff;
+  font-size: 12px;
+`;
+
 export const FloatingButton = styled.TouchableOpacity`
   position: absolute;
   right: 20px;
@@ -147,78 +154,77 @@ export const FloatingButtonText = styled.Text`
 
 export const TabContainer = styled.View`
   flex-direction: row;
-    border-bottom-width: 1px;
-    border-bottom-color: #eee;
+  border-bottom-width: 1px;
+  border-bottom-color: #eee;
 `;
 
 export const Tab = styled.TouchableOpacity<{active: boolean}>`
-    flex: 1;
-    padding: 16px;
-    align-items: center;
-    position: relative;
+  flex: 1;
+  padding: 16px;
+  align-items: center;
+  position: relative;
 `;
 
-
 export const TabText = styled.Text<{active: boolean}>`
-    font-size: 16px;
-    font-weight: ${props => (props.active ? '700' : '400')};
-    color: ${props => (props.active ? '#333' : '#999')};
+  font-size: 16px;
+  font-weight: ${props => (props.active ? '700' : '400')};
+  color: ${props => (props.active ? '#333' : '#999')};
 `;
 
 export const TabIndicator = styled.View`
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background-color: #000;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #000;
 `;
 
-export const TabRow= styled.View`
-    flex-direction: row;
+export const TabRow = styled.View`
+  flex-direction: row;
 `;
 
-export const  ViewModeToggle= styled.View`
-flex-direction: row;
-gap: 8px;
-justify-content: flex-end;
-margin-top: 4px;
+export const ViewModeToggle = styled.View`
+  flex-direction: row;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
 `;
 
-export const  ViewModeButton= styled.TouchableOpacity<{active: boolean}>`
-padding: 8px;
-border-radius: 8px;
-background-color: ${props => (props.active ? '#F0F8FF' : 'transparent')};
+export const ViewModeButton = styled.TouchableOpacity<{active: boolean}>`
+  padding: 8px;
+  border-radius: 8px;
+  background-color: ${props => (props.active ? '#F0F8FF' : 'transparent')};
 `;
 
-export const GridItem= styled.TouchableOpacity`
-width: 100%;
-height: 100%;
-position: relative;
+export const GridItem = styled.TouchableOpacity`
+  width: 100%;
+  height: 100%;
+  position: relative;
 `;
 
-export const GridImage= styled.Image`
-width: 100%;
-height: 100%;
+export const GridImage = styled.Image`
+  width: 100%;
+  height: 100%;
 `;
 
-export const GridNoImage= styled.View`
-width: 100%;
-height: 100%;
-background-color: #f5f5f5;
-justify-content: center;
-align-items: center;
+export const GridNoImage = styled.View`
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  justify-content: center;
+  align-items: center;
 `;
 
-export const GridNoImageText= styled.Text`
-font-size: 32px;
+export const GridNoImageText = styled.Text`
+  font-size: 32px;
 `;
 
-export const MultipleImageIcon=styled.View`
-position: absolute;
-top: 8px;
-right: 8px;
-background-color: rgba(0, 0, 0, 0.6);
-padding: 4px;
-border-radius: 4px;
+export const MultipleImageIcon = styled.View`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 4px;
+  border-radius: 4px;
 `;

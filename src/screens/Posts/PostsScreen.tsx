@@ -201,23 +201,24 @@ export default function PostsScreen({route}: PostsScreenProps) {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              style={{width: '100%', height: 200}}>
+              snapToInterval={SCREEN_WIDTH - 18}
+              decelerationRate="fast"
+              contentContainerStyle={{flexGrow: 1}}
+              style={{height: 200}}>
               {item.post_images.map((image, index) => (
-                <S.PostImage key={image.id}>
-                  <Image
+                <S.ImageContainer
+                  key={image.id}
+                  style={{width: SCREEN_WIDTH - 18}}>
+                  <S.PostImage
                     source={{uri: image.image_url}}
-                    style={{width: 200, height: 200}}
-                    resizeMode="cover"
+                    style={{width: '100%', height: '100%'}}
                   />
-                </S.PostImage>
+                  <S.ImageCounter>
+                    {index + 1} / {item.post_images.length}
+                  </S.ImageCounter>
+                </S.ImageContainer>
               ))}
             </ScrollView>
-            {/* 이미지 개수 표시 */}
-            {item.post_images.length > 1 && (
-              <S.ImageCountBadge>
-                <S.ImageCountText>{item.post_images.length}장</S.ImageCountText>
-              </S.ImageCountBadge>
-            )}
           </S.ImageContainer>
         ) : (
           // 이미지 없을 때

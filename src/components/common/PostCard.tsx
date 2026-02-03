@@ -1,14 +1,14 @@
 import React from 'react';
-import {
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import {ScrollView, TouchableOpacity, Dimensions} from 'react-native';
 
 import {useNavigation} from '@react-navigation/native';
-import { HOME_ROUTES, POST_ROUTES, TAB_ROUTES } from '@/constants/navigation.constant';
+import {
+  HOME_ROUTES,
+  POST_ROUTES,
+  TAB_ROUTES,
+} from '@/constants/navigation.constant';
 import styled from '@emotion/native';
-import { Post } from '@/@types/database';
+import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 interface PostCardProps {
@@ -17,19 +17,19 @@ interface PostCardProps {
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+console.log('???', SCREEN_WIDTH);
 
 //홈, 탐색 페이지에서 사용
 const PostCard: React.FC<PostCardProps> = ({post}) => {
   const {navigation} = useCommonNavigation();
-  
+
   return (
     <S.CardContainer>
       {/* 프로필 영역 */}
-      <S.ProfileSection 
-      onPress={() =>
-        navigation.navigate(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
-      }
-      >
+      <S.ProfileSection
+        onPress={() =>
+          navigation.navigate(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
+        }>
         <S.ProfileImage
           source={{uri: post.users.profile_image}}
           resizeMode="cover"
@@ -42,13 +42,14 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
         <ScrollView
           horizontal
           pagingEnabled
-          showsHorizontalScrollIndicator={false}>
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={SCREEN_WIDTH - 36}
+          decelerationRate="fast"
+          contentContainerStyle={{flexGrow: 1}}
+          style={{height: 200}}>
           {post.post_images.map((image, index) => (
-            <S.ImageContainer key={index}>
-              <S.PostImage
-                source={{uri: image.image_url}}
-                resizeMode="cover"
-              />
+            <S.ImageContainer key={index} style={{width: SCREEN_WIDTH - 36}}>
+              <S.PostImage source={{uri: image.image_url}} />
               <S.ImageCounter>
                 {index + 1} / {post.post_images.length}
               </S.ImageCounter>
@@ -59,13 +60,13 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
       {/* 게시물 내용 */}
       <TouchableOpacity
-        onPress={() =>
-          navigation.navigate('PostDetail', {postId: post.id})
-        }>
+        onPress={() => navigation.navigate('PostDetail', {postId: post.id})}>
         <S.ContentSection>
           <S.Title>{post.title}</S.Title>
           <S.Content numberOfLines={3}>{post.content}</S.Content>
-          <S.Date>{new Date(post.created_at).toLocaleDateString('ko-KR')}</S.Date>
+          <S.Date>
+            {new Date(post.created_at).toLocaleDateString('ko-KR')}
+          </S.Date>
         </S.ContentSection>
       </TouchableOpacity>
     </S.CardContainer>
@@ -74,11 +75,10 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
 const S = {
   CardContainer: styled.View`
-    background-color: #fff;
+    //background-color: #fff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
-    border: 1px solid;
   `,
   ProfileSection: styled.TouchableOpacity`
     flex-direction: row;
@@ -97,8 +97,7 @@ const S = {
     color: #333;
   `,
   ImageContainer: styled.View`
-    //width: ${SCREEN_WIDTH * 0.9}px;
-    width: 200px;
+    width: ${SCREEN_WIDTH}px;
     height: 200px;
     position: relative;
   `,
@@ -109,7 +108,7 @@ const S = {
   ImageCounter: styled.Text`
     position: absolute;
     bottom: 16px;
-    right: 16px;
+    right: 20px;
     background-color: rgba(0, 0, 0, 0.6);
     padding: 6px 12px;
     border-radius: 16px;

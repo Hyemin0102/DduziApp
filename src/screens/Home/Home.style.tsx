@@ -28,7 +28,7 @@ export const SearchInput = styled.TextInput`
 export const SearchButton = styled.TouchableOpacity`
   height: 44px;
   padding: 0 20px;
-  background-color: #007AFF;
+  background-color: #007aff;
   border-radius: 12px;
   justify-content: center;
   align-items: center;
@@ -48,7 +48,7 @@ export const ClearButton = styled.TouchableOpacity`
 `;
 
 export const ClearButtonText = styled.Text`
-  color: #007AFF;
+  color: #007aff;
   font-size: 14px;
 `;
 

@@ -1,5 +1,6 @@
 import NaverLogin from '@react-native-seoul/naver-login';
 import React, {useEffect, useState} from 'react';
+import * as S from './Login.style';
 import {Button, Linking, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
@@ -198,54 +199,41 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView
-      style={{alignItems: 'center', justifyContent: 'center', flex: 1}}>
-      <ScrollView
-        style={{flex: 1}}
-        contentContainerStyle={{
-          flexGrow: 1,
-          padding: 24,
-          justifyContent: 'center',
-        }}>
-        <View style={{gap: 16}}>
-          <Text style={{fontSize: 24, fontWeight: 'bold', textAlign: 'center'}}>
-            Dduzi 로그인
-          </Text>
+    <S.Container>
+      <S.ScrollViewContainer
+        contentContainerStyle={{flexGrow: 1}}
+        keyboardShouldPersistTaps="handled">
+        <S.InnerContainer>
+          <S.Title>Dduzi</S.Title>
 
           {error && (
-            <View
-              style={{
-                backgroundColor: '#ffe6e6',
-                padding: 12,
-                borderRadius: 8,
-              }}>
-              <Text style={{color: '#d32f2f', textAlign: 'center'}}>
-                {error}
-              </Text>
-            </View>
+            <S.ErrorBox>
+              <S.ErrorText>{error}</S.ErrorText>
+            </S.ErrorBox>
           )}
 
-          {/* <Button
-            title={isLoading ? '로그인 중...' : '네이버 로그인'}
-            onPress={() => socialLoginHandle('naver')}
-            disabled={isLoading}
-            color="#03C75A"
-          /> */}
-          <Button
-            title={isLoading ? '로그인 중...' : '카카오 로그인'}
-            onPress={() => socialLoginHandle('kakao')}
-            disabled={isLoading}
-            color="#FEE500"
-          />
-          <Button
-            title={isLoading ? '로그인 중...' : '구글 로그인'}
-            onPress={() => socialLoginHandle('google')}
-            disabled={isLoading}
-            color="#4285F4"
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          <S.ButtonContainer>
+            <S.SocialButton
+              provider="kakao"
+              onPress={() => socialLoginHandle('kakao')}
+              disabled={isLoading}
+              activeOpacity={0.8}>
+              <S.ButtonText provider="kakao">카카오로 시작하기</S.ButtonText>
+            </S.SocialButton>
+
+            <S.SocialButton
+              provider="google"
+              onPress={() => socialLoginHandle('google')}
+              disabled={isLoading}
+              activeOpacity={0.8}>
+              <S.ButtonText provider="google">
+                Google 계정으로 로그인
+              </S.ButtonText>
+            </S.SocialButton>
+          </S.ButtonContainer>
+        </S.InnerContainer>
+      </S.ScrollViewContainer>
+    </S.Container>
   );
 };
 
