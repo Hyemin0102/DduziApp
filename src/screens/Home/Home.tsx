@@ -11,6 +11,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  console.log('posts', posts);
+
   const fetchPosts = async () => {
     try {
       setLoading(true);
@@ -25,11 +27,13 @@ const Home = () => {
             id,
             nickname,
             profile_image
+          ),
+          projects!inner (
+            visibility
           )
         `,
         )
-        .eq('is_completed', true)
-        .eq('visibility', 'public') //공개 게시물만
+        .eq('projects.visibility', 'public')
         .order('created_at', {ascending: false});
 
       if (error) {

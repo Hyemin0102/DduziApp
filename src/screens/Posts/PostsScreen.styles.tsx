@@ -51,6 +51,19 @@ export const EmptySubText = styled.Text`
   color: #999;
 `;
 
+export const EmptyAddButton = styled.TouchableOpacity`
+  margin-top: 8px;
+  background-color: #6b4fbb;
+  padding: 12px 28px;
+  border-radius: 24px;
+`;
+
+export const EmptyAddButtonText = styled.Text`
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+`;
+
 export const PostCard = styled.View`
   background-color: #fff;
   border-radius: 12px;

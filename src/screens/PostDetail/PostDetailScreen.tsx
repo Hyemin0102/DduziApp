@@ -21,6 +21,8 @@ import {PostDetail} from '@/@types/database';
 import {completePost} from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {POST_ROUTES} from '@/constants/navigation.constant';
+import Icon from 'react-native-vector-icons/Feather';
 
 type RouteParams = {
   PostDetail: {
@@ -58,33 +60,32 @@ export default function PostDetailScreen() {
         .from('posts')
         .select(
           `
-        id,
-        user_id,
-        title,
-        content,
-        yarn_info,
-        pattern_info,
-        pattern_url,
-        needle_info,
-        created_at,
-        updated_at,
-        is_completed,
-        visibility,
-        users!posts_user_id_fkey!inner(
-          nickname,
-          profile_image
-        ),
-        post_images (
           id,
-          image_url,
-          display_order
-        ),
-        knitting_logs (
-          id,
+          user_id,
+          project_id,
           content,
-          created_at
-        )
-      `,
+          created_at,
+          updated_at,
+          users!posts_user_id_fkey!inner(
+            nickname,
+            profile_image
+          ),
+          post_images (
+            id,
+            image_url,
+            display_order
+          ),
+          projects (
+            id,
+            title,
+            yarn_info,
+            needle_info,
+            pattern_info,
+            pattern_url,
+            is_completed,
+            visibility
+          )
+        `,
         )
         .eq('id', postId)
         .single();
@@ -94,28 +95,28 @@ export default function PostDetailScreen() {
         throw postError;
       }
 
+      const project = (postData as any).projects;
+
       const postDetail: PostDetail = {
         id: (postData as any).id,
         user_id: (postData as any).user_id,
-        title: (postData as any).title,
+        project_id: (postData as any).project_id,
         content: (postData as any).content,
-        yarn_info: (postData as any).yarn_info,
-        pattern_info: (postData as any).pattern_info,
-        pattern_url: (postData as any).pattern_url,
-        needle_info: (postData as any).needle_info,
         created_at: (postData as any).created_at,
         updated_at: (postData as any).updated_at,
         nickname: (postData as any).users.nickname,
         profile_image: (postData as any).users.profile_image,
-        is_completed: (postData as any).is_completed,
-        visibility: (postData as any).visibility,
+        // project 정보
+        title: project?.title,
+        yarn_info: project?.yarn_info,
+        needle_info: project?.needle_info,
+        pattern_info: project?.pattern_info,
+        pattern_url: project?.pattern_url,
+        is_completed: project?.is_completed,
+        visibility: project?.visibility,
         images: ((postData as any).post_images || []).sort(
           (a: any, b: any) => a.display_order - b.display_order,
         ),
-        knitting_logs: ((postData as any).knitting_logs || []).sort(
-          (a: any, b: any) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        ), // 최신순 정렬
       };
 
       setPost(postDetail);
@@ -124,6 +125,14 @@ export default function PostDetailScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoToProject = () => {
+    if (!post?.project_id) return;
+    navigation.navigate(POST_ROUTES.PROJECT_DETAIL, {
+      projectId: post.project_id,
+      projectTitle: post.title,
+    });
   };
 
   // 게시물 삭제
@@ -287,86 +296,9 @@ export default function PostDetailScreen() {
         <S.ContentSection>
           <S.Title>{post.title}</S.Title>
           <S.Content>{post.content}</S.Content>
-
-          {/* 구분선 */}
-          <S.Divider />
-
-          {/* 상세 정보 */}
-          <S.InfoSection>
-            <S.InfoTitle>프로젝트 정보</S.InfoTitle>
-
-            <S.InfoRow>
-              <S.InfoLabel>실 정보</S.InfoLabel>
-              <S.InfoText>{post.yarn_info}</S.InfoText>
-            </S.InfoRow>
-
-            <S.InfoRow>
-              <S.InfoLabel>바늘 정보</S.InfoLabel>
-              <S.InfoText>{post.needle_info}</S.InfoText>
-            </S.InfoRow>
-
-            {post.pattern_info && (
-              <S.InfoRow>
-                <S.InfoLabel>패턴 정보</S.InfoLabel>
-                <S.InfoText>{post.pattern_info}</S.InfoText>
-              </S.InfoRow>
-            )}
-          </S.InfoSection>
-
-          {/* 도안 이미지 */}
-          {post.pattern_url && (
-            <>
-              <S.Divider />
-              <S.PatternSection>
-                <S.InfoTitle>도안</S.InfoTitle>
-                <S.PatternImage
-                  source={{uri: post.pattern_url}}
-                  resizeMode="contain"
-                />
-              </S.PatternSection>
-            </>
-          )}
-          {/* 뜨개 로그 */}
-          {post.knitting_logs && post.knitting_logs.length > 0 && (
-            <>
-              <S.Divider />
-              <S.LogSection>
-                <S.LogTitle>🧶 뜨개 일지</S.LogTitle>
-                <S.Timeline>
-                  {post.knitting_logs.map((log, index) => (
-                    <S.TimelineItem key={log.id}>
-                      {/* 타임라인 점 */}
-                      <S.TimelineDot isFirst={index === 0} />
-
-                      {/* 타임라인 선 */}
-                      {index !== post.knitting_logs.length - 1 && (
-                        <S.TimelineLine />
-                      )}
-
-                      {/* 로그 내용 */}
-                      <S.LogContent>
-                        <S.LogDate>
-                          {new Date(log.created_at).toLocaleDateString(
-                            'ko-KR',
-                            {
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            },
-                          )}
-                        </S.LogDate>
-                        <S.LogText>{log.content}</S.LogText>
-                      </S.LogContent>
-                    </S.TimelineItem>
-                  ))}
-                </S.Timeline>
-              </S.LogSection>
-            </>
-          )}
         </S.ContentSection>
 
-        {!post?.is_completed && isMyPost && (
+        {/* {!post?.is_completed && isMyPost && (
           <TouchableOpacity
             onPress={handleCompletePress}
             style={{
@@ -402,6 +334,22 @@ export default function PostDetailScreen() {
             </View>
             <Text style={{fontSize: 24}}>✓</Text>
           </View>
+        )} */}
+
+        {/* 연결된 프로젝트 */}
+        {post.project_id && (
+          <S.ProjectBanner onPress={handleGoToProject} activeOpacity={0.8}>
+            <S.ProjectBannerLeft>
+              <Icon name="folder" size={18} color="#8b5cf6" />
+              <S.ProjectBannerTextGroup>
+                <S.ProjectBannerLabel>연결된 프로젝트</S.ProjectBannerLabel>
+                <S.ProjectBannerTitle numberOfLines={1}>
+                  {post.title || '프로젝트 보기'}
+                </S.ProjectBannerTitle>
+              </S.ProjectBannerTextGroup>
+            </S.ProjectBannerLeft>
+            <S.ProjectBannerChevron>›</S.ProjectBannerChevron>
+          </S.ProjectBanner>
         )}
       </ScrollView>
 

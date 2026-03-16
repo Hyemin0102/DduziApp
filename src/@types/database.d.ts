@@ -12,7 +12,7 @@ export interface User {
 
 export interface PostImage {
   id: string;
-  post_id?: string;
+  post_id: string;
   image_url: string;
   display_order: number;
   created_at?: string;
@@ -20,77 +20,101 @@ export interface PostImage {
 
 export interface KnittingLog {
   id: string;
-  post_id?: string;
+  project_id: string;
   content: string;
   created_at: string;
 }
 
 // ================================
-// 게시물 기본 타입 (DB 테이블 구조)
+// 프로젝트 타입 (projects 테이블)
 // ================================
 
-export interface PostBase {
+export interface ProjectBase {
   id: string;
   user_id: string;
   title: string;
-  content: string;
-  yarn_info?: string;
-  pattern_info?: string;
+  content?: string | null;
+  yarn_info?: string | null;
+  pattern_info?: string | null;
   pattern_url?: string | null;
-  needle_info?: string;
-  created_at: string;
-  updated_at: string;
+  needle_info?: string | null;
   is_completed: boolean;
   visibility: 'public' | 'private';
+  created_at: string;
+  updated_at: string;
+}
+
+// 프로젝트 목록용
+export type ProjectItem = Pick;
+ProjectBase,
+  'id' | 'title' | 'created_at' | 'updated_at' | 'is_completed' | 'visibility';
+
+// 프로젝트 상세용 (knitting_logs 포함)
+export interface ProjectDetail extends ProjectBase {
+  knitting_logs: KnittingLog[];
+  posts: SimplePost[];
 }
 
 // ================================
-// 조회용 타입
+// 게시물 타입 (posts 테이블)
 // ================================
 
-// 홈/검색용 (users, post_images 조인)
-export interface Post extends PostBase {
+export interface SimplePost {
+  id: string;
+  user_id: string;
+  project_id: string;
+  content?: string | null;
+  created_at: string;
+  updated_at: string;
+  post_images: Array<Pick<PostImage, 'id' | 'image_url' | 'display_order'>>;
+}
+
+// 홈/피드용 (users, post_images, project 조인)
+export interface Post extends SimplePost {
   users: {
     id: string;
     nickname: string;
     profile_image: string;
   };
-  post_images: Array<Pick<PostImage, 'id' | 'image_url' | 'display_order'>>;
+  projects: Pick<ProjectBase, 'id' | 'title' | 'visibility'>;
 }
 
-// 프로젝트 페이지용 (간소화)
-export type PostItem = Pick<
-  Post,
-  'id' | 'title' | 'created_at' | 'updated_at' | 'post_images' | 'is_completed' | 'visibility'
->;
-
-// 상세 페이지용 (플랫 구조 + knitting_logs)
-export interface PostDetail extends PostBase {
+// 상세 페이지용 (플랫 구조)
+export interface PostDetail {
+  id: string;
+  user_id: string;
+  project_id: string;
+  content?: string | null;
+  created_at: string;
+  updated_at: string;
   nickname: string;
   profile_image: string | null;
   images: PostImage[];
-  knitting_logs: KnittingLog[];
+  title: string;
+  yarn_info?: string | null;
+  needle_info?: string | null;
+  pattern_info?: string | null;
+  pattern_url?: string | null;
+  is_completed: boolean;
+  visibility: 'public' | 'private';
 }
 
 // ================================
 // 입력용 타입
 // ================================
 
-// 게시물 입력 공통 필드
-interface PostInputFields {
+export interface CreateProjectInput {
   title: string;
   content?: string;
   yarn_info?: string;
   pattern_info?: string;
   pattern_url?: string;
   needle_info?: string;
+  visibility?: 'public' | 'private';
 }
 
-// 생성용
-export interface CreatePostInput extends PostInputFields {
-  images: Array<{ uri: string; name?: string; type?: string }>;
-  knitting_logs: Array<{ content: string }>;
+export interface CreatePostInput {
+  project_id: string;
+  content?: string;
+  images: Array<{uri: string; name?: string; type?: string}>;
 }
-
-// 수정용 (모든 필드 optional)
-export type UpdatePostInput = Partial<PostInputFields>;

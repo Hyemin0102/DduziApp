@@ -1,8 +1,7 @@
 // screens/CreatePost/CreatePost.tsx
 import React, {useState} from 'react';
-import {ScrollView, TouchableOpacity, Image, Alert, View} from 'react-native';
-import {launchImageLibrary} from 'react-native-image-picker';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {TouchableOpacity, Alert} from 'react-native';
+import {RouteProp, useRoute} from '@react-navigation/native';
 
 import * as S from './PostCreateScreen.styles.tsx';
 
@@ -17,16 +16,13 @@ type RouteParams = {
       pattern_info: string;
       pattern_url: string | null;
       needle_info: string;
-      images: Array<{id: string; image_url: string; display_order: number}>;
       knitting_logs: Array<{id: string; content: string; created_at: string}>;
     };
   };
 };
 import {supabase} from '@/lib/supabase.ts';
-import {uploadMultipleImages} from '@/lib/uploadImage.tsx';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid.tsx';
 import useCommonNavigation from '@/hooks/useCommonNavigation.ts';
-import Icon from 'react-native-vector-icons/Feather';
 
 interface KnittingLog {
   id: string;
@@ -50,11 +46,6 @@ export default function PostCreateScreen() {
   const [needleInfo, setNeedleInfo] = useState('');
   const [patternInfo, setPatternInfo] = useState('');
   const [patternUrl, setPatternUrl] = useState('');
-  const [images, setImages] = useState<any[]>([]);
-  const [existingImages, setExistingImages] = useState<
-    Array<{id: string; image_url: string; display_order: number}>
-  >([]);
-  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
   // 기존 로그 (수정 모드에서 읽기 전용으로 표시)
   const [existingLogs, setExistingLogs] = useState<
     Array<{id: string; content: string; created_at: string}>
@@ -80,7 +71,6 @@ export default function PostCreateScreen() {
       setNeedleInfo(postData.needle_info || '');
       setPatternInfo(postData.pattern_info || '');
       setPatternUrl(postData.pattern_url || '');
-      setExistingImages(postData.images || []);
 
       // 오늘 날짜 확인
       const today = new Date();
@@ -122,31 +112,6 @@ export default function PostCreateScreen() {
     }
   }, [isEditMode, postData]);
 
-  // 이미지 선택
-  const handleSelectImages = async () => {
-    const totalImages = images.length + existingImages.length;
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      selectionLimit: 10 - totalImages,
-      quality: 0.8,
-    });
-
-    if (result.assets) {
-      setImages([...images, ...result.assets]);
-    }
-  };
-
-  // 새 이미지 삭제
-  const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-  };
-
-  // 기존 이미지 삭제 (수정 모드)
-  const handleRemoveExistingImage = (imageId: string) => {
-    setDeletedImageIds([...deletedImageIds, imageId]);
-    setExistingImages(existingImages.filter(img => img.id !== imageId));
-  };
-
   // 로그 내용 변경
   const handleLogContentChange = (id: string, text: string) => {
     setKnittingLogs(
@@ -178,12 +143,12 @@ export default function PostCreateScreen() {
         return;
       }
 
-      let currentPostId: string;
+      let currentProjectId: string;
 
       if (isEditMode && postData) {
         // 수정 모드: UPDATE
         const {error: updateError} = await supabase
-          .from('posts')
+          .from('projects')
           .update({
             title: title.trim(),
             content: content.trim() || null,
@@ -196,20 +161,15 @@ export default function PostCreateScreen() {
           .eq('id', postData.id);
 
         if (updateError) {
-          console.error('게시물 수정 실패:', updateError);
-          throw new Error('게시물 수정에 실패했습니다.');
+          console.error('프로젝트 수정 실패:', updateError);
+          throw new Error('프로젝트 수정에 실패했습니다.');
         }
 
-        currentPostId = postData.id;
-
-        // 삭제된 이미지 처리
-        if (deletedImageIds.length > 0) {
-          await supabase.from('post_images').delete().in('id', deletedImageIds);
-        }
+        currentProjectId = postData.id;
       } else {
         // 생성 모드: INSERT
-        const {data: post, error: postError} = await supabase
-          .from('posts')
+        const {data: project, error: projectError} = await supabase
+          .from('projects')
           .insert({
             user_id: user.id,
             title: title.trim(),
@@ -222,36 +182,12 @@ export default function PostCreateScreen() {
           .select()
           .single();
 
-        if (postError) {
-          console.error('게시물 생성 실패:', postError);
-          throw new Error('게시물 생성에 실패했습니다.');
+        if (projectError) {
+          console.error('프로젝트 생성 실패:', projectError);
+          throw new Error('프로젝트 생성에 실패했습니다.');
         }
 
-        currentPostId = post.id;
-      }
-
-      // 새 이미지 업로드
-      if (images.length > 0) {
-        const imageUrls = await uploadMultipleImages(
-          images,
-          'post-images',
-          currentPostId,
-        );
-
-        if (imageUrls.length > 0) {
-          const startOrder = existingImages.length;
-          const imageData = imageUrls.map((url, index) => ({
-            post_id: currentPostId,
-            image_url: url,
-            display_order: startOrder + index,
-          }));
-
-          const {error: imageError} = await supabase
-            .from('post_images')
-            .insert(imageData);
-
-          if (imageError) throw imageError;
-        }
+        currentProjectId = project.id;
       }
 
       // 로그 저장
@@ -272,7 +208,7 @@ export default function PostCreateScreen() {
             const {error: insertLogError} = await supabase
               .from('knitting_logs')
               .insert({
-                post_id: currentPostId,
+                project_id: currentProjectId,
                 content: log.content.trim(),
               });
 
@@ -284,15 +220,15 @@ export default function PostCreateScreen() {
       }
 
       const successMessage = isEditMode
-        ? '게시물이 수정되었습니다!'
-        : '게시물이 작성되었습니다!';
+        ? '프로젝트가 수정되었습니다!'
+        : '프로젝트가 작성되었습니다!';
 
       Alert.alert('성공', successMessage, [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
     } catch (error) {
-      console.error('게시물 저장 실패:', error);
-      Alert.alert('오류', '게시물 저장에 실패했습니다.');
+      console.error('프로젝트 저장 실패:', error);
+      Alert.alert('오류', '프로젝트 저장에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -301,9 +237,7 @@ export default function PostCreateScreen() {
   return (
     <S.Container>
       <S.Header>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          {/* <Icon name="ArrowLeft" size={24} color="#000" /> */}
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()} />
         <S.HeaderTitle>
           {isEditMode ? '프로젝트 수정' : '프로젝트 작성'}
         </S.HeaderTitle>
@@ -312,55 +246,6 @@ export default function PostCreateScreen() {
         </TouchableOpacity>
       </S.Header>
       <KeyboardAvoid>
-        {/* 이미지 업로드 */}
-        <S.Section>
-          <S.LabelWrapper>
-            <S.Label>프로젝트 사진</S.Label>
-            {/* <Icon name="plus-circle" size={16} /> */}
-          </S.LabelWrapper>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{flexDirection: 'row', gap: 12}}>
-            {/* 업로드 버튼 */}
-            <S.ImageUploadButton onPress={handleSelectImages}>
-              <Icon name="camera" size={32} color="#999" />
-              <S.ImageUploadText>
-                {existingImages.length + images.length}/10
-              </S.ImageUploadText>
-            </S.ImageUploadButton>
-
-            {/* 기존 이미지 (수정 모드) */}
-            {existingImages.map((image, index) => (
-              <S.ImagePreview key={`existing-${image.id}`}>
-                <Image
-                  source={{uri: image.image_url}}
-                  style={{width: '100%', height: '100%', borderRadius: 8}}
-                />
-                <S.ImageRemoveButton
-                  onPress={() => handleRemoveExistingImage(image.id)}>
-                  <Icon name="x" size={16} color={'#fff'} />
-                </S.ImageRemoveButton>
-                <S.ImageOrder>{index + 1}</S.ImageOrder>
-              </S.ImagePreview>
-            ))}
-
-            {/* 새 이미지 미리보기 */}
-            {images.map((image, index) => (
-              <S.ImagePreview key={`new-${index}`}>
-                <Image
-                  source={{uri: image.uri}}
-                  style={{width: '100%', height: '100%', borderRadius: 8}}
-                />
-                <S.ImageRemoveButton onPress={() => handleRemoveImage(index)}>
-                  <Icon name="x" size={16} color={'#fff'} />
-                </S.ImageRemoveButton>
-                <S.ImageOrder>{existingImages.length + index + 1}</S.ImageOrder>
-              </S.ImagePreview>
-            ))}
-          </ScrollView>
-        </S.Section>
         {/* 제목 */}
         <S.Section>
           <S.Label>프로젝트 제목 *</S.Label>
@@ -477,9 +362,7 @@ export default function PostCreateScreen() {
             <S.LogItem key={log.id}>
               <S.LogHeader>
                 <S.LogNumber>{isEditMode ? '새 로그' : index + 1}</S.LogNumber>
-
                 <S.DateButton>
-                  {/* <Icon name="Calendar" size={16} color="#666" /> */}
                   <S.DateText>
                     {log.log_date.toLocaleDateString('ko-KR')}
                   </S.DateText>

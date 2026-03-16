@@ -15,7 +15,15 @@ export const TAB_ROUTES = {
   HOME_TAB: 'HomeTab',
   POST_CREATE_TAB: 'PostCreateTap',
   POST_TAB: 'PostTab',
+  PROJECTS_TAB: 'ProjectsTab',
   MY_PAGE_TAB: 'MyPageTab',
+} as const;
+
+// ============= Projects Stack Routes =============
+export const PROJECTS_ROUTES = {
+  PROJECTS_MAIN: 'ProjectsMain',
+  PROJECT_DETAIL: 'ProjectDetail',
+  CREATE_POST_FOR_PROJECT: 'CreatePostForProject',
 } as const;
 
 // ============= Home Stack Routes =============
@@ -32,6 +40,8 @@ export const POST_ROUTES = {
   POSTS_MAIN: 'PostsMain',
   CREATE_POST: 'CreatePost',
   POST_DETAIL: 'PostDetail',
+  PROJECT_DETAIL: 'ProjectDetail',
+  CREATE_POST_FOR_PROJECT: 'CreatePostForProject',
 } as const;
 
 // ============= MyPage Stack Routes =============

@@ -2,6 +2,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeStack from './stacks/HomeStack';
 import MyPageStack from './stacks/MyPageStack';
 import PostsStack from './stacks/PostsStack';
+import ProjectsStack from './stacks/ProjectsStack';
 
 import SvgHomeTab from '../../components/Icons/HomeTab';
 import SvgDiscoverTab from '../../components/Icons/DiscoverTab';
@@ -18,7 +19,7 @@ import {SvgProps} from 'react-native-svg';
 import {JSX} from 'react';
 import {TabParamList} from '../../@types/navigation';
 import PostCreateScreen from '../PostCreate/PostCreateScreen';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 interface TabIconComponent {
@@ -112,10 +113,10 @@ const TabNavigator = () => {
         options={{
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel icon={SvgHomeTab} label="홈" focused={focused} />
-          )
+          ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="PostCreatePlaceholder"
         component={EmptyComponent}
         options={{
@@ -127,13 +128,13 @@ const TabNavigator = () => {
             />
           ),
         }}
-        listeners={{ 
-          tabPress: (e) => {
+        listeners={{
+          tabPress: e => {
             e.preventDefault();
             navigation.navigate('PostCreate');
           },
         }}
-      />
+      /> */}
       <Tab.Screen
         name="PostTab"
         component={PostsStack}
@@ -142,6 +143,19 @@ const TabNavigator = () => {
             <TabIconWithLabel
               icon={SvgMyPageTab}
               label="내 뜨개"
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ProjectsTab"
+        component={ProjectsStack}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <TabIconWithLabel
+              icon={SvgMyPageTab}
+              label="프로젝트"
               focused={focused}
             />
           ),

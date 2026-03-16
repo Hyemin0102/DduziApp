@@ -113,6 +113,49 @@ export const ImageCounter = styled.Text`
   color: #ffffff;
 `;
 
+// 프로젝트 링크 배너
+export const ProjectBanner = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 16px 16px;
+  padding: 12px 16px;
+  background-color: #f5f0ff;
+  border-radius: 12px;
+  border-width: 1px;
+  border-color: #e0d4ff;
+`;
+
+export const ProjectBannerLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+`;
+
+export const ProjectBannerLabel = styled.Text`
+  font-size: 11px;
+  color: #8b5cf6;
+  font-weight: 600;
+  margin-bottom: 2px;
+`;
+
+export const ProjectBannerTitle = styled.Text`
+  font-size: 14px;
+  color: #4c1d95;
+  font-weight: 600;
+`;
+
+export const ProjectBannerTextGroup = styled.View`
+  flex: 1;
+  margin-left: 10px;
+`;
+
+export const ProjectBannerChevron = styled.Text`
+  font-size: 16px;
+  color: #8b5cf6;
+  margin-left: 8px;
+`;
+
 // 콘텐츠 섹션
 export const ContentSection = styled.View`
   padding: 20px;

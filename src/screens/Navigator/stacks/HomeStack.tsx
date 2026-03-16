@@ -9,6 +9,8 @@ import {HomeStackParamList} from '../../../@types/navigation';
 import {HOME_ROUTES, POST_ROUTES} from '../../../constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PostsScreen from '@/screens/Posts/PostsScreen';
+import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
+import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -68,10 +70,25 @@ const HomeStack = () => {
       <Stack.Screen
         name={HOME_ROUTES.POSTS_MAIN}
         component={PostsScreen}
-        options={({ route }) => ({
+        options={({route}) => ({
           title: route.params?.userId ? '' : '내 포스트',
           headerBackTitleVisible: false,
         })}
+      />
+      <Stack.Screen
+        name={POST_ROUTES.PROJECT_DETAIL}
+        component={ProjectDetailScreen}
+        options={({route}) => ({
+          title: route.params?.projectTitle || '프로젝트 상세',
+        })}
+      />
+      <Stack.Screen
+        name={POST_ROUTES.CREATE_POST_FOR_PROJECT}
+        component={PostCreateForProjectScreen}
+        options={{
+          title: '게시물 작성',
+          headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );

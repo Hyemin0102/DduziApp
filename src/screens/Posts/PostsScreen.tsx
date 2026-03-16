@@ -2,15 +2,14 @@
 import React, {useState, useCallback, useEffect} from 'react';
 import {
   FlatList,
+  ScrollView,
   Image,
   RefreshControl,
   ActivityIndicator,
-  ScrollView,
   Dimensions,
 } from 'react-native';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
-import {Post, PostItem} from '@/@types/database';
 import {supabase} from '@/lib/supabase';
 import {useAuth} from '@/contexts/AuthContext';
 import UserProfileCard from '@/components/common/UserProfileCard';
@@ -37,10 +36,20 @@ interface PostsScreenProps {
   route: PostsScreenRouteProp;
 }
 
+interface PostListItem {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  project_id: string;
+  post_images: {id: string; image_url: string; display_order: number}[];
+  projects: {title: string; is_completed: boolean; visibility: string} | null;
+}
+
 export default function PostsScreen({route}: PostsScreenProps) {
   const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
-  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [posts, setPosts] = useState<PostListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -50,9 +59,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
     completed: 'list',
   });
 
-  //route로 넘어온 userId 우선
   const targetUserId = route.params?.userId;
-  //route 유저가 없거나 현재 로그인한 auth user와 route 정보가 일치하면 내 페이지
   const isMyPage = !targetUserId || targetUserId === currentUserId;
 
   useEffect(() => {
@@ -65,7 +72,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
         AsyncStorage.getItem(STORAGE_KEY_IN_PROGRESS),
         AsyncStorage.getItem(STORAGE_KEY_COMPLETED),
       ]);
-
       setViewModes({
         inProgress: (inProgress as ViewMode) || 'list',
         completed: (completed as ViewMode) || 'list',
@@ -76,11 +82,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   };
 
   const handleViewModeChange = async (mode: ViewMode) => {
-    setViewModes(prev => ({
-      ...prev,
-      [activeTab]: mode,
-    }));
-
+    setViewModes(prev => ({...prev, [activeTab]: mode}));
     try {
       const storageKey =
         activeTab === 'inProgress'
@@ -94,7 +96,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
 
   const currentViewMode = viewModes[activeTab];
 
-  // 현재 로그인한 사용자 확인
   useEffect(() => {
     const getCurrentUser = async () => {
       const {
@@ -105,11 +106,9 @@ export default function PostsScreen({route}: PostsScreenProps) {
     getCurrentUser();
   }, []);
 
-  //포스트 정보
   const fetchPosts = async () => {
     try {
       if (!currentUserId) {
-        console.log('❌ 로그인 필요');
         setLoading(false);
         return;
       }
@@ -120,37 +119,39 @@ export default function PostsScreen({route}: PostsScreenProps) {
         .from('posts')
         .select(
           `
-        id,
-        title,
-        created_at,
-        updated_at,
-        is_completed,
-        visibility,
-        post_images (
           id,
-          image_url,
-          display_order
-        )
-      `,
+          user_id,
+          content,
+          created_at,
+          project_id,
+          post_images (
+            id,
+            image_url,
+            display_order
+          ),
+          projects (
+            title,
+            is_completed,
+            visibility
+          )
+        `,
         )
         .eq('user_id', displayUserId);
 
       if (!isMyPage) {
-        query = query.eq('is_completed', true).eq('visibility', 'public');
+        query = query.eq('projects.visibility', 'public');
       }
 
       query = query.order('created_at', {ascending: false});
 
-      const {data: postsData, error: postsError} = await query;
+      const {data, error} = await query;
 
-      if (postsError) {
-        console.error('❌ posts 조회 실패:', postsError);
-        throw postsError;
+      if (error) {
+        console.error('❌ posts 조회 실패:', error);
+        throw error;
       }
 
-      console.log('데이터 불러옴', postsData);
-
-      setPosts(postsData);
+      setPosts((data as unknown as PostListItem[]) || []);
     } catch (error) {
       console.error('❌ 게시물 로드 실패:', error);
     } finally {
@@ -172,70 +173,77 @@ export default function PostsScreen({route}: PostsScreenProps) {
     fetchPosts();
   };
 
-  //포스트 작성 이동
   const handleCreatePost = () => {
     navigation.navigate(POST_ROUTES.CREATE_POST);
   };
 
-  //탭에 따라 필터링 (내 페이지가 아니면 필터링 없이 전체 반환)
+  const handleCreatePostFAB = () => {
+    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT);
+  };
+
+  const getIsCompleted = (post: PostListItem) =>
+    post.projects?.is_completed ?? false;
+
   const filteredPosts = isMyPage
     ? posts.filter(post => {
-        if (activeTab === 'inProgress') {
-          return !post.is_completed;
-        } else {
-          return post.is_completed;
-        }
+        const isCompleted = getIsCompleted(post);
+        return activeTab === 'inProgress' ? !isCompleted : isCompleted;
       })
     : posts;
 
-  const inProgressCount = posts.filter(p => !p.is_completed).length;
-  const completedCount = posts.filter(p => p.is_completed).length;
+  const inProgressCount = posts.filter(p => !getIsCompleted(p)).length;
+  const completedCount = posts.filter(p => getIsCompleted(p)).length;
 
-  const renderListItem = ({item}: {item: PostItem}) => {
+  const navigateToDetail = (postId: string) => {
+    navigation.navigate(POST_ROUTES.POST_DETAIL, {postId});
+  };
+
+  const renderListItem = ({item}: {item: PostListItem}) => {
+    const sortedImages = [...item.post_images].sort(
+      (a, b) => a.display_order - b.display_order,
+    );
+
     return (
       <S.PostCard>
-        {/* 이미지 가로 스크롤 */}
-        {item.post_images.length > 0 ? (
+        {sortedImages.length > 0 ? (
           <S.ImageContainer>
             <ScrollView
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              snapToInterval={SCREEN_WIDTH - 18}
+              snapToInterval={SCREEN_WIDTH - 32}
               decelerationRate="fast"
-              contentContainerStyle={{flexGrow: 1}}
               style={{height: 200}}>
-              {item.post_images.map((image, index) => (
+              {sortedImages.map((image, index) => (
                 <S.ImageContainer
                   key={image.id}
-                  style={{width: SCREEN_WIDTH - 18}}>
+                  style={{width: SCREEN_WIDTH - 32}}>
                   <S.PostImage
                     source={{uri: image.image_url}}
                     style={{width: '100%', height: '100%'}}
                   />
-                  <S.ImageCounter>
-                    {index + 1} / {item.post_images.length}
-                  </S.ImageCounter>
+                  {sortedImages.length > 1 && (
+                    <S.ImageCounter>
+                      {index + 1} / {sortedImages.length}
+                    </S.ImageCounter>
+                  )}
                 </S.ImageContainer>
               ))}
             </ScrollView>
           </S.ImageContainer>
         ) : (
-          // 이미지 없을 때
           <S.NoImageContainer>
-            <S.NoImageText>📝</S.NoImageText>
+            <S.NoImageText>🧶</S.NoImageText>
           </S.NoImageContainer>
         )}
 
-        {/* 제목과 날짜 */}
-        <S.PostInfo
-          onPress={() =>
-            navigation.navigate(POST_ROUTES.POST_DETAIL, {
-              postId: item.id,
-            })
-          }
-          activeOpacity={0.8}>
-          <S.PostTitle numberOfLines={2}>{item.title}</S.PostTitle>
+        <S.PostInfo onPress={() => navigateToDetail(item.id)} activeOpacity={0.8}>
+          {item.projects?.title ? (
+            <S.PostTitle numberOfLines={1}>{item.projects.title}</S.PostTitle>
+          ) : null}
+          {item.content ? (
+            <S.PostDate numberOfLines={2}>{item.content}</S.PostDate>
+          ) : null}
           <S.PostDate>
             {new Date(item.created_at).toLocaleDateString('ko-KR')}
           </S.PostDate>
@@ -244,22 +252,18 @@ export default function PostsScreen({route}: PostsScreenProps) {
     );
   };
 
-  const renderGridItem = ({item}: {item: PostItem}) => {
-    const firstImage = item.post_images[0]?.image_url;
+  const renderGridItem = ({item}: {item: PostListItem}) => {
+    const firstImage = [...item.post_images]
+      .sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
 
     return (
       <S.GridItem
         style={{width: GRID_ITEM_SIZE, height: GRID_ITEM_SIZE}}
-        onPress={() =>
-          navigation.navigate(POST_ROUTES.POST_DETAIL, {
-            postId: item.id,
-          })
-        }
+        onPress={() => navigateToDetail(item.id)}
         activeOpacity={0.8}>
         {firstImage ? (
           <>
             <S.GridImage source={{uri: firstImage}} resizeMode="cover" />
-            {/* 여러 이미지가 있으면 아이콘 표시 */}
             {item.post_images.length > 1 && (
               <S.MultipleImageIcon>
                 <Icon name="layers" size={16} color="#fff" />
@@ -268,7 +272,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
           </>
         ) : (
           <S.GridNoImage>
-            <S.GridNoImageText>📝</S.GridNoImageText>
+            <S.GridNoImageText>🧶</S.GridNoImageText>
           </S.GridNoImage>
         )}
       </S.GridItem>
@@ -280,7 +284,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
       <S.Container>
         <S.LoadingContainer>
           <ActivityIndicator size="large" color="#0070f3" />
-          <S.LoadingText>게시물 불러오는 중...</S.LoadingText>
+          <S.LoadingText>불러오는 중...</S.LoadingText>
         </S.LoadingContainer>
       </S.Container>
     );
@@ -288,8 +292,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
 
   return (
     <S.Container>
-      {/* 사용자 프로필 카드 */}
-
       <S.ProfileSection>
         <UserProfileCard
           userId={isMyPage ? currentUserId : targetUserId}
@@ -297,15 +299,13 @@ export default function PostsScreen({route}: PostsScreenProps) {
         />
       </S.ProfileSection>
 
-      {/* 🔥 탭 네비게이션 */}
-
       {isMyPage && (
         <S.TabContainer>
           <S.Tab
             active={activeTab === 'inProgress'}
             onPress={() => setActiveTab('inProgress')}>
             <S.TabText active={activeTab === 'inProgress'}>
-              진행중 ({inProgressCount})
+              뜨개 중 ({inProgressCount})
             </S.TabText>
             {activeTab === 'inProgress' && <S.TabIndicator />}
           </S.Tab>
@@ -314,7 +314,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
             active={activeTab === 'completed'}
             onPress={() => setActiveTab('completed')}>
             <S.TabText active={activeTab === 'completed'}>
-              완료 ({completedCount})
+              뜨개 완료 ({completedCount})
             </S.TabText>
             {activeTab === 'completed' && <S.TabIndicator />}
           </S.Tab>
@@ -364,25 +364,30 @@ export default function PostsScreen({route}: PostsScreenProps) {
             <S.EmptyText>
               {isMyPage
                 ? activeTab === 'inProgress'
-                  ? '진행 중인 프로젝트가 없어요'
-                  : '완료된 프로젝트가 없어요'
-                : '작성한 프로젝트가 없어요'}
+                  ? '진행 중인 뜨개가 없어요'
+                  : '완료된 뜨개가 없어요'
+                : '작성한 게시물이 없어요'}
             </S.EmptyText>
             <S.EmptySubText>
               {isMyPage
                 ? activeTab === 'inProgress'
                   ? '첫 프로젝트를 시작해보세요! 🧶'
-                  : '프로젝트를 완료해보세요!'
+                  : '뜨개를 완료해보세요!'
                 : ''}
             </S.EmptySubText>
+            {isMyPage && activeTab === 'inProgress' && (
+              <S.EmptyAddButton onPress={handleCreatePost}>
+                <S.EmptyAddButtonText>뜨개 추가하기</S.EmptyAddButtonText>
+              </S.EmptyAddButton>
+            )}
           </S.EmptyContainer>
         }
       />
-
-      {/* 플로팅 작성 버튼 */}
-      {/* <S.FloatingButton onPress={handleCreatePost}>
-        <S.FloatingButtonText>+</S.FloatingButtonText>
-      </S.FloatingButton> */}
+      {isMyPage && (
+        <S.FloatingButton onPress={handleCreatePostFAB}>
+          <S.FloatingButtonText>+</S.FloatingButtonText>
+        </S.FloatingButton>
+      )}
     </S.Container>
   );
 }
