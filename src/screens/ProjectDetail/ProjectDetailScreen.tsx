@@ -229,40 +229,50 @@ export default function ProjectDetailScreen() {
           </S.BadgeRow>
         </S.Section>
 
-        {project.content ? (
-          <S.Section>
-            <S.Label>프로젝트 설명</S.Label>
+        <S.Section>
+          <S.Label>프로젝트 설명</S.Label>
+          {project.content ? (
             <S.Body>{project.content}</S.Body>
-          </S.Section>
-        ) : null}
+          ) : (
+            <S.PlaceholderText>프로젝트에 대해 자유롭게 설명해주세요</S.PlaceholderText>
+          )}
+        </S.Section>
 
-        {project.yarn_info ? (
-          <S.Section>
-            <S.Label>실 정보</S.Label>
+        <S.Section>
+          <S.Label>실 정보</S.Label>
+          {project.yarn_info ? (
             <S.Body>{project.yarn_info}</S.Body>
-          </S.Section>
-        ) : null}
+          ) : (
+            <S.PlaceholderText>사용한 실의 브랜드, 색상, 두께 등</S.PlaceholderText>
+          )}
+        </S.Section>
 
-        {project.needle_info ? (
-          <S.Section>
-            <S.Label>바늘 정보</S.Label>
+        <S.Section>
+          <S.Label>바늘 정보</S.Label>
+          {project.needle_info ? (
             <S.Body>{project.needle_info}</S.Body>
-          </S.Section>
-        ) : null}
+          ) : (
+            <S.PlaceholderText>사용한 바늘의 브랜드, 두께 등</S.PlaceholderText>
+          )}
+        </S.Section>
 
-        {project.pattern_info ? (
-          <S.Section>
-            <S.Label>도안 정보</S.Label>
+        <S.Section>
+          <S.Label>도안 정보</S.Label>
+          {project.pattern_info ? (
             <S.Body>{project.pattern_info}</S.Body>
-          </S.Section>
-        ) : null}
+          ) : (
+            <S.PlaceholderText>사용한 도안에 대한 설명</S.PlaceholderText>
+          )}
+        </S.Section>
 
-        {project.pattern_url ? (
-          <S.Section>
-            <S.Label>도안 링크</S.Label>
+        <S.Section>
+          <S.Label>도안 링크</S.Label>
+          {project.pattern_url ? (
             <S.Link>{project.pattern_url}</S.Link>
-          </S.Section>
-        ) : null}
+          ) : (
+            <S.PlaceholderText>https://...</S.PlaceholderText>
+          )}
+        </S.Section>
 
         {/* 게시물 목록 */}
         <S.Section>
@@ -318,10 +328,10 @@ export default function ProjectDetailScreen() {
         </S.Section>
 
         {/* 뜨개 로그 */}
-        {project.knitting_logs && project.knitting_logs.length > 0 && (
-          <S.Section>
-            <S.Label>뜨개 로그</S.Label>
-            {project.knitting_logs
+        <S.Section>
+          <S.Label>뜨개 로그</S.Label>
+          {project.knitting_logs && project.knitting_logs.length > 0 ? (
+            project.knitting_logs
               .slice()
               .sort(
                 (a, b) =>
@@ -339,9 +349,11 @@ export default function ProjectDetailScreen() {
                   </S.LogDate>
                   <S.LogContent>{log.content}</S.LogContent>
                 </S.LogItem>
-              ))}
-          </S.Section>
-        )}
+              ))
+          ) : (
+            <S.PlaceholderText>오늘 뜬 내용을 기록해보세요</S.PlaceholderText>
+          )}
+        </S.Section>
 
         {/* 완료하기 버튼 */}
         {isMyProject && !project.is_completed && (

@@ -101,6 +101,12 @@ export const Link = styled.Text`
   color: #007aff;
 `;
 
+export const PlaceholderText = styled.Text`
+  font-size: 15px;
+  color: #bbb;
+  line-height: 22px;
+`;
+
 export const LogItem = styled.View`
   margin-bottom: 12px;
   background-color: #fafafa;
@@ -308,4 +314,96 @@ export const CancelText = styled.Text`
   color: #007aff;
   font-weight: 600;
   text-align: center;
+`;
+
+export const TitleInput = styled.TextInput`
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  padding: 0;
+  border-bottom-width: 1.5px;
+  border-bottom-color: #0070f3;
+`;
+
+// 제목이 비어있을 때 placeholder 스타일 (텍스트)
+export const TitlePlaceholder = styled.Text`
+  font-size: 20px;
+  font-weight: 700;
+  color: #ccc;
+`;
+
+// 일반 한 줄 인라인 입력
+export const InlineInput = styled.TextInput`
+  font-size: 14px;
+  color: #333;
+  padding: 6px 0;
+  border-bottom-width: 1px;
+  border-bottom-color: #0070f3;
+`;
+
+// 여러 줄 인라인 입력
+export const InlineTextArea = styled.TextInput`
+  font-size: 14px;
+  color: #333;
+  padding: 6px 0;
+  min-height: 80px;
+  border-bottom-width: 1px;
+  border-bottom-color: #0070f3;
+`;
+
+// 헤더 오른쪽 저장 버튼 텍스트
+export const SubmitText = styled.Text`
+  font-size: 15px;
+  font-weight: 600;
+  color: #0070f3;
+`;
+
+export const Header = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #e5e5e5;
+`;
+
+export const HeaderTitle = styled.Text`
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+`;
+
+export const LogHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+`;
+
+export const LogNumber = styled.Text`
+  font-size: 16px;
+  font-weight: 700;
+  color: #0070f3;
+`;
+
+export const DateButton = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+`;
+
+export const DateText = styled.Text`
+  font-size: 14px;
+  color: #666;
+`;
+
+export const LogInput = styled.TextInput`
+  padding: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #000;
+  background-color: #fff;
+  min-height: 80px;
 `;

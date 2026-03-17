@@ -3,10 +3,11 @@ import MyPageScreen from '../../MyPage/Mypage';
 import ProfileScreen from '../../Profile/Profile';
 import {MyPageStackParamList} from '../../../@types/navigation';
 import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
-import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
+
 import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
+import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
 const MyPageStack = () => {
