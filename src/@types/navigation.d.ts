@@ -44,7 +44,11 @@ export type TabParamList = {
 // Projects Stack
 export type ProjectsStackParamList = {
   [PROJECTS_ROUTES.PROJECTS_MAIN]: undefined;
-  [PROJECTS_ROUTES.PROJECT_DETAIL]: {projectId: string; projectTitle?: string};
+  [PROJECTS_ROUTES.PROJECT_DETAIL]: {
+    projectId?: string;
+    projectTitle?: string;
+    mode?: 'view' | 'edit' | 'create';
+  };
   [PROJECTS_ROUTES.CREATE_POST_FOR_PROJECT]:
     | {projectId?: string; projectTitle?: string}
     | undefined;
@@ -58,7 +62,7 @@ export type HomeStackParamList = {
   [HOME_ROUTES.SEARCH]: undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
-  [POST_ROUTES.PROJECT_DETAIL]: {projectId: string; projectTitle?: string};
+  [POST_ROUTES.PROJECT_DETAIL]: {projectId?: string; projectTitle?: string; mode?: 'view' | 'edit' | 'create'};
   [POST_ROUTES.CREATE_POST_FOR_PROJECT]:
     | {projectId?: string; projectTitle?: string}
     | undefined;
@@ -69,7 +73,7 @@ export type PostsStackParamList = {
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
-  [POST_ROUTES.PROJECT_DETAIL]: {projectId: string; projectTitle?: string};
+  [POST_ROUTES.PROJECT_DETAIL]: {projectId?: string; projectTitle?: string; mode?: 'view' | 'edit' | 'create'};
   [POST_ROUTES.CREATE_POST_FOR_PROJECT]:
     | {projectId?: string; projectTitle?: string}
     | undefined;
@@ -81,7 +85,7 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.MY_PAGE_MAIN]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
   [MY_PAGE_ROUTES.PROJECTS_MAIN]: undefined;
-  [MY_PAGE_ROUTES.PROJECT_DETAIL]: {projectId: string; projectTitle?: string};
+  [MY_PAGE_ROUTES.PROJECT_DETAIL]: {projectId?: string; projectTitle?: string; mode?: 'view' | 'edit' | 'create'};
   [MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT]:
     | {projectId?: string; projectTitle?: string}
     | undefined;

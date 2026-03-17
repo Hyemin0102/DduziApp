@@ -211,9 +211,8 @@ export const ViewModeButton = styled.TouchableOpacity<{active: boolean}>`
 `;
 
 export const GridItem = styled.TouchableOpacity`
-  width: 100%;
-  height: 100%;
   position: relative;
+  overflow: hidden;
 `;
 
 export const GridImage = styled.Image`
@@ -238,6 +237,15 @@ export const MultipleImageIcon = styled.View`
   top: 8px;
   right: 8px;
   background-color: rgba(0, 0, 0, 0.6);
+  padding: 4px;
+  border-radius: 4px;
+`;
+
+export const PrivateLockIcon = styled.View`
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background-color: rgba(0, 0, 0, 0.55);
   padding: 4px;
   border-radius: 4px;
 `;

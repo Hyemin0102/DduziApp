@@ -17,6 +17,7 @@ interface CompletePostModalProps {
   onClose: () => void;
   onConfirm: (visibility: 'public' | 'private') => Promise<void>;
   loading?: boolean;
+  initialVisibility?: 'public' | 'private';
 }
 
 const CompletePostModal: React.FC<CompletePostModalProps> = ({
@@ -24,9 +25,16 @@ const CompletePostModal: React.FC<CompletePostModalProps> = ({
   onClose,
   onConfirm,
   loading = false,
+  initialVisibility = 'public',
 }) => {
   const [selectedVisibility, setSelectedVisibility] =
-    useState<'public' | 'private'>('public');
+    useState<'public' | 'private'>(initialVisibility);
+
+  React.useEffect(() => {
+    if (visible) {
+      setSelectedVisibility(initialVisibility);
+    }
+  }, [visible, initialVisibility]);
 
   const handleConfirm = async () => {
     await onConfirm(selectedVisibility);

@@ -175,6 +175,23 @@ export const Content = styled.Text`
   line-height: 24px;
 `;
 
+export const PrivateBadge = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  padding: 4px 10px;
+  margin-bottom: 12px;
+`;
+
+export const PrivateBadgeText = styled.Text`
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+`;
+
 export const Divider = styled.View`
   height: 1px;
   background-color: #eeeeee;

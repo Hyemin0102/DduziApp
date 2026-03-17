@@ -10,6 +10,8 @@ import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjec
 import {PostsStackParamList} from '@/@types/navigation';
 import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 import ProfileScreen from '@/screens/Profile/Profile';
+import {TouchableOpacity} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 
 const Stack = createNativeStackNavigator<PostsStackParamList>();
 
@@ -25,12 +27,23 @@ const PostsStack = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        headerBackTitle: '',
       }}>
       <Stack.Screen
         name={POST_ROUTES.POSTS_MAIN}
         component={PostsScreen}
-        options={({route}) => ({
+        options={({route, navigation}) => ({
           title: route.params?.userId ? '프로필' : '내 포스트',
+          headerRight: () =>
+            !route.params?.userId ? (
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT)
+                }
+                style={{paddingHorizontal: 4}}>
+                <Icon name="plus" size={22} color="#333" />
+              </TouchableOpacity>
+            ) : null,
         })}
       />
       <Stack.Screen

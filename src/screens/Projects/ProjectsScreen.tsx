@@ -1,14 +1,7 @@
 import React, {useState, useCallback} from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  StyleSheet,
-  RefreshControl,
-} from 'react-native';
+import {FlatList, ActivityIndicator, RefreshControl} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
+import * as S from './ProjectsScreen.styles';
 import {supabase} from '@/lib/supabase';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
@@ -56,7 +49,7 @@ export default function ProjectsScreen() {
   };
 
   const handleCreateProject = () => {
-    navigation.navigate('PostCreate');
+    navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {mode: 'create'});
   };
 
   const inProgressCount = projects.filter(p => !p.is_completed).length;
@@ -64,53 +57,49 @@ export default function ProjectsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <S.Center>
         <ActivityIndicator size="large" color="#6b4fbb" />
-      </View>
+      </S.Center>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* 상단 요약 */}
+    <S.Container>
       {projects.length > 0 && (
-        <View style={styles.summary}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryCount}>{inProgressCount}</Text>
-            <Text style={styles.summaryLabel}>진행 중</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryCount}>{completedCount}</Text>
-            <Text style={styles.summaryLabel}>완료</Text>
-          </View>
-        </View>
+        <S.Summary>
+          <S.SummaryItem>
+            <S.SummaryCount>{inProgressCount}</S.SummaryCount>
+            <S.SummaryLabel>진행 중</S.SummaryLabel>
+          </S.SummaryItem>
+          <S.SummaryDivider />
+          <S.SummaryItem>
+            <S.SummaryCount>{completedCount}</S.SummaryCount>
+            <S.SummaryLabel>완료</S.SummaryLabel>
+          </S.SummaryItem>
+        </S.Summary>
       )}
 
       <FlatList
         data={projects}
         keyExtractor={item => item.id}
         contentContainerStyle={
-          projects.length === 0 ? styles.emptyContainer : styles.listContainer
+          projects.length === 0 ? {flex: 1} : {padding: 16, gap: 10}
         }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🧶</Text>
-            <Text style={styles.emptyText}>아직 프로젝트가 없어요</Text>
-            <Text style={styles.emptySubText}>첫 프로젝트를 시작해보세요!</Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={handleCreateProject}>
-              <Text style={styles.emptyButtonText}>프로젝트 추가하기</Text>
-            </TouchableOpacity>
-          </View>
+          <S.Empty>
+            <S.EmptyIcon>🧶</S.EmptyIcon>
+            <S.EmptyText>아직 프로젝트가 없어요</S.EmptyText>
+            <S.EmptySubText>첫 프로젝트를 시작해보세요!</S.EmptySubText>
+            <S.EmptyButton onPress={handleCreateProject}>
+              <S.EmptyButtonText>프로젝트 추가하기</S.EmptyButtonText>
+            </S.EmptyButton>
+          </S.Empty>
         }
         renderItem={({item}) => (
-          <TouchableOpacity
-            style={styles.card}
+          <S.Card
             activeOpacity={0.75}
             onPress={() =>
               navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
@@ -118,230 +107,39 @@ export default function ProjectsScreen() {
                 projectTitle: item.title,
               })
             }>
-            <View style={styles.cardLeft}>
-              <View
-                style={[
-                  styles.statusDot,
-                  item.is_completed ? styles.dotCompleted : styles.dotProgress,
-                ]}
-              />
-              <View style={styles.cardInfo}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.cardDate}>
+            <S.CardLeft>
+              <S.StatusDot completed={item.is_completed} />
+              <S.CardInfo>
+                <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
+                <S.CardDate>
                   {new Date(item.updated_at).toLocaleDateString('ko-KR')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.cardRight}>
-              <Text
-                style={[
-                  styles.statusBadge,
-                  item.is_completed
-                    ? styles.badgeCompleted
-                    : styles.badgeProgress,
-                ]}>
+                </S.CardDate>
+              </S.CardInfo>
+            </S.CardLeft>
+            <S.CardRight>
+              <S.StatusBadge
+                variant={item.is_completed ? 'completed' : 'progress'}>
                 {item.is_completed ? '완료' : '진행 중'}
-              </Text>
-              <Text
-                style={[
-                  styles.statusBadge,
-                  item.visibility === 'public'
-                    ? styles.badgePublic
-                    : styles.badgePrivate,
-                ]}>
+              </S.StatusBadge>
+              <S.StatusBadge
+                variant={item.visibility === 'public' ? 'public' : 'private'}>
                 {item.visibility === 'public' ? '공개' : '비공개'}
-              </Text>
+              </S.StatusBadge>
               <Icon name="chevron-right" size={16} color="#ccc" />
-            </View>
-          </TouchableOpacity>
+            </S.CardRight>
+          </S.Card>
         )}
       />
 
-      {/* 하단 프로젝트 추가 버튼 */}
-      {projects.length > 0 && (
-        <TouchableOpacity style={styles.fab} onPress={handleCreateProject}>
-          {/* <Icon name="plus" size={24} color="#fff" /> */}
-          <Text style={styles.addText}>새 프로젝트 추가</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+      {/* {projects.length > 0 && (
+        <S.AddButton onPress={handleCreateProject}>
+          <Icon name="plus" size={16} color="#fff" />
+          <S.AddButtonText>새 프로젝트 추가</S.AddButtonText>
+        </S.AddButton>
+      )} */}
+      <S.FAB onPress={handleCreateProject}>
+        <Icon name="plus" size={22} color="#fff" />
+      </S.FAB>
+    </S.Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summary: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  summaryItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  summaryDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: '#eee',
-  },
-  summaryCount: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#6b4fbb',
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  listContainer: {
-    padding: 16,
-    gap: 10,
-  },
-  emptyContainer: {
-    flex: 1,
-  },
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-    gap: 12,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  emptyButton: {
-    marginTop: 8,
-    backgroundColor: '#6b4fbb',
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  emptyButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  dotProgress: {
-    backgroundColor: '#6b4fbb',
-  },
-  dotCompleted: {
-    backgroundColor: '#4CAF50',
-  },
-  cardInfo: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111',
-    marginBottom: 3,
-  },
-  cardDate: {
-    fontSize: 12,
-    color: '#999',
-  },
-  cardRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginLeft: 8,
-  },
-  statusBadge: {
-    fontSize: 11,
-    fontWeight: '600',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  badgeProgress: {
-    backgroundColor: '#f0ecff',
-    color: '#6b4fbb',
-  },
-  badgeCompleted: {
-    backgroundColor: '#e8f5e9',
-    color: '#4CAF50',
-  },
-  badgePublic: {
-    backgroundColor: '#e3f2fd',
-    color: '#1976D2',
-  },
-  badgePrivate: {
-    backgroundColor: '#f5f5f5',
-    color: '#999',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    backgroundColor: '#6b4fbb',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#6b4fbb',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  addText: {
-    color: '#fff',
-  },
-});

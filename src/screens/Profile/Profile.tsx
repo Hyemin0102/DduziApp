@@ -127,7 +127,7 @@ const ProfileScreen = () => {
     <S.Container>
       <KeyboardAvoid>
         <S.Inner>
-          <S.PageTitle>프로필 설정</S.PageTitle>
+          {/* <S.PageTitle>프로필 설정</S.PageTitle> */}
 
           <S.ImageSection>
             {displayImage ? (

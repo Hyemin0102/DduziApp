@@ -44,7 +44,7 @@ const HomeStack = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-        
+        headerBackTitle: '',
       }}>
       <Stack.Screen
         name={HOME_ROUTES.HOME_MAIN}
@@ -57,7 +57,7 @@ const HomeStack = () => {
       <Stack.Screen
         name={HOME_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
-        options={{title: '프로젝트 상세'}}
+        options={{title: '게시물 상세'}}
       />
       <Stack.Screen
         name={HOME_ROUTES.SEARCH}
@@ -65,7 +65,7 @@ const HomeStack = () => {
         options={{
           title: '',
           headerShown: false,
-        }}  
+        }}
       />
       <Stack.Screen
         name={HOME_ROUTES.POSTS_MAIN}

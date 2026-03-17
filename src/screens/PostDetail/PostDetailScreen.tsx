@@ -295,6 +295,12 @@ export default function PostDetailScreen() {
         {/* 게시물 내용 */}
         <S.ContentSection>
           <S.Title>{post.title}</S.Title>
+          {post.visibility === 'private' && (
+            <S.PrivateBadge>
+              <Icon name="lock" size={11} color="#888" />
+              <S.PrivateBadgeText>비공개</S.PrivateBadgeText>
+            </S.PrivateBadge>
+          )}
           <S.Content>{post.content}</S.Content>
         </S.ContentSection>
 

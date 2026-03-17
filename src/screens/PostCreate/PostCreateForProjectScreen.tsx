@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   TouchableOpacity,
   Alert,
@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
@@ -48,13 +48,6 @@ export default function PostCreateForProjectScreen() {
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
 
-  // projectId가 없으면 (홈에서 진입) 프로젝트 목록 로드
-  useEffect(() => {
-    if (!presetProjectId) {
-      fetchProjects();
-    }
-  }, [presetProjectId]);
-
   const fetchProjects = async () => {
     setLoadingProjects(true);
     try {
@@ -76,6 +69,20 @@ export default function PostCreateForProjectScreen() {
     } finally {
       setLoadingProjects(false);
     }
+  };
+
+  // 포커스될 때마다 목록 갱신 (프로젝트 추가 후 돌아왔을 때 반영)
+  useFocusEffect(
+    useCallback(() => {
+      if (!presetProjectId) {
+        fetchProjects();
+      }
+    }, [presetProjectId]),
+  );
+
+  const handleAddProject = () => {
+    setShowProjectPicker(false);
+    navigation.navigate('ProjectDetail', {mode: 'create'});
   };
 
   const handleSelectImages = async () => {
@@ -199,35 +206,43 @@ export default function PostCreateForProjectScreen() {
               <View style={styles.projectList}>
                 {loadingProjects ? (
                   <ActivityIndicator size="small" color="#6b4fbb" />
-                ) : projects.length === 0 ? (
-                  <Text style={styles.emptyText}>프로젝트가 없어요</Text>
                 ) : (
-                  projects.map(p => (
-                    <TouchableOpacity
-                      key={p.id}
-                      style={[
-                        styles.projectItem,
-                        selectedProjectId === p.id &&
-                          styles.projectItemSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedProjectId(p.id);
-                        setSelectedProjectTitle(p.title);
-                        setShowProjectPicker(false);
-                      }}>
-                      <Text
+                  <>
+                    {projects.map(p => (
+                      <TouchableOpacity
+                        key={p.id}
                         style={[
-                          styles.projectItemText,
+                          styles.projectItem,
                           selectedProjectId === p.id &&
-                            styles.projectItemTextSelected,
-                        ]}>
-                        {p.title}
-                      </Text>
-                      {selectedProjectId === p.id && (
-                        <Icon name="check" size={16} color="#6b4fbb" />
-                      )}
+                            styles.projectItemSelected,
+                        ]}
+                        onPress={() => {
+                          setSelectedProjectId(p.id);
+                          setSelectedProjectTitle(p.title);
+                          setShowProjectPicker(false);
+                        }}>
+                        <Text
+                          style={[
+                            styles.projectItemText,
+                            selectedProjectId === p.id &&
+                              styles.projectItemTextSelected,
+                          ]}>
+                          {p.title}
+                        </Text>
+                        {selectedProjectId === p.id && (
+                          <Icon name="check" size={16} color="#6b4fbb" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                    {projects.length > 0 && (
+                      <View style={styles.projectListDivider} />
+                    )}
+                    <TouchableOpacity
+                      style={styles.addProjectItem}
+                      onPress={handleAddProject}>
+                      <Icon name="plus" size={16} color="#fff" />
                     </TouchableOpacity>
-                  ))
+                  </>
                 )}
               </View>
             )}
@@ -434,5 +449,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
     minHeight: 120,
+  },
+  projectListDivider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginHorizontal: 14,
+  },
+  addProjectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#6b4fbb',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+    margin: 12,
+  },
+  addProjectText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
