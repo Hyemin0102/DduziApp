@@ -72,7 +72,7 @@ const HomeStack = () => {
         name={HOME_ROUTES.POSTS_MAIN}
         component={PostsScreen}
         options={({route}) => ({
-          title: route.params?.userId ? '' : '내 포스트',
+          title: route.params?.userId ? '' : '내 뜨개',
           headerBackTitleVisible: false,
         })}
       />

@@ -62,10 +62,25 @@ export type HomeStackParamList = {
   [HOME_ROUTES.SEARCH]: undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
-  [POST_ROUTES.PROJECT_DETAIL]: {projectId?: string; projectTitle?: string; mode?: 'view' | 'edit' | 'create'};
-  [POST_ROUTES.CREATE_POST_FOR_PROJECT]:
-    | {projectId?: string; projectTitle?: string}
-    | undefined;
+  [POST_ROUTES.PROJECT_DETAIL]: {
+    projectId?: string;
+    projectTitle?: string;
+    mode?: 'view' | 'edit' | 'create';
+  };
+  [POST_ROUTES.CREATE_POST_FOR_PROJECT]: {
+    mode?: 'create' | 'edit';
+    // 생성/수정 공통
+    projectId?: string;
+    projectTitle?: string;
+    // 수정 모드 전용
+    postId?: string;
+    content?: string;
+    existingImages?: {
+      id: string;
+      image_url: string;
+      display_order: number;
+    }[];
+  };
 };
 
 // Posts Stack
@@ -73,10 +88,25 @@ export type PostsStackParamList = {
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
   [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
-  [POST_ROUTES.PROJECT_DETAIL]: {projectId?: string; projectTitle?: string; mode?: 'view' | 'edit' | 'create'};
-  [POST_ROUTES.CREATE_POST_FOR_PROJECT]:
-    | {projectId?: string; projectTitle?: string}
-    | undefined;
+  [POST_ROUTES.PROJECT_DETAIL]: {
+    projectId?: string;
+    projectTitle?: string;
+    mode?: 'view' | 'edit' | 'create';
+  };
+  [POST_ROUTES.CREATE_POST_FOR_PROJECT]: {
+    mode?: 'create' | 'edit';
+    // 생성/수정 공통
+    projectId?: string;
+    projectTitle?: string;
+    // 수정 모드 전용
+    postId?: string;
+    content?: string;
+    existingImages?: {
+      id: string;
+      image_url: string;
+      display_order: number;
+    }[];
+  };
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
 };
 
@@ -85,7 +115,11 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.MY_PAGE_MAIN]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
   [MY_PAGE_ROUTES.PROJECTS_MAIN]: undefined;
-  [MY_PAGE_ROUTES.PROJECT_DETAIL]: {projectId?: string; projectTitle?: string; mode?: 'view' | 'edit' | 'create'};
+  [MY_PAGE_ROUTES.PROJECT_DETAIL]: {
+    projectId?: string;
+    projectTitle?: string;
+    mode?: 'view' | 'edit' | 'create';
+  };
   [MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT]:
     | {projectId?: string; projectTitle?: string}
     | undefined;

@@ -100,6 +100,7 @@ export const Link = styled.Text`
   color: #007aff;
   line-height: 22px;
   text-decoration-line: underline;
+  flex-shrink: 1;
 `;
 
 export const PlaceholderText = styled.Text`
@@ -461,4 +462,12 @@ export const InfoInput = styled.TextInput`
   color: #333;
   padding: 0;
   line-height: 20px;
+  //flex-wrap: wrap;
+`;
+
+export const LinkRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 `;

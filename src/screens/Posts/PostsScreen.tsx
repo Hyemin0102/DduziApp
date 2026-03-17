@@ -131,6 +131,8 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
 
+  console.log('posts', posts);
+
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
 
@@ -153,12 +155,16 @@ export default function PostsScreen({route}: PostsScreenProps) {
 
       const displayUserId = targetUserId || currentUserId;
 
+      const projectsJoin = isMyPage
+        ? 'projects ( title, is_completed, visibility )'
+        : 'projects!inner ( title, is_completed, visibility )';
+
       let query = supabase
         .from('posts')
         .select(
           `id, user_id, content, created_at, project_id,
            post_images ( id, image_url, display_order ),
-           projects ( title, is_completed, visibility )`,
+           ${projectsJoin}`,
         )
         .eq('user_id', displayUserId);
 
@@ -197,16 +203,20 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const getIsCompleted = (post: PostListItem) =>
     post.projects?.is_completed ?? false;
 
-  const filteredPosts = isMyPage
-    ? posts.filter(post =>
-        activeTab === 'inProgress'
-          ? !getIsCompleted(post)
-          : getIsCompleted(post),
-      )
-    : posts;
+  const visiblePosts = isMyPage
+    ? posts
+    : posts.filter(p => p.projects?.visibility === 'public');
 
-  const inProgressCount = posts.filter(p => !getIsCompleted(p)).length;
-  const completedCount = posts.filter(p => getIsCompleted(p)).length;
+  const filteredPosts = visiblePosts.filter(post =>
+    activeTab === 'inProgress' ? !getIsCompleted(post) : getIsCompleted(post),
+  );
+
+  const inProgressCount = visiblePosts.filter(p => !getIsCompleted(p)).length;
+  const completedCount = visiblePosts.filter(p => getIsCompleted(p)).length;
+
+  const handleAddPost = () => {
+    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT);
+  };
 
   return (
     <S.Container>
@@ -214,29 +224,28 @@ export default function PostsScreen({route}: PostsScreenProps) {
         <UserProfileCard
           userId={isMyPage ? currentUserId : targetUserId}
           isMyPage={isMyPage}
+          onAddPost={handleAddPost}
         />
       </S.ProfileSection>
 
-      {isMyPage && (
-        <S.TabContainer>
-          <S.Tab
-            active={activeTab === 'inProgress'}
-            onPress={() => setActiveTab('inProgress')}>
-            <S.TabText active={activeTab === 'inProgress'}>
-              뜨개 중 ({inProgressCount})
-            </S.TabText>
-            {activeTab === 'inProgress' && <S.TabIndicator />}
-          </S.Tab>
-          <S.Tab
-            active={activeTab === 'completed'}
-            onPress={() => setActiveTab('completed')}>
-            <S.TabText active={activeTab === 'completed'}>
-              뜨개 완료 ({completedCount})
-            </S.TabText>
-            {activeTab === 'completed' && <S.TabIndicator />}
-          </S.Tab>
-        </S.TabContainer>
-      )}
+      <S.TabContainer>
+        <S.Tab
+          active={activeTab === 'inProgress'}
+          onPress={() => setActiveTab('inProgress')}>
+          <S.TabText active={activeTab === 'inProgress'}>
+            뜨개 중 ({inProgressCount})
+          </S.TabText>
+          {activeTab === 'inProgress' && <S.TabIndicator />}
+        </S.Tab>
+        <S.Tab
+          active={activeTab === 'completed'}
+          onPress={() => setActiveTab('completed')}>
+          <S.TabText active={activeTab === 'completed'}>
+            뜨개 완료 ({completedCount})
+          </S.TabText>
+          {activeTab === 'completed' && <S.TabIndicator />}
+        </S.Tab>
+      </S.TabContainer>
 
       <FlatList
         data={filteredPosts}

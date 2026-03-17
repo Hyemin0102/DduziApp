@@ -27,7 +27,7 @@ export const ErrorText = styled.Text`
 `;
 
 // 작성자 섹션
-export const AuthorSection = styled.View`
+export const AuthorSection = styled.TouchableOpacity`
   padding: 16px;
   border-bottom-width: 1px;
   border-bottom-color: #eeeeee;

@@ -34,17 +34,17 @@ const PostsStack = () => {
         name={POST_ROUTES.POSTS_MAIN}
         component={PostsScreen}
         options={({route, navigation}) => ({
-          title: route.params?.userId ? '프로필' : '내 포스트',
-          headerRight: () =>
-            !route.params?.userId ? (
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT)
-                }
-                style={{paddingHorizontal: 4}}>
-                <Icon name="plus" size={22} color="#333" />
-              </TouchableOpacity>
-            ) : null,
+          title: route.params?.userId ? '프로필' : '내 뜨개',
+          // headerRight: () =>
+          //   !route.params?.userId ? (
+          //     <TouchableOpacity
+          //       onPress={() =>
+          //         navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT)
+          //       }
+          //       style={{paddingHorizontal: 4}}>
+          //       <Icon name="plus" size={22} color="#333" />
+          //     </TouchableOpacity>
+          //   ) : null,
         })}
       />
       <Stack.Screen

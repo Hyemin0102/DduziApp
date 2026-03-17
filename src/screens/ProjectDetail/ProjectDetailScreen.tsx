@@ -1,4 +1,10 @@
-import React, {useState, useCallback, useLayoutEffect, useRef} from 'react';
+import React, {
+  useState,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useEffect,
+} from 'react';
 import {
   ScrollView,
   ActivityIndicator,
@@ -14,18 +20,6 @@ import {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
-
-function parseTextWithLinks(
-  text: string,
-): Array<{type: 'text' | 'url'; value: string}> {
-  const parts = text.split(URL_REGEX);
-  return parts
-    .filter(p => p.length > 0)
-    .map(p => ({
-      type: URL_REGEX.test(p) ? 'url' : 'text',
-      value: p,
-    }));
-}
 
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
 import {supabase} from '@/lib/supabase';
@@ -65,6 +59,7 @@ function checkDirty(
     original.yarnInfo !== current.yarnInfo ||
     original.needleInfo !== current.needleInfo ||
     original.patternInfo !== current.patternInfo ||
+    original.patternUrl !== current.patternUrl ||
     original.formIsCompleted !== current.formIsCompleted ||
     original.formVisibility !== current.formVisibility ||
     current.pendingLogs.some(l => l.content.trim() !== '')
@@ -77,6 +72,7 @@ interface OriginalValues {
   yarnInfo: string;
   needleInfo: string;
   patternInfo: string;
+  patternUrl: string;
   formIsCompleted: boolean;
   formVisibility: 'public' | 'private';
 }
@@ -87,6 +83,7 @@ interface CurrentForm {
   yarnInfo: string;
   needleInfo: string;
   patternInfo: string;
+  patternUrl: string;
   formIsCompleted: boolean;
   formVisibility: 'public' | 'private';
   pendingLogs: PendingLog[];
@@ -106,13 +103,18 @@ export default function ProjectDetailScreen() {
   const [completeModalVisible, setCompleteModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditingPatternUrl, setIsEditingPatternUrl] = useState(false);
+  const hasFetchedRef = useRef(false);
 
+  console.log('프로젝트', project);
+  console.log('프로젝트 로딩', loading);
   // ── 폼 필드
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [yarnInfo, setYarnInfo] = useState('');
   const [needleInfo, setNeedleInfo] = useState('');
   const [patternInfo, setPatternInfo] = useState('');
+  const [patternUrl, setPatternUrl] = useState('');
   const [formIsCompleted, setFormIsCompleted] = useState(false);
   const [formVisibility, setFormVisibility] = useState<'public' | 'private'>(
     'private',
@@ -136,6 +138,7 @@ export default function ProjectDetailScreen() {
         yarnInfo,
         needleInfo,
         patternInfo,
+        patternUrl,
         formIsCompleted,
         formVisibility,
         pendingLogs,
@@ -149,6 +152,7 @@ export default function ProjectDetailScreen() {
       yarnInfo,
       needleInfo,
       patternInfo,
+      patternUrl,
       formIsCompleted,
       formVisibility,
       pendingLogs,
@@ -169,6 +173,7 @@ export default function ProjectDetailScreen() {
         yarnInfo: setYarnInfo,
         needleInfo: setNeedleInfo,
         patternInfo: setPatternInfo,
+        patternUrl: setPatternUrl,
         formIsCompleted: setFormIsCompleted,
         formVisibility: setFormVisibility,
       };
@@ -215,7 +220,8 @@ export default function ProjectDetailScreen() {
       content: p.content || '',
       yarnInfo: p.yarn_info || '',
       needleInfo: p.needle_info || '',
-      patternInfo: p.pattern_info || p.pattern_url || '',
+      patternInfo: p.pattern_info || '',
+      patternUrl: p.pattern_url || '',
       formIsCompleted: p.is_completed || false,
       formVisibility: p.visibility || 'private',
     };
@@ -225,6 +231,7 @@ export default function ProjectDetailScreen() {
     setYarnInfo(values.yarnInfo);
     setNeedleInfo(values.needleInfo);
     setPatternInfo(values.patternInfo);
+    setPatternUrl(values.patternUrl);
     setFormIsCompleted(values.formIsCompleted);
     setFormVisibility(values.formVisibility);
     setIsDirty(false);
@@ -239,13 +246,14 @@ export default function ProjectDetailScreen() {
       return d.getTime() === today.getTime();
     });
 
-    console.log('오늘 로그', todayLogs);
-
     const todayLogIds = new Set(todayLogs.map(l => l.id));
     setExistingReadOnlyLogs(logs.filter(l => !todayLogIds.has(l.id)));
     setPendingLogs(
       todayLogs.map(l => ({id: l.id, content: l.content, isExisting: true})),
     );
+
+    //url입력 완료 후 수정 모드 해제
+    setIsEditingPatternUrl(false);
   }, []);
 
   // 오늘 로그가 이미 있는지 (pendingLogs 중 isExisting인 것)
@@ -279,7 +287,7 @@ export default function ProjectDetailScreen() {
 
   // ── fetch
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    if (!hasFetchedRef.current) setLoading(true); // 최초만
     try {
       const {
         data: {user},
@@ -311,6 +319,7 @@ export default function ProjectDetailScreen() {
         .order('created_at', {ascending: false});
       if (postsError) throw postsError;
       setPosts((postsData as SimplePost[]) || []);
+      hasFetchedRef.current = true;
     } catch (error) {
       console.error('프로젝트 상세 조회 실패:', error);
       Alert.alert('오류', '프로젝트 정보를 불러오지 못했습니다.');
@@ -319,14 +328,17 @@ export default function ProjectDetailScreen() {
     }
   }, [projectId, populateForm]);
 
-  console.log('프로젝트', project);
-  console.log('포스트', posts);
-
   useFocusEffect(
     useCallback(() => {
-      if (!isCreateMode && projectId) fetchData();
+      if (!isCreateMode && projectId) {
+        fetchData();
+      }
     }, [projectId, isCreateMode, fetchData]),
   );
+
+  useEffect(() => {
+    hasFetchedRef.current = false;
+  }, [projectId]);
 
   // ── 저장
   const handleSave = useCallback(async () => {
@@ -356,7 +368,7 @@ export default function ProjectDetailScreen() {
             yarn_info: yarnInfo.trim() || null,
             needle_info: needleInfo.trim() || null,
             pattern_info: patternInfo.trim() || null,
-            pattern_url: null,
+            pattern_url: patternUrl.trim() || null,
             visibility: formVisibility,
           })
           .select()
@@ -372,7 +384,7 @@ export default function ProjectDetailScreen() {
             yarn_info: yarnInfo.trim() || null,
             needle_info: needleInfo.trim() || null,
             pattern_info: patternInfo.trim() || null,
-            pattern_url: null,
+            pattern_url: patternUrl.trim() || null,
             is_completed: formIsCompleted,
             visibility: formVisibility,
             updated_at: new Date().toISOString(),
@@ -424,6 +436,7 @@ export default function ProjectDetailScreen() {
     yarnInfo,
     needleInfo,
     patternInfo,
+    patternUrl,
     formIsCompleted,
     formVisibility,
     pendingLogs,
@@ -693,45 +706,66 @@ export default function ProjectDetailScreen() {
             </S.InfoContent>
           </S.InfoRow>
 
-          <S.InfoRow style={{borderBottomWidth: 0}}>
+          <S.InfoRow>
             <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
               <S.InfoIcon>📄</S.InfoIcon>
             </S.InfoIconBox>
             <S.InfoContent>
-              <S.InfoLabel>도안</S.InfoLabel>
+              <S.InfoLabel>도안 설명</S.InfoLabel>
               {canEdit ? (
                 <S.InfoInput
-                  placeholder="설명 또는 링크"
+                  placeholder="사용한 도안에 대한 설명"
                   value={patternInfo}
                   onChangeText={v => setField('patternInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
-                  autoCapitalize="none"
                 />
+              ) : project?.pattern_info ? (
+                <S.InfoValue>{project.pattern_info}</S.InfoValue>
               ) : (
-                (() => {
-                  const val = project?.pattern_info || project?.pattern_url;
-                  if (!val)
-                    return (
-                      <S.InfoPlaceholder>설명 또는 링크</S.InfoPlaceholder>
-                    );
-                  const segments = parseTextWithLinks(val);
-                  return (
-                    <S.InfoValue>
-                      {segments.map((seg, i) =>
-                        seg.type === 'url' ? (
-                          <S.Link
-                            key={i}
-                            onPress={() => Linking.openURL(seg.value)}>
-                            {seg.value}
-                          </S.Link>
-                        ) : (
-                          <S.InfoValue key={i}>{seg.value}</S.InfoValue>
-                        ),
-                      )}
-                    </S.InfoValue>
-                  );
-                })()
+                <S.InfoPlaceholder>사용한 도안에 대한 설명</S.InfoPlaceholder>
+              )}
+            </S.InfoContent>
+          </S.InfoRow>
+
+          <S.InfoRow style={{borderBottomWidth: 0}}>
+            <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
+              <S.InfoIcon>🔗</S.InfoIcon>
+            </S.InfoIconBox>
+            <S.InfoContent>
+              <S.InfoLabel>도안 링크</S.InfoLabel>
+              {isEditingPatternUrl ? (
+                <S.InfoInput
+                  autoFocus
+                  placeholder="https://..."
+                  value={patternUrl}
+                  onChangeText={v => setField('patternUrl', v)}
+                  placeholderTextColor="#ccc"
+                  autoCapitalize="none"
+                  keyboardType="url"
+                  onBlur={() => setIsEditingPatternUrl(false)}
+                  multiline
+                />
+              ) : patternUrl ? (
+                <S.LinkRow>
+                  <S.Link
+                    onPress={() => Linking.openURL(patternUrl)}
+                    style={{flex: 1}}>
+                    {patternUrl}
+                  </S.Link>
+                  {canEdit && (
+                    <TouchableOpacity
+                      onPress={() => setIsEditingPatternUrl(true)}>
+                      <Icon name="edit-2" size={14} color="#bbb" />
+                    </TouchableOpacity>
+                  )}
+                </S.LinkRow>
+              ) : canEdit ? (
+                <TouchableOpacity onPress={() => setIsEditingPatternUrl(true)}>
+                  <S.InfoPlaceholder>https://...</S.InfoPlaceholder>
+                </TouchableOpacity>
+              ) : (
+                <S.InfoPlaceholder>https://...</S.InfoPlaceholder>
               )}
             </S.InfoContent>
           </S.InfoRow>

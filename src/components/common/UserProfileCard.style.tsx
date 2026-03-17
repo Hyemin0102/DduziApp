@@ -1,56 +1,55 @@
 import styled from '@emotion/native';
 
+/** 전체 카드 - 세로 배치 */
 export const Container = styled.View`
-    flex-direction: row;
-    position: relative;
+  padding-vertical: 16px;
 `;
 
+/** 프로필 이미지 + 이름/소개 가로 배치 */
 export const Wrapper = styled.View`
   flex-direction: row;
-  padding-vertical: 20px;
   align-items: center;
 `;
 
 export const ProfileImage = styled.Image`
-  width: 80px;
-  height: 80px;
-  border-radius: 40px;
+  width: 72px;
+  height: 72px;
+  border-radius: 36px;
   border-width: 1px;
   border-color: #dde1e9;
   margin-right: 16px;
 `;
 
 export const ProfileImagePlaceholder = styled.View`
-  width: 80px;
-  height: 80px;
-  border-radius: 40px;
-  background-color: #e0e0e0;
+  width: 72px;
+  height: 72px;
+  border-radius: 36px;
+  background-color: #e8e4f8;
   justify-content: center;
   align-items: center;
   margin-right: 16px;
 `;
 
 export const ProfileImagePlaceholderText = styled.Text`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: bold;
-  color: #666;
+  color: #6b4fbb;
 `;
 
 export const InfoContainer = styled.View`
-  //flex: 1;
+  flex: 1;
 `;
 
 export const Name = styled.Text`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
-  color: #333;
+  color: #111;
   margin-bottom: 4px;
 `;
 
 export const Email = styled.Text`
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 8px;
+  font-size: 13px;
+  color: #999;
 `;
 
 export const ProviderBadge = styled.View`
@@ -61,25 +60,57 @@ export const ProviderBadge = styled.View`
 `;
 
 export const ProviderText = styled.Text`
-  font-size: 12px;
+  font-size: 13px;
+  color: #666;
+  line-height: 18px;
+`;
+
+/** 버튼 행 - Wrapper 아래 세로로 */
+export const ButtonRow = styled.View`
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 14px;
+`;
+
+/** 외곽선 버튼 (프로필 수정) */
+export const OutlineButton = styled.TouchableOpacity`
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding-vertical: 8px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-color: #ddd;
+  background-color: #fff;
+`;
+
+export const OutlineButtonText = styled.Text`
+  font-size: 13px;
   font-weight: 600;
   color: #333;
 `;
 
-export const EditProfileButton = styled.TouchableOpacity`
-  padding-horizontal: 16px;
+/** 채워진 버튼 (게시물 추가) */
+export const FillButton = styled.TouchableOpacity`
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   padding-vertical: 8px;
-  border-radius: 8px;
-  border-width: 1px;
-  border-color: #dde1e9;
-  background-color: #fff;
-  position: absolute;
-  top: 0;
-  right: 0;
+  border-radius: 10px;
+  background-color: #6b4fbb;
 `;
 
-export const EditProfileButtonText = styled.Text`
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+export const FillButtonIcon = styled.Text`
+  font-size: 15px;
+  color: #fff;
+  line-height: 18px;
+`;
+
+export const FillButtonText = styled.Text`
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
 `;

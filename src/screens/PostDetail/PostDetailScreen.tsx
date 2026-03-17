@@ -1,19 +1,12 @@
 import {supabase} from '@/lib/supabase';
-import {
-  RouteProp,
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
-import {useState, useCallback} from 'react';
+import {RouteProp, useFocusEffect, useRoute} from '@react-navigation/native';
+import {useState, useCallback, useRef, useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
   Modal,
   ScrollView,
-  Text,
   TouchableOpacity,
-  View,
 } from 'react-native';
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
@@ -41,20 +34,28 @@ export default function PostDetailScreen() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  console.log('상세???', post);
+  const hasFetchedRef = useRef(false);
 
-  // 내 게시물인지 확인
+  console.log('포스트상세', post);
+  console.log('포스트 로딩', loading);
+
   const isMyPost = post && user && post.user_id === user.id;
 
   useFocusEffect(
     useCallback(() => {
+      // 최초: post가 없으면 로딩 보여주기
+
       fetchPostDetail();
     }, [postId]),
   );
 
+  useEffect(() => {
+    hasFetchedRef.current = false;
+  }, [postId]);
+
   const fetchPostDetail = async () => {
     try {
-      setLoading(true);
+      if (!hasFetchedRef.current) setLoading(true);
 
       const {data: postData, error: postError} = await supabase
         .from('posts')
@@ -90,10 +91,7 @@ export default function PostDetailScreen() {
         .eq('id', postId)
         .single();
 
-      if (postError) {
-        console.error('❌ 게시물 조회 실패:', postError);
-        throw postError;
-      }
+      if (postError) throw postError;
 
       const project = (postData as any).projects;
 
@@ -106,7 +104,6 @@ export default function PostDetailScreen() {
         updated_at: (postData as any).updated_at,
         nickname: (postData as any).users.nickname,
         profile_image: (postData as any).users.profile_image,
-        // project 정보
         title: project?.title,
         yarn_info: project?.yarn_info,
         needle_info: project?.needle_info,
@@ -120,6 +117,7 @@ export default function PostDetailScreen() {
       };
 
       setPost(postDetail);
+      hasFetchedRef.current = true;
     } catch (error) {
       console.error('❌ 게시물 로드 실패:', error);
     } finally {
@@ -135,7 +133,19 @@ export default function PostDetailScreen() {
     });
   };
 
-  // 게시물 삭제
+  const handleEdit = () => {
+    setShowActionSheet(false);
+    if (!post) return;
+    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
+      mode: 'edit',
+      postId: post.id,
+      projectId: post.project_id,
+      projectTitle: post.title,
+      content: post.content,
+      existingImages: post.images,
+    });
+  };
+
   const handleDelete = () => {
     Alert.alert('게시물 삭제', '정말 이 게시물을 삭제하시겠습니까?', [
       {text: '취소', style: 'cancel'},
@@ -145,12 +155,8 @@ export default function PostDetailScreen() {
         onPress: async () => {
           try {
             setIsDeleting(true);
-
-            // 관련 데이터 삭제 (cascade 설정이 없다면 수동 삭제)
-            await supabase.from('knitting_logs').delete().eq('post_id', postId);
             await supabase.from('post_images').delete().eq('post_id', postId);
             await supabase.from('posts').delete().eq('id', postId);
-
             Alert.alert('삭제 완료', '게시물이 삭제되었습니다.', [
               {text: '확인', onPress: () => navigation.goBack()},
             ]);
@@ -166,55 +172,25 @@ export default function PostDetailScreen() {
     ]);
   };
 
-  // 게시물 수정 화면으로 이동
-  const handleEdit = () => {
-    setShowActionSheet(false);
-    navigation.navigate('CreatePost', {
-      mode: 'edit',
-      postData: post,
-    });
-  };
-
-  // 완료 버튼 클릭
-  const handleCompletePress = () => {
-    setModalVisible(true);
-  };
-
   const handleConfirmComplete = async (visibility: 'public' | 'private') => {
     if (!post) return;
-
     setLoading(true);
-
     try {
       const result = await completePost(post.id, visibility);
-
       if (result.success) {
-        // 로컬 상태 업데이트
-        setPost({
-          ...post,
-          is_completed: true,
-          visibility: visibility,
-        });
-
+        setPost({...post, is_completed: true, visibility});
         setModalVisible(false);
-
         Alert.alert(
           '완료',
           visibility === 'public'
             ? '프로젝트가 공개로 완료되었습니다.'
             : '프로젝트가 비공개로 완료되었습니다.',
-          [
-            {
-              text: '확인',
-              onPress: () => navigation.goBack(),
-            },
-          ],
+          [{text: '확인', onPress: () => navigation.goBack()}],
         );
       } else {
         Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
       }
     } catch (error) {
-      console.error('완료 처리 에러:', error);
       Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -242,7 +218,10 @@ export default function PostDetailScreen() {
     <S.Container>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 작성자 정보 */}
-        <S.AuthorSection>
+        <S.AuthorSection
+          onPress={() =>
+            navigation.navigate(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
+          }>
           <S.AuthorInfo>
             {post.profile_image ? (
               <S.ProfileImage source={{uri: post.profile_image}} />
@@ -264,7 +243,6 @@ export default function PostDetailScreen() {
               </S.Date>
             </S.AuthorTextContainer>
           </S.AuthorInfo>
-          {/* 내 게시물일 때 더보기 버튼 */}
           {isMyPost && (
             <TouchableOpacity onPress={() => setShowActionSheet(true)}>
               <S.MoreButton>⋯</S.MoreButton>
@@ -294,7 +272,6 @@ export default function PostDetailScreen() {
 
         {/* 게시물 내용 */}
         <S.ContentSection>
-          <S.Title>{post.title}</S.Title>
           {post.visibility === 'private' && (
             <S.PrivateBadge>
               <Icon name="lock" size={11} color="#888" />
@@ -303,44 +280,6 @@ export default function PostDetailScreen() {
           )}
           <S.Content>{post.content}</S.Content>
         </S.ContentSection>
-
-        {/* {!post?.is_completed && isMyPost && (
-          <TouchableOpacity
-            onPress={handleCompletePress}
-            style={{
-              backgroundColor: '#007AFF',
-              padding: 16,
-              margin: 16,
-              borderRadius: 12,
-              alignItems: 'center',
-            }}>
-            <Text style={{color: '#fff', fontSize: 16, fontWeight: '600'}}>
-              프로젝트 완료하기
-            </Text>
-          </TouchableOpacity>
-        )}
-        {post?.is_completed && isMyPost && (
-          <View
-            style={{
-              backgroundColor: '#F0F8FF',
-              padding: 16,
-              margin: 16,
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <View>
-              <Text style={{fontSize: 16, fontWeight: '600', color: '#007AFF'}}>
-                완료된 프로젝트
-              </Text>
-              <Text style={{fontSize: 13, color: '#666', marginTop: 4}}>
-                {post.visibility === 'public' ? '공개' : '비공개'}
-              </Text>
-            </View>
-            <Text style={{fontSize: 24}}>✓</Text>
-          </View>
-        )} */}
 
         {/* 연결된 프로젝트 */}
         {post.project_id && (
@@ -359,7 +298,7 @@ export default function PostDetailScreen() {
         )}
       </ScrollView>
 
-      {/* 액션시트 (수정/삭제) */}
+      {/* 액션시트 */}
       <Modal
         visible={showActionSheet}
         transparent
@@ -376,7 +315,7 @@ export default function PostDetailScreen() {
             <S.ActionSheetButton onPress={handleDelete}>
               <S.ActionSheetIcon>🗑️</S.ActionSheetIcon>
               <S.ActionSheetButtonText isDestructive>
-                삭제하기
+                {isDeleting ? '삭제 중...' : '삭제하기'}
               </S.ActionSheetButtonText>
             </S.ActionSheetButton>
             <S.ActionSheetCancelButton

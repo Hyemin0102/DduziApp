@@ -26,15 +26,39 @@ type RouteProps = RouteProp<
   typeof POST_ROUTES.CREATE_POST_FOR_PROJECT
 >;
 
+// 기존 이미지 (DB에 저장된 것)
+interface ExistingImage {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
+
+// 새로 추가할 이미지 (로컬 picker에서 선택한 것)
+interface NewImage {
+  uri: string;
+  type?: string;
+  fileName?: string;
+}
+
 export default function PostCreateForProjectScreen() {
   const route = useRoute<RouteProps>();
   const {navigation} = useCommonNavigation<any>();
 
+  const mode = route.params?.mode || 'create';
+  const isEditMode = mode === 'edit';
+
   const presetProjectId = route.params?.projectId;
   const presetProjectTitle = route.params?.projectTitle;
+  const editPostId = route.params?.postId;
 
-  const [content, setContent] = useState('');
-  const [images, setImages] = useState<any[]>([]);
+  // 폼 상태 – 수정 모드면 기존 데이터로 초기화
+  const [content, setContent] = useState(route.params?.content || '');
+  const [existingImages, setExistingImages] = useState<ExistingImage[]>(
+    route.params?.existingImages || [],
+  );
+  const [newImages, setNewImages] = useState<NewImage[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 프로젝트 선택 (홈에서 진입 시)
@@ -47,6 +71,8 @@ export default function PostCreateForProjectScreen() {
   );
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
+
+  const totalImageCount = existingImages.length + newImages.length;
 
   const fetchProjects = async () => {
     setLoadingProjects(true);
@@ -71,13 +97,10 @@ export default function PostCreateForProjectScreen() {
     }
   };
 
-  // 포커스될 때마다 목록 갱신 (프로젝트 추가 후 돌아왔을 때 반영)
   useFocusEffect(
     useCallback(() => {
-      if (!presetProjectId) {
-        fetchProjects();
-      }
-    }, [presetProjectId]),
+      fetchProjects();
+    }, []),
   );
 
   const handleAddProject = () => {
@@ -86,18 +109,28 @@ export default function PostCreateForProjectScreen() {
   };
 
   const handleSelectImages = async () => {
+    const remaining = 10 - totalImageCount;
+    if (remaining <= 0) return;
+
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      selectionLimit: 10 - images.length,
+      selectionLimit: remaining,
       quality: 0.8,
     });
     if (result.assets) {
-      setImages([...images, ...result.assets]);
+      setNewImages(prev => [...prev, ...(result.assets as NewImage[])]);
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
+  // 기존 이미지 삭제 (DB에서 제거 예약)
+  const handleRemoveExistingImage = (id: string) => {
+    setExistingImages(prev => prev.filter(img => img.id !== id));
+    setDeletedImageIds(prev => [...prev, id]);
+  };
+
+  // 새 이미지 삭제
+  const handleRemoveNewImage = (index: number) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
@@ -120,42 +153,90 @@ export default function PostCreateForProjectScreen() {
         return;
       }
 
-      // posts 테이블에 게시물 생성
-      const {data: post, error: postError} = await supabase
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          project_id: selectedProjectId,
-          content: content.trim(),
-        })
-        .select()
-        .single();
+      if (isEditMode && editPostId) {
+        // ── 수정 모드
 
-      if (postError) throw postError;
+        // 1. 게시물 내용 + 프로젝트 업데이트
+        const {error: updateError} = await supabase
+          .from('posts')
+          .update({
+            project_id: selectedProjectId,
+            content: content.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editPostId);
+        if (updateError) throw updateError;
 
-      // 이미지 업로드
-      if (images.length > 0) {
-        const imageUrls = await uploadMultipleImages(
-          images,
-          'post-images',
-          post.id,
-        );
-        if (imageUrls.length > 0) {
-          const imageData = imageUrls.map((url, index) => ({
-            post_id: post.id,
-            image_url: url,
-            display_order: index,
-          }));
-          const {error: imageError} = await supabase
+        // 2. 삭제된 기존 이미지 제거
+        if (deletedImageIds.length > 0) {
+          const {error: deleteError} = await supabase
             .from('post_images')
-            .insert(imageData);
-          if (imageError) throw imageError;
+            .delete()
+            .in('id', deletedImageIds);
+          if (deleteError) throw deleteError;
         }
-      }
 
-      Alert.alert('성공', '게시물이 작성되었습니다!', [
-        {text: '확인', onPress: () => navigation.goBack()},
-      ]);
+        // 3. 새 이미지 업로드
+        if (newImages.length > 0) {
+          const imageUrls = await uploadMultipleImages(
+            newImages,
+            'post-images',
+            editPostId,
+          );
+          if (imageUrls.length > 0) {
+            const startOrder = existingImages.length;
+            const imageData = imageUrls.map((url, index) => ({
+              post_id: editPostId,
+              image_url: url,
+              display_order: startOrder + index,
+            }));
+            const {error: imageError} = await supabase
+              .from('post_images')
+              .insert(imageData);
+            if (imageError) throw imageError;
+          }
+        }
+
+        Alert.alert('성공', '게시물이 수정되었습니다!', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
+      } else {
+        // ── 생성 모드
+
+        const {data: post, error: postError} = await supabase
+          .from('posts')
+          .insert({
+            user_id: user.id,
+            project_id: selectedProjectId,
+            content: content.trim(),
+          })
+          .select()
+          .single();
+        if (postError) throw postError;
+
+        if (newImages.length > 0) {
+          const imageUrls = await uploadMultipleImages(
+            newImages,
+            'post-images',
+            post.id,
+          );
+          if (imageUrls.length > 0) {
+            const imageData = imageUrls.map((url, index) => ({
+              post_id: post.id,
+              image_url: url,
+              display_order: index,
+            }));
+            const {error: imageError} = await supabase
+              .from('post_images')
+              .insert(imageData);
+            if (imageError) throw imageError;
+          }
+        }
+
+        Alert.alert('성공', '게시물이 작성되었습니다!', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
+      }
     } catch (error) {
       console.error('게시물 저장 실패:', error);
       Alert.alert('오류', '게시물 저장에 실패했습니다.');
@@ -164,6 +245,8 @@ export default function PostCreateForProjectScreen() {
     }
   };
 
+  console.log('projects', projects);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* 헤더 */}
@@ -171,7 +254,9 @@ export default function PostCreateForProjectScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="x" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>게시물 작성</Text>
+        <Text style={styles.headerTitle}>
+          {isEditMode ? '게시물 수정' : '게시물 작성'}
+        </Text>
         <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
           <Text
             style={[styles.submitText, isSubmitting && styles.submitDisabled]}>
@@ -181,10 +266,10 @@ export default function PostCreateForProjectScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 프로젝트 선택 (홈 진입 시만 표시) */}
-        {!presetProjectId && (
+        {/* 프로젝트 선택 – 홈 진입(생성) 또는 수정 모드에서 프로젝트 변경 가능 */}
+        {!presetProjectId || isEditMode ? (
           <View style={styles.section}>
-            <Text style={styles.label}>프로젝트 선택 *</Text>
+            <Text style={styles.label}>프로젝트 *</Text>
             <TouchableOpacity
               style={styles.projectSelector}
               onPress={() => setShowProjectPicker(!showProjectPicker)}>
@@ -247,10 +332,8 @@ export default function PostCreateForProjectScreen() {
               </View>
             )}
           </View>
-        )}
-
-        {/* 프로젝트 이름 표시 (프로젝트 상세에서 진입 시) */}
-        {presetProjectId && presetProjectTitle && (
+        ) : (
+          // 프로젝트 상세에서 진입 시 (생성 모드) – 읽기 전용 배지
           <View style={styles.section}>
             <Text style={styles.label}>프로젝트</Text>
             <View style={styles.projectBadge}>
@@ -266,18 +349,36 @@ export default function PostCreateForProjectScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{flexDirection: 'row', gap: 10}}>
+            {/* 추가 버튼 */}
             <TouchableOpacity
               style={styles.imageUploadButton}
               onPress={handleSelectImages}>
               <Icon name="camera" size={28} color="#999" />
-              <Text style={styles.imageCount}>{images.length}/10</Text>
+              <Text style={styles.imageCount}>{totalImageCount}/10</Text>
             </TouchableOpacity>
-            {images.map((image, index) => (
-              <View key={index} style={styles.imagePreview}>
+
+            {/* 기존 이미지 (수정 모드) */}
+            {existingImages.map(image => (
+              <View key={image.id} style={styles.imagePreview}>
+                <Image
+                  source={{uri: image.image_url}}
+                  style={styles.previewImage}
+                />
+                <TouchableOpacity
+                  style={styles.imageRemoveButton}
+                  onPress={() => handleRemoveExistingImage(image.id)}>
+                  <Icon name="x" size={14} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            {/* 새로 추가한 이미지 */}
+            {newImages.map((image, index) => (
+              <View key={`new-${index}`} style={styles.imagePreview}>
                 <Image source={{uri: image.uri}} style={styles.previewImage} />
                 <TouchableOpacity
                   style={styles.imageRemoveButton}
-                  onPress={() => handleRemoveImage(index)}>
+                  onPress={() => handleRemoveNewImage(index)}>
                   <Icon name="x" size={14} color="#fff" />
                 </TouchableOpacity>
               </View>
@@ -387,12 +488,6 @@ const styles = StyleSheet.create({
     color: '#6b4fbb',
     fontWeight: '600',
   },
-  emptyText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    padding: 16,
-  },
   projectBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#f3f0ff',
@@ -465,10 +560,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 4,
     margin: 12,
-  },
-  addProjectText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
   },
 });
