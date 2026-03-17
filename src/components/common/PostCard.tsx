@@ -17,12 +17,11 @@ interface PostCardProps {
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-console.log('???', SCREEN_WIDTH);
 
 //홈, 탐색 페이지에서 사용
 const PostCard: React.FC<PostCardProps> = ({post}) => {
   const {navigation} = useCommonNavigation();
-
+  console.log('post', post);
   return (
     <S.CardContainer>
       {/* 프로필 영역 */}
@@ -62,7 +61,20 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
       <TouchableOpacity
         onPress={() => navigation.navigate('PostDetail', {postId: post.id})}>
         <S.ContentSection>
-          <S.Title>{post.title}</S.Title>
+          {post.projects && (
+            <S.BadgeRow>
+              <S.ProjectBadge>
+                <S.ProjectBadgeText numberOfLines={1}>
+                  🧶 {post.projects.title}
+                </S.ProjectBadgeText>
+              </S.ProjectBadge>
+              <S.StatusBadge completed={post.projects.is_completed}>
+                <S.StatusBadgeText completed={post.projects.is_completed}>
+                  {post.projects.is_completed ? '✅ 완료' : '진행 중'}
+                </S.StatusBadgeText>
+              </S.StatusBadge>
+            </S.BadgeRow>
+          )}
           <S.Content numberOfLines={3}>{post.content}</S.Content>
           <S.Date>
             {new Date(post.created_at).toLocaleDateString('ko-KR')}
@@ -133,6 +145,35 @@ const S = {
   Date: styled.Text`
     font-size: 12px;
     color: #999;
+  `,
+  BadgeRow: styled.View`
+    flex-direction: row;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  `,
+  ProjectBadge: styled.View`
+    background-color: #f0ecff;
+    padding-horizontal: 8px;
+    padding-vertical: 3px;
+    border-radius: 10px;
+    max-width: 160px;
+  `,
+  ProjectBadgeText: styled.Text`
+    font-size: 12px;
+    color: #6b4fbb;
+    font-weight: 600;
+  `,
+  StatusBadge: styled.View<{completed: boolean}>`
+    background-color: ${({completed}) => (completed ? '#e8f5e9' : '#fff8e1')};
+    padding-horizontal: 8px;
+    padding-vertical: 3px;
+    border-radius: 10px;
+  `,
+  StatusBadgeText: styled.Text<{completed: boolean}>`
+    font-size: 12px;
+    color: ${({completed}) => (completed ? '#4CAF50' : '#f59e0b')};
+    font-weight: 600;
   `,
 };
 

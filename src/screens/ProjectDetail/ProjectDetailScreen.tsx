@@ -4,10 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-  Image,
   View,
-  Text,
-  StyleSheet,
   Modal,
 } from 'react-native';
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
@@ -17,6 +14,7 @@ import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
 import CompletePostModal from '@/components/modal/CompletePostModal';
+import * as S from './ProjectDetailScreen.styles';
 
 type RouteProps = RouteProp<
   {ProjectDetail: {projectId: string; projectTitle?: string}},
@@ -181,175 +179,148 @@ export default function ProjectDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <S.Container>
         <ActivityIndicator size="large" color="#0070f3" />
-      </View>
+      </S.Container>
     );
   }
 
   if (!project) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.emptyText}>프로젝트를 찾을 수 없어요.</Text>
-      </View>
+      <S.Center>
+        <S.EmptyText>프로젝트를 찾을 수 없어요.</S.EmptyText>
+      </S.Center>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <S.Container>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 프로젝트 정보 */}
-        <View style={styles.section}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>{project.title}</Text>
+        <S.Section>
+          <S.TitleRow>
+            <S.Title>{project.title}</S.Title>
             {isMyProject && (
               <TouchableOpacity onPress={() => setShowActionSheet(true)}>
                 <Icon name="more-horizontal" size={22} color="#666" />
               </TouchableOpacity>
             )}
-          </View>
-          <Text style={styles.date}>
+          </S.TitleRow>
+          <S.Date>
             {new Date(project.created_at).toLocaleDateString('ko-KR')}
-          </Text>
-          <View style={styles.badgeRow}>
-            <View
-              style={[
-                styles.statusBadge,
-                project.is_completed
-                  ? styles.badgeCompleted
-                  : styles.badgeProgress,
-              ]}>
-              <Text
-                style={[
-                  styles.statusText,
-                  project.is_completed
-                    ? styles.badgeCompletedText
-                    : styles.badgeProgressText,
-                ]}>
+          </S.Date>
+          <S.BadgeRow>
+            <S.StatusBadge
+              variant={project.is_completed ? 'completed' : 'progress'}>
+              <S.StatusText
+                variant={project.is_completed ? 'completed' : 'progress'}>
                 {project.is_completed ? '✅ 완료' : '🧶 진행 중'}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.statusBadge,
-                project.visibility === 'public'
-                  ? styles.badgePublic
-                  : styles.badgePrivate,
-              ]}>
-              <Text
-                style={[
-                  styles.statusText,
-                  project.visibility === 'public'
-                    ? styles.badgePublicText
-                    : styles.badgePrivateText,
-                ]}>
+              </S.StatusText>
+            </S.StatusBadge>
+            <S.StatusBadge
+              variant={project.visibility === 'public' ? 'public' : 'private'}>
+              <S.StatusText
+                variant={
+                  project.visibility === 'public' ? 'public' : 'private'
+                }>
                 {project.visibility === 'public' ? '🌐 공개' : '🔒 비공개'}
-              </Text>
-            </View>
-          </View>
-        </View>
+              </S.StatusText>
+            </S.StatusBadge>
+          </S.BadgeRow>
+        </S.Section>
 
         {project.content ? (
-          <View style={styles.section}>
-            <Text style={styles.label}>프로젝트 설명</Text>
-            <Text style={styles.body}>{project.content}</Text>
-          </View>
+          <S.Section>
+            <S.Label>프로젝트 설명</S.Label>
+            <S.Body>{project.content}</S.Body>
+          </S.Section>
         ) : null}
 
         {project.yarn_info ? (
-          <View style={styles.section}>
-            <Text style={styles.label}>실 정보</Text>
-            <Text style={styles.body}>{project.yarn_info}</Text>
-          </View>
+          <S.Section>
+            <S.Label>실 정보</S.Label>
+            <S.Body>{project.yarn_info}</S.Body>
+          </S.Section>
         ) : null}
 
         {project.needle_info ? (
-          <View style={styles.section}>
-            <Text style={styles.label}>바늘 정보</Text>
-            <Text style={styles.body}>{project.needle_info}</Text>
-          </View>
+          <S.Section>
+            <S.Label>바늘 정보</S.Label>
+            <S.Body>{project.needle_info}</S.Body>
+          </S.Section>
         ) : null}
 
         {project.pattern_info ? (
-          <View style={styles.section}>
-            <Text style={styles.label}>도안 정보</Text>
-            <Text style={styles.body}>{project.pattern_info}</Text>
-          </View>
+          <S.Section>
+            <S.Label>도안 정보</S.Label>
+            <S.Body>{project.pattern_info}</S.Body>
+          </S.Section>
         ) : null}
 
         {project.pattern_url ? (
-          <View style={styles.section}>
-            <Text style={styles.label}>도안 링크</Text>
-            <Text style={[styles.body, styles.link]}>
-              {project.pattern_url}
-            </Text>
-          </View>
+          <S.Section>
+            <S.Label>도안 링크</S.Label>
+            <S.Link>{project.pattern_url}</S.Link>
+          </S.Section>
         ) : null}
 
         {/* 게시물 목록 */}
-        <View style={styles.section}>
-          <View style={styles.postHeaderRow}>
-            <Text style={styles.label}>게시물 ({posts.length})</Text>
+        <S.Section>
+          <S.PostHeaderRow>
+            <S.Label>게시물 ({posts.length})</S.Label>
             {isMyProject && (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddPost}>
+              <S.AddButton onPress={handleAddPost}>
                 <Icon name="plus" size={16} color="#fff" />
-                <Text style={styles.addButtonText}>게시물 추가</Text>
-              </TouchableOpacity>
+                <S.AddButtonText>게시물 추가</S.AddButtonText>
+              </S.AddButton>
             )}
-          </View>
+          </S.PostHeaderRow>
 
           {posts.length === 0 ? (
-            <View style={styles.emptyPosts}>
-              <Text style={styles.emptyText}>아직 게시물이 없어요</Text>
+            <S.EmptyPosts>
+              <S.EmptyText>아직 게시물이 없어요</S.EmptyText>
               {isMyProject && (
-                <TouchableOpacity
-                  style={styles.emptyAddButton}
-                  onPress={handleAddPost}>
-                  <Text style={styles.emptyAddButtonText}>
+                <S.EmptyAddButton onPress={handleAddPost}>
+                  <S.EmptyAddButtonText>
                     첫 게시물 추가하기
-                  </Text>
-                </TouchableOpacity>
+                  </S.EmptyAddButtonText>
+                </S.EmptyAddButton>
               )}
-            </View>
+            </S.EmptyPosts>
           ) : (
             posts.map(post => (
-              <TouchableOpacity
+              <S.PostCard
                 key={post.id}
-                style={styles.postCard}
                 onPress={() => handleGoToPost(post.id)}
                 activeOpacity={0.8}>
                 {post.post_images.length > 0 && (
-                  <ScrollView
+                  <S.ImageScroll
                     horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.imageScroll}>
+                    showsHorizontalScrollIndicator={false}>
                     {post.post_images
                       .slice()
                       .sort((a, b) => a.display_order - b.display_order)
                       .map(img => (
-                        <Image
+                        <S.PostImage
                           key={img.id}
                           source={{uri: img.image_url}}
-                          style={styles.postImage}
                         />
                       ))}
-                  </ScrollView>
+                  </S.ImageScroll>
                 )}
-                <Text style={styles.postContent}>{post.content}</Text>
-                <Text style={styles.postDate}>
+                <S.PostContent>{post.content}</S.PostContent>
+                <S.PostDate>
                   {new Date(post.created_at).toLocaleDateString('ko-KR')}
-                </Text>
-              </TouchableOpacity>
+                </S.PostDate>
+              </S.PostCard>
             ))
           )}
-        </View>
+        </S.Section>
 
         {/* 뜨개 로그 */}
         {project.knitting_logs && project.knitting_logs.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.label}>뜨개 로그</Text>
+          <S.Section>
+            <S.Label>뜨개 로그</S.Label>
             {project.knitting_logs
               .slice()
               .sort(
@@ -358,27 +329,25 @@ export default function ProjectDetailScreen() {
                   new Date(a.created_at).getTime(),
               )
               .map(log => (
-                <View key={log.id} style={styles.logItem}>
-                  <Text style={styles.logDate}>
+                <S.LogItem key={log.id}>
+                  <S.LogDate>
                     {new Date(log.created_at).toLocaleDateString('ko-KR', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                     })}
-                  </Text>
-                  <Text style={styles.logContent}>{log.content}</Text>
-                </View>
+                  </S.LogDate>
+                  <S.LogContent>{log.content}</S.LogContent>
+                </S.LogItem>
               ))}
-          </View>
+          </S.Section>
         )}
 
         {/* 완료하기 버튼 */}
         {isMyProject && !project.is_completed && (
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={() => setCompleteModalVisible(true)}>
-            <Text style={styles.completeButtonText}>완료하기</Text>
-          </TouchableOpacity>
+          <S.CompleteButton onPress={() => setCompleteModalVisible(true)}>
+            <S.CompleteButtonText>완료하기</S.CompleteButtonText>
+          </S.CompleteButton>
         )}
 
         <View style={{height: 40}} />
@@ -390,34 +359,25 @@ export default function ProjectDetailScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => setShowActionSheet(false)}>
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setShowActionSheet(false)}>
-          <View style={styles.actionSheet}>
-            <View style={styles.actionSheetHandle} />
-            <TouchableOpacity
-              style={styles.actionSheetBtn}
-              onPress={handleEditProject}>
-              <Text style={styles.actionSheetIcon}>✏️</Text>
-              <Text style={styles.actionSheetText}>수정하기</Text>
-            </TouchableOpacity>
-            <View style={styles.actionSheetDivider} />
-            <TouchableOpacity
-              style={styles.actionSheetBtn}
-              onPress={handleDeleteProject}>
-              <Text style={styles.actionSheetIcon}>🗑️</Text>
-              <Text style={[styles.actionSheetText, styles.destructiveText]}>
+        <S.Overlay activeOpacity={1} onPress={() => setShowActionSheet(false)}>
+          <S.ActionSheet>
+            <S.ActionSheetHandle />
+            <S.ActionSheetBtn onPress={handleEditProject}>
+              <S.ActionSheetIcon>✏️</S.ActionSheetIcon>
+              <S.ActionSheetText>수정하기</S.ActionSheetText>
+            </S.ActionSheetBtn>
+            <S.ActionSheetDivider />
+            <S.ActionSheetBtn onPress={handleDeleteProject}>
+              <S.ActionSheetIcon>🗑️</S.ActionSheetIcon>
+              <S.DestructiveText>
                 {isDeleting ? '삭제 중...' : '삭제하기'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionSheetBtn, styles.cancelBtn]}
-              onPress={() => setShowActionSheet(false)}>
-              <Text style={styles.cancelText}>취소</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+              </S.DestructiveText>
+            </S.ActionSheetBtn>
+            <S.CancelBtn onPress={() => setShowActionSheet(false)}>
+              <S.CancelText>취소</S.CancelText>
+            </S.CancelBtn>
+          </S.ActionSheet>
+        </S.Overlay>
       </Modal>
 
       <CompletePostModal
@@ -425,241 +385,6 @@ export default function ProjectDetailScreen() {
         onClose={() => setCompleteModalVisible(false)}
         onConfirm={handleConfirmComplete}
       />
-    </View>
+    </S.Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  section: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#111',
-    flex: 1,
-    marginRight: 12,
-  },
-  date: {
-    fontSize: 13,
-    color: '#999',
-    marginBottom: 8,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 13,
-  },
-  badgeProgress: {
-    backgroundColor: '#f0ecff',
-  },
-  badgeProgressText: {
-    color: '#6b4fbb',
-  },
-  badgeCompleted: {
-    backgroundColor: '#e8f5e9',
-  },
-  badgeCompletedText: {
-    color: '#4CAF50',
-  },
-  badgePublic: {
-    backgroundColor: '#e3f2fd',
-  },
-  badgePublicText: {
-    color: '#1976D2',
-  },
-  badgePrivate: {
-    backgroundColor: '#f5f5f5',
-  },
-  badgePrivateText: {
-    color: '#999',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#555',
-    marginBottom: 8,
-  },
-  body: {
-    fontSize: 15,
-    color: '#333',
-    lineHeight: 22,
-  },
-  link: {
-    color: '#007AFF',
-  },
-  logItem: {
-    marginBottom: 12,
-    backgroundColor: '#fafafa',
-    padding: 12,
-    borderRadius: 8,
-  },
-  logDate: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  logContent: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-  postHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#6b4fbb',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  emptyPosts: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  emptyAddButton: {
-    backgroundColor: '#6b4fbb',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  emptyAddButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  postCard: {
-    marginBottom: 16,
-    backgroundColor: '#fafafa',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  imageScroll: {
-    height: 200,
-  },
-  postImage: {
-    width: 200,
-    height: 200,
-    marginRight: 4,
-  },
-  postContent: {
-    fontSize: 14,
-    color: '#333',
-    padding: 12,
-    lineHeight: 20,
-  },
-  postDate: {
-    fontSize: 12,
-    color: '#999',
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-  },
-  completeButton: {
-    margin: 20,
-    backgroundColor: '#6b4fbb',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  completeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  actionSheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 34,
-  },
-  actionSheetHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#ddd',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  actionSheetBtn: {
-    padding: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionSheetIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  actionSheetText: {
-    fontSize: 17,
-    color: '#000',
-  },
-  actionSheetDivider: {
-    height: 1,
-    backgroundColor: '#eee',
-    marginHorizontal: 20,
-  },
-  destructiveText: {
-    color: '#FF3B30',
-  },
-  cancelBtn: {
-    borderTopWidth: 8,
-    borderTopColor: '#f5f5f5',
-    justifyContent: 'center',
-  },
-  cancelText: {
-    fontSize: 17,
-    color: '#007AFF',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});

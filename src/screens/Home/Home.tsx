@@ -29,7 +29,10 @@ const Home = () => {
             profile_image
           ),
           projects!inner (
-            visibility
+            id,
+            title,
+            visibility,
+            is_completed
           )
         `,
         )

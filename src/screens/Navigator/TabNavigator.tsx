@@ -2,31 +2,23 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeStack from './stacks/HomeStack';
 import MyPageStack from './stacks/MyPageStack';
 import PostsStack from './stacks/PostsStack';
-import ProjectsStack from './stacks/ProjectsStack';
 
 import SvgHomeTab from '../../components/Icons/HomeTab';
 import SvgDiscoverTab from '../../components/Icons/DiscoverTab';
 import SvgMyPageTab from '../../components/Icons/MyPageTab';
-import {
-  Platform,
-  Text,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import {Text, TextStyle, TouchableOpacity, View, ViewStyle} from 'react-native';
 import {SvgProps} from 'react-native-svg';
 import {JSX} from 'react';
 import {TabParamList} from '../../@types/navigation';
-import PostCreateScreen from '../PostCreate/PostCreateScreen';
-import {useNavigation} from '@react-navigation/native';
-import useCommonNavigation from '@/hooks/useCommonNavigation';
+import PostCreateForProjectScreen from '../PostCreate/PostCreateForProjectScreen';
+import SearchScreen from '../Search/Search';
+import Icon from 'react-native-vector-icons/Feather';
+import {TAB_ROUTES} from '@/constants/navigation.constant';
 
 interface TabIconComponent {
   (props: SvgProps): JSX.Element;
 }
 
-// 커스텀 탭 아이콘 props 타입
 interface TabIconWithLabelProps {
   icon: TabIconComponent;
   label: string;
@@ -75,7 +67,6 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
 };
 
 const TabNavigator = () => {
-  const {navigation} = useCommonNavigation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -118,22 +109,47 @@ const TabNavigator = () => {
       />
       {/* <Tab.Screen
         name="PostCreatePlaceholder"
-        component={EmptyComponent}
-        options={{
+        component={PostCreateForProjectScreen}
+        options={({navigation}) => ({
+          headerShown: true,
+          title: '뜨개 추가',
+          headerStyle: {backgroundColor: '#fff'},
+          headerTintColor: '#000',
+          headerTitleStyle: {fontWeight: 'bold'},
+          // 탭 바 숨김
+          tabBarStyle: {display: 'none'},
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => {
+                // navigation history에서 이전 탭으로 이동
+                const state = navigation.getState();
+                const history = (state as any).history as
+                  | {key: string}[]
+                  | undefined;
+                if (history && history.length > 1) {
+                  const prevKey = history[history.length - 2]?.key;
+                  const prevRoute = state.routes.find(
+                    r => r.key === prevKey,
+                  );
+                  if (prevRoute) {
+                    (navigation as any).navigate(prevRoute.name);
+                    return;
+                  }
+                }
+                (navigation as any).navigate('HomeTab');
+              }}
+              style={{paddingHorizontal: 16}}>
+              <Icon name="arrow-left" size={22} color="#000" />
+            </TouchableOpacity>
+          ),
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel
               icon={SvgDiscoverTab}
               label="뜨개 추가"
-              focused={false}
+              focused={focused}
             />
           ),
-        }}
-        listeners={{
-          tabPress: e => {
-            e.preventDefault();
-            navigation.navigate('PostCreate');
-          },
-        }}
+        })}
       /> */}
       <Tab.Screen
         name="PostTab"
@@ -149,26 +165,13 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="ProjectsTab"
-        component={ProjectsStack}
-        options={{
-          tabBarIcon: ({focused}) => (
-            <TabIconWithLabel
-              icon={SvgMyPageTab}
-              label="프로젝트"
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="MyPageTab"
         component={MyPageStack}
         options={{
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel
               icon={SvgMyPageTab}
-              label="설정"
+              label="마이페이지"
               focused={focused}
             />
           ),
@@ -178,5 +181,4 @@ const TabNavigator = () => {
   );
 };
 
-const EmptyComponent = () => null;
 export default TabNavigator;

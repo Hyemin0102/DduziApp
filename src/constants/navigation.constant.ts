@@ -13,6 +13,7 @@ export const AUTH_ROUTES = {
 // ============= Tab Routes (탭 네비게이터) =============
 export const TAB_ROUTES = {
   HOME_TAB: 'HomeTab',
+  SEARCH_TAB: 'SearchTab',
   POST_CREATE_TAB: 'PostCreateTap',
   POST_TAB: 'PostTab',
   PROJECTS_TAB: 'ProjectsTab',
@@ -32,7 +33,7 @@ export const HOME_ROUTES = {
   POST_DETAIL: 'PostDetail',
   CREATE_POST: 'CreatePost',
   SEARCH: 'Search',
-  POSTS_MAIN: 'PostsMain'
+  POSTS_MAIN: 'PostsMain',
 } as const;
 
 // ============= Posts Stack Routes =============
@@ -48,4 +49,7 @@ export const POST_ROUTES = {
 export const MY_PAGE_ROUTES = {
   MY_PAGE_MAIN: 'MyPageMain',
   PROFILE_EDIT: 'ProfileEdit',
+  PROJECTS_MAIN: 'ProjectsMain',
+  PROJECT_DETAIL: 'ProjectDetail',
+  CREATE_POST_FOR_PROJECT: 'CreatePostForProject',
 } as const;

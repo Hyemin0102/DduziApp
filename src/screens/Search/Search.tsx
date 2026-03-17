@@ -57,6 +57,12 @@ const Search = () => {
             id,
             nickname,
             profile_image
+          ),
+          projects (
+            id,
+            title,
+            visibility,
+            is_completed
           )
         `,
         )

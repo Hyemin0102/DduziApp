@@ -13,16 +13,18 @@ import UserProfileCard from '../../components/common/UserProfileCard';
 import {useNavigation} from '@react-navigation/native';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 
-
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
   const {navigation} = useCommonNavigation();
 
   console.log('auth!!!', user);
-  
 
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');
+  };
+
+  const handleProject = () => {
+    navigation.navigate('ProjectsMain');
   };
 
   const handleLogout = async () => {
@@ -63,13 +65,17 @@ const Mypage = () => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}>
-
         {/* 메뉴 섹션 */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>계정</Text>
 
           <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
             <Text style={styles.menuText}>프로필 편집</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleProject}>
+            <Text style={styles.menuText}>프로젝트 관리</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 

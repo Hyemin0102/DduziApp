@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../../contexts/AuthContext';
 import {supabase} from '../../lib/supabase';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import * as S from './Profile.style';
 
 import {
   ImagePickerResponse,
@@ -22,18 +23,18 @@ const ProfileScreen = () => {
   const {navigation} = useCommonNavigation();
   const route = useRoute();
 
-  // 최초 프로필 설정 모드인지 확인 (RootStack에서 온 경우), 프로필 편집은 ProfileEdit
   const isInitialSetup = route.name === 'Profile';
 
   if (!user) {
     return (
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        <Text>사용자 정보를 불러오는 중...</Text>
-      </View>
+      <S.Container>
+        <S.Inner>
+          <S.PageTitle>사용자 정보를 불러오는 중...</S.PageTitle>
+        </S.Inner>
+      </S.Container>
     );
   }
 
-  //프로필 수정
   const [nickname, setNickname] = useState(user.nickname || '');
   const [bio, setBio] = useState(user.bio || '');
   const [loading, setLoading] = useState(false);
@@ -50,17 +51,8 @@ const ProfileScreen = () => {
         quality: 0.8,
         selectionLimit: 1,
       });
-
-      if (result.didCancel) {
-        console.log('사용자가 취소했습니다.');
-        return;
-      }
-
-      if (result.errorCode) {
-        console.log('에러:', result.errorMessage);
-        return;
-      }
-
+      if (result.didCancel) return;
+      if (result.errorCode) return;
       if (result.assets && result.assets[0]) {
         setImageUri(result.assets[0].uri || null);
       }
@@ -79,17 +71,8 @@ const ProfileScreen = () => {
         cameraType: 'back',
         saveToPhotos: true,
       });
-
-      if (result.didCancel) {
-        console.log('사용자가 취소했습니다.');
-        return;
-      }
-
-      if (result.errorCode) {
-        console.log('에러:', result.errorMessage);
-        return;
-      }
-
+      if (result.didCancel) return;
+      if (result.errorCode) return;
       if (result.assets && result.assets[0]) {
         setImageUri(result.assets[0].uri || null);
       }
@@ -104,47 +87,33 @@ const ProfileScreen = () => {
     try {
       let profileImageUrl = user.profile_image;
 
-      // 🔥 새 이미지를 선택했으면 업로드
       if (imageUri) {
         const uploadedUrl = await uploadImage(imageUri, 'profile', user.id);
-
         if (uploadedUrl) {
           profileImageUrl = uploadedUrl;
         } else {
-          console.log('✅ 이미지 업로드 실패');
           setLoading(false);
           return;
         }
       }
 
-      // DB 업데이트
       const {error} = await supabase
         .from('users')
-        .update({
-          nickname,
-          bio,
-          profile_image: profileImageUrl,
-        })
+        .update({nickname, bio, profile_image: profileImageUrl})
         .eq('id', user.id);
 
       if (error) throw error;
 
-      // AuthContext의 user 상태 업데이트
       updateUserProfile({
-        nickname: nickname,
-        bio: bio,
+        nickname,
+        bio,
         profile_image: profileImageUrl,
       });
 
       if (isInitialSetup) {
-        // 최초 프로필 설정 완료
         await AsyncStorage.removeItem('needsProfileSetup');
         setNeedsProfileSetup(false);
-        console.log('✅ 최초 프로필 설정 완료 - Home으로 자동 이동');
-        // needsProfileSetup false로 Navigator가 자동으로 TabNavigator로 전환
       } else {
-        // 프로필 편집 완료 - 이전 화면으로 돌아가기
-        console.log('✅ 프로필 업데이트 완료 - 이전 화면으로 이동');
         navigation.goBack();
       }
     } catch (error) {
@@ -155,81 +124,30 @@ const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <S.Container>
       <KeyboardAvoid>
-        <View
-          style={{
-            flexGrow: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}>
-          <Text style={{fontSize: 24, marginBottom: 20}}>프로필 설정</Text>
+        <S.Inner>
+          <S.PageTitle>프로필 설정</S.PageTitle>
 
-          <View
-            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <S.ImageSection>
             {displayImage ? (
-              <Image
-                source={{uri: displayImage}}
-                style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: 60,
-                  marginBottom: 20,
-                }}
-              />
+              <S.ProfileImage source={{uri: displayImage}} />
             ) : (
-              <View
-                style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: 60,
-                  backgroundColor: '#ddd',
-                  marginBottom: 20,
-                }}
-              />
+              <S.ProfileImagePlaceholder />
             )}
-
             <Button title="갤러리에서 선택" onPress={selectImage} />
             <Button title="카메라로 촬영" onPress={takePhoto} />
-          </View>
+          </S.ImageSection>
 
-          {/* 닉네임 입력 */}
-          <Text
-            style={{fontSize: 16, marginBottom: 10, alignSelf: 'flex-start'}}>
-            닉네임
-          </Text>
-          <TextInput
-            style={{
-              width: '100%',
-              height: 50,
-              borderWidth: 1,
-              borderColor: '#ddd',
-              borderRadius: 8,
-              padding: 10,
-              marginBottom: 20,
-            }}
+          <S.Label>닉네임</S.Label>
+          <S.Input
             placeholder="닉네임을 입력하세요"
             value={nickname}
             onChangeText={setNickname}
           />
 
-          {/* 자기소개 입력 */}
-          <Text
-            style={{fontSize: 16, marginBottom: 10, alignSelf: 'flex-start'}}>
-            자기소개
-          </Text>
-          <TextInput
-            style={{
-              width: '100%',
-              height: 100,
-              borderWidth: 1,
-              borderColor: '#ddd',
-              borderRadius: 8,
-              padding: 10,
-              marginBottom: 20,
-              textAlignVertical: 'top',
-            }}
+          <S.Label>자기소개</S.Label>
+          <S.TextArea
             multiline
             placeholder="자기소개를 입력하세요"
             value={bio}
@@ -241,9 +159,9 @@ const ProfileScreen = () => {
             onPress={handleSave}
             disabled={loading || !nickname.trim() || !bio.trim()}
           />
-        </View>
+        </S.Inner>
       </KeyboardAvoid>
-    </SafeAreaView>
+    </S.Container>
   );
 };
 

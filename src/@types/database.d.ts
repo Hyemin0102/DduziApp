@@ -40,6 +40,7 @@ export interface ProjectBase {
   needle_info?: string | null;
   is_completed: boolean;
   visibility: 'public' | 'private';
+  progress?: number;
   created_at: string;
   updated_at: string;
 }
@@ -76,7 +77,7 @@ export interface Post extends SimplePost {
     nickname: string;
     profile_image: string;
   };
-  projects: Pick<ProjectBase, 'id' | 'title' | 'visibility'>;
+  projects: Pick<ProjectBase, 'id' | 'title' | 'visibility' | 'is_completed'>;
 }
 
 // 상세 페이지용 (플랫 구조)

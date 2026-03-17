@@ -22,6 +22,7 @@ export type RootStackParamList = {
   [ROOT_ROUTES.PROFILE]: undefined;
   [ROOT_ROUTES.TAB_NAVIGATOR]: NavigatorScreenParams<TabParamList>;
   PostCreate: undefined;
+  CreatePostForProject: {projectId?: string; projectTitle?: string} | undefined;
 };
 
 // Auth Stack
@@ -32,6 +33,7 @@ export type AuthStackParamList = {
 // Tab Navigator
 export type TabParamList = {
   [TAB_ROUTES.HOME_TAB]: NavigatorScreenParams<HomeStackParamList>;
+  [TAB_ROUTES.SEARCH_TAB]: undefined;
   [TAB_ROUTES.POST_TAB]: NavigatorScreenParams<PostsStackParamList>;
   [TAB_ROUTES.PROJECTS_TAB]: NavigatorScreenParams<ProjectsStackParamList>;
   [TAB_ROUTES.MY_PAGE_TAB]: NavigatorScreenParams<MyPageStackParamList>;
@@ -78,6 +80,12 @@ export type PostsStackParamList = {
 export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.MY_PAGE_MAIN]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
+  [MY_PAGE_ROUTES.PROJECTS_MAIN]: undefined;
+  [MY_PAGE_ROUTES.PROJECT_DETAIL]: {projectId: string; projectTitle?: string};
+  [MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT]:
+    | {projectId?: string; projectTitle?: string}
+    | undefined;
+  [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 
 // ============= Navigation Props =============

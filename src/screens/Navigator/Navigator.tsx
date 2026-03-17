@@ -8,6 +8,7 @@ import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
 import PostCreateScreen from '../PostCreate/PostCreateScreen';
+import PostCreateForProjectScreen from '../PostCreate/PostCreateForProjectScreen';
 import {Title} from '../PostDetail/PostDetailScreen.styles';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -47,6 +48,18 @@ const Navigator = () => {
                 headerShown: false,
                 title: '뜨개 추가',
                 animation: 'slide_from_right',
+              }}
+            />
+            <RootStack.Screen
+              name="CreatePostForProject"
+              component={PostCreateForProjectScreen}
+              options={{
+                headerShown: true,
+                title: '뜨개 추가',
+                headerStyle: {backgroundColor: '#fff'},
+                headerTintColor: '#000',
+                headerTitleStyle: {fontWeight: 'bold'},
+                animation: 'slide_from_bottom',
               }}
             />
           </>

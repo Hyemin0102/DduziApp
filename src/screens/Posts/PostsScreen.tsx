@@ -2,8 +2,6 @@
 import React, {useState, useCallback, useEffect} from 'react';
 import {
   FlatList,
-  ScrollView,
-  Image,
   RefreshControl,
   ActivityIndicator,
   Dimensions,
@@ -16,13 +14,9 @@ import UserProfileCard from '@/components/common/UserProfileCard';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {PostsStackParamList} from '@/@types/navigation';
 
-const STORAGE_KEY_IN_PROGRESS = '@view_mode_in_progress';
-const STORAGE_KEY_COMPLETED = '@view_mode_completed';
 type TabType = 'inProgress' | 'completed';
-type ViewMode = 'list' | 'grid';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const GRID_ITEM_SIZE = SCREEN_WIDTH / 3;
@@ -54,47 +48,9 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
-  const [viewModes, setViewModes] = useState<Record<TabType, ViewMode>>({
-    inProgress: 'list',
-    completed: 'list',
-  });
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
-
-  useEffect(() => {
-    loadViewModes();
-  }, []);
-
-  const loadViewModes = async () => {
-    try {
-      const [inProgress, completed] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEY_IN_PROGRESS),
-        AsyncStorage.getItem(STORAGE_KEY_COMPLETED),
-      ]);
-      setViewModes({
-        inProgress: (inProgress as ViewMode) || 'list',
-        completed: (completed as ViewMode) || 'list',
-      });
-    } catch (error) {
-      console.error('보기 방식 불러오기 실패:', error);
-    }
-  };
-
-  const handleViewModeChange = async (mode: ViewMode) => {
-    setViewModes(prev => ({...prev, [activeTab]: mode}));
-    try {
-      const storageKey =
-        activeTab === 'inProgress'
-          ? STORAGE_KEY_IN_PROGRESS
-          : STORAGE_KEY_COMPLETED;
-      await AsyncStorage.setItem(storageKey, mode);
-    } catch (error) {
-      console.error('보기 방식 저장 실패:', error);
-    }
-  };
-
-  const currentViewMode = viewModes[activeTab];
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -198,63 +154,10 @@ export default function PostsScreen({route}: PostsScreenProps) {
     navigation.navigate(POST_ROUTES.POST_DETAIL, {postId});
   };
 
-  const renderListItem = ({item}: {item: PostListItem}) => {
-    const sortedImages = [...item.post_images].sort(
-      (a, b) => a.display_order - b.display_order,
-    );
-
-    return (
-      <S.PostCard>
-        {sortedImages.length > 0 ? (
-          <S.ImageContainer>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={SCREEN_WIDTH - 32}
-              decelerationRate="fast"
-              style={{height: 200}}>
-              {sortedImages.map((image, index) => (
-                <S.ImageContainer
-                  key={image.id}
-                  style={{width: SCREEN_WIDTH - 32}}>
-                  <S.PostImage
-                    source={{uri: image.image_url}}
-                    style={{width: '100%', height: '100%'}}
-                  />
-                  {sortedImages.length > 1 && (
-                    <S.ImageCounter>
-                      {index + 1} / {sortedImages.length}
-                    </S.ImageCounter>
-                  )}
-                </S.ImageContainer>
-              ))}
-            </ScrollView>
-          </S.ImageContainer>
-        ) : (
-          <S.NoImageContainer>
-            <S.NoImageText>🧶</S.NoImageText>
-          </S.NoImageContainer>
-        )}
-
-        <S.PostInfo onPress={() => navigateToDetail(item.id)} activeOpacity={0.8}>
-          {item.projects?.title ? (
-            <S.PostTitle numberOfLines={1}>{item.projects.title}</S.PostTitle>
-          ) : null}
-          {item.content ? (
-            <S.PostDate numberOfLines={2}>{item.content}</S.PostDate>
-          ) : null}
-          <S.PostDate>
-            {new Date(item.created_at).toLocaleDateString('ko-KR')}
-          </S.PostDate>
-        </S.PostInfo>
-      </S.PostCard>
-    );
-  };
-
   const renderGridItem = ({item}: {item: PostListItem}) => {
-    const firstImage = [...item.post_images]
-      .sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
+    const firstImage = [...item.post_images].sort(
+      (a, b) => a.display_order - b.display_order,
+    )[0]?.image_url;
 
     return (
       <S.GridItem
@@ -321,40 +224,22 @@ export default function PostsScreen({route}: PostsScreenProps) {
         </S.TabContainer>
       )}
 
-      <S.ViewModeToggle>
-        <S.ViewModeButton
-          onPress={() => handleViewModeChange('list')}
-          active={currentViewMode === 'list'}>
-          <Icon
-            name="list"
-            size={20}
-            color={currentViewMode === 'list' ? '#007AFF' : '#999'}
-          />
+      {/* <S.ViewModeToggle>
+        <S.ViewModeButton onPress={() => handleViewModeChange('list')} active={currentViewMode === 'list'}>
+          <Icon name="list" size={20} color={currentViewMode === 'list' ? '#007AFF' : '#999'} />
         </S.ViewModeButton>
-        <S.ViewModeButton
-          onPress={() => handleViewModeChange('grid')}
-          active={currentViewMode === 'grid'}>
-          <Icon
-            name="grid"
-            size={20}
-            color={currentViewMode === 'grid' ? '#007AFF' : '#999'}
-          />
+        <S.ViewModeButton onPress={() => handleViewModeChange('grid')} active={currentViewMode === 'grid'}>
+          <Icon name="grid" size={20} color={currentViewMode === 'grid' ? '#007AFF' : '#999'} />
         </S.ViewModeButton>
-      </S.ViewModeToggle>
+      </S.ViewModeToggle> */}
 
       <FlatList
         data={filteredPosts}
-        renderItem={
-          currentViewMode === 'list' ? renderListItem : renderGridItem
-        }
+        renderItem={renderGridItem}
         keyExtractor={item => item.id}
-        key={`${activeTab}-${currentViewMode}`}
-        numColumns={currentViewMode === 'grid' ? 3 : 1}
-        contentContainerStyle={
-          currentViewMode === 'list'
-            ? {paddingHorizontal: 16, paddingVertical: 20, gap: 16}
-            : {paddingVertical: 20}
-        }
+        key={activeTab}
+        numColumns={3}
+        contentContainerStyle={{}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
