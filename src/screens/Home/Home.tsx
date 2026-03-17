@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react';
-import {ActivityIndicator, FlatList} from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react';
+import {FlatList, StyleSheet, View} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import * as S from './Home.style';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
+import PostCardSkeleton from '@/components/skeleton/PostCardSkeleton';
 import {Post} from '@/@types/database';
 
 const Home = () => {
@@ -11,12 +12,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  console.log('posts', posts);
-
   const fetchPosts = async () => {
     try {
-      setLoading(true);
-
       const {data, error} = await supabase
         .from('posts')
         .select(
@@ -39,10 +36,7 @@ const Home = () => {
         .eq('projects.visibility', 'public')
         .order('created_at', {ascending: false});
 
-      if (error) {
-        console.error('posts 조회 실패:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const allPosts: Post[] = data
         ? (data as any[]).map((post: any) => ({
@@ -57,7 +51,7 @@ const Home = () => {
     } catch (error) {
       console.error('게시물 로드 실패:', error);
     } finally {
-      setLoading(false);
+      setLoading(false); // 데이터만 오면 바로 스켈레톤 해제
     }
   };
 
@@ -73,47 +67,46 @@ const Home = () => {
 
   const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
 
-  const renderEmptyComponent = () => {
-    if (loading) {
-      return (
-        <S.LoadingContainer>
-          <ActivityIndicator size="large" color="#007AFF" />
-        </S.LoadingContainer>
-      );
-    }
-
-    if (posts.length === 0) {
-      return (
-        <S.EmptyContainer>
-          <S.EmptyText>게시물이 없습니다</S.EmptyText>
-        </S.EmptyContainer>
-      );
-    }
-
-    return null;
-  };
-
   return (
     <S.Container>
-      <FlatList
-        data={loading ? [] : posts}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-        ListEmptyComponent={renderEmptyComponent}
-        contentContainerStyle={{
-          paddingVertical: 16,
-          flexGrow: 1,
-        }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#007AFF"
+      {loading ? (
+        <View style={styles.fill}>
+          <FlatList
+            data={new Array(5).fill('')}
+            keyExtractor={(_, idx) => String(idx)}
+            renderItem={() => <PostCardSkeleton count={1} />}
+            contentContainerStyle={{paddingVertical: 16}}
+            scrollEnabled={false}
           />
-        }
-      />
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={{paddingVertical: 16, flexGrow: 1}}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#007AFF"
+            />
+          }
+          ListEmptyComponent={
+            <S.EmptyContainer>
+              <S.EmptyText>게시물이 없습니다</S.EmptyText>
+            </S.EmptyContainer>
+          }
+        />
+      )}
     </S.Container>
   );
 };
 
 export default Home;
+
+const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
+});

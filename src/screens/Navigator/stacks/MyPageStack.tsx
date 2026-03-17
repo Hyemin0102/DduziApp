@@ -14,6 +14,8 @@ const MyPageStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
+        headerBackTitle: '',
+        headerBackButtonDisplayMode: 'minimal',
         headerStyle: {
           backgroundColor: '#fff',
         },
@@ -41,7 +43,7 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
         options={({route}) => ({
-          title: route.params?.projectTitle || '프로젝트 상세',
+          title: '',
         })}
       />
       <Stack.Screen

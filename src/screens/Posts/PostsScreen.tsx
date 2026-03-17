@@ -1,6 +1,12 @@
 // screens/Posts/PostsScreen.tsx
 import React, {useState, useCallback, useEffect, useRef} from 'react';
-import {FlatList, RefreshControl, Dimensions, Image, View, StyleSheet} from 'react-native';
+import {
+  FlatList,
+  RefreshControl,
+  Dimensions,
+  Animated,
+  View,
+} from 'react-native';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
 import {supabase} from '@/lib/supabase';
@@ -9,7 +15,6 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
 import {PostsStackParamList} from '@/@types/navigation';
-import PostsGridSkeleton from '@/components/skeleton/PostsGridSkeletom';
 
 type TabType = 'inProgress' | 'completed';
 
@@ -35,26 +40,45 @@ interface PostListItem {
   projects: {title: string; is_completed: boolean; visibility: string} | null;
 }
 
+const SKELETON_DATA = new Array(0)
+  .fill(null)
+  .map((_, i) => ({id: `skeleton-${i}`}));
+
 const getFirstImageUrl = (post: PostListItem) =>
   [...post.post_images].sort((a, b) => a.display_order - b.display_order)[0]
     ?.image_url;
 
+// ── 실제 그리드 셀 (이미지 로드 전엔 ShimmerCell 오버레이)
 const GridCell = ({
   item,
   onPress,
-  onFirstImageLoad,
 }: {
   item: PostListItem;
   onPress: () => void;
-  onFirstImageLoad?: () => void;
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const shimmerOpacity = useRef(new Animated.Value(0.4)).current;
   const firstImage = getFirstImageUrl(item);
 
-  const handleLoadEnd = () => {
-    setImageLoaded(true);
-    onFirstImageLoad?.();
-  };
+  useEffect(() => {
+    if (imageLoaded) return;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerOpacity, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerOpacity, {
+          toValue: 0.4,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [imageLoaded]);
 
   return (
     <S.GridItem
@@ -63,10 +87,21 @@ const GridCell = ({
       activeOpacity={0.8}>
       {firstImage ? (
         <>
+          {!imageLoaded && (
+            <Animated.View
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundColor: '#e8e8e8',
+                opacity: shimmerOpacity,
+              }}
+            />
+          )}
           <S.GridImage
             source={{uri: firstImage}}
             resizeMode="cover"
-            onLoadEnd={handleLoadEnd}
+            onLoadEnd={() => setImageLoaded(true)}
+            style={{opacity: imageLoaded ? 1 : 0}}
           />
           {imageLoaded && item.post_images.length > 1 && (
             <S.MultipleImageIcon>
@@ -92,13 +127,9 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const {navigation} = useCommonNavigation<any>();
   const [posts, setPosts] = useState<PostListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadedTabs, setLoadedTabs] = useState<Set<TabType>>(new Set());
-  const [imagesRendered, setImagesRendered] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
-
-  const imageRenderedRef = useRef(false);
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
@@ -112,24 +143,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
     };
     getCurrentUser();
   }, []);
-
-  const resetImageRendered = () => {
-    imageRenderedRef.current = false;
-    setImagesRendered(false);
-  };
-
-  const handleFirstImageLoad = useCallback(() => {
-    if (!imageRenderedRef.current) {
-      imageRenderedRef.current = true;
-      setImagesRendered(true);
-    }
-  }, []);
-
-  const prefetchTab = async (tabPosts: PostListItem[], tab: TabType) => {
-    const urls = tabPosts.map(getFirstImageUrl).filter(Boolean) as string[];
-    await Promise.all(urls.map(url => Image.prefetch(url)));
-    setLoadedTabs(prev => new Set([...prev, tab]));
-  };
 
   const fetchPosts = async () => {
     try {
@@ -158,23 +171,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
       const {data, error} = await query;
       if (error) throw error;
 
-      const fetchedPosts = (data as unknown as PostListItem[]) || [];
-      setPosts(fetchedPosts);
-
-      const inProgressPosts = fetchedPosts.filter(
-        p => !p.projects?.is_completed,
-      );
-      const completedPosts = fetchedPosts.filter(p => p.projects?.is_completed);
-
-      await prefetchTab(inProgressPosts, 'inProgress');
-      prefetchTab(completedPosts, 'completed');
-
-      // 이미지가 없는 경우 skeleton을 바로 해제
-      const hasImages = inProgressPosts.some(getFirstImageUrl);
-      if (!hasImages) {
-        setImagesRendered(true);
-        imageRenderedRef.current = true;
-      }
+      setPosts((data as unknown as PostListItem[]) || []);
     } catch (error) {
       console.error('❌ 게시물 로드 실패:', error);
     } finally {
@@ -187,8 +184,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
     useCallback(() => {
       if (currentUserId) {
         setLoading(true);
-        setLoadedTabs(new Set());
-        resetImageRendered();
         fetchPosts();
       }
     }, [currentUserId, targetUserId]),
@@ -196,57 +191,22 @@ export default function PostsScreen({route}: PostsScreenProps) {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setLoadedTabs(new Set());
-    resetImageRendered();
     fetchPosts();
-  };
-
-  const handleTabChange = (tab: TabType) => {
-    if (tab !== activeTab) {
-      resetImageRendered();
-      // 전환할 탭에 이미지가 없으면 바로 해제
-      const tabPosts = posts.filter(p =>
-        tab === 'inProgress' ? !p.projects?.is_completed : p.projects?.is_completed,
-      );
-      if (!tabPosts.some(getFirstImageUrl)) {
-        setImagesRendered(true);
-        imageRenderedRef.current = true;
-      }
-      setActiveTab(tab);
-    }
-  };
-
-  const handleCreatePost = () => {
-    navigation.navigate(POST_ROUTES.CREATE_POST);
   };
 
   const getIsCompleted = (post: PostListItem) =>
     post.projects?.is_completed ?? false;
 
   const filteredPosts = isMyPage
-    ? posts.filter(post => {
-        const isCompleted = getIsCompleted(post);
-        return activeTab === 'inProgress' ? !isCompleted : isCompleted;
-      })
+    ? posts.filter(post =>
+        activeTab === 'inProgress'
+          ? !getIsCompleted(post)
+          : getIsCompleted(post),
+      )
     : posts;
 
   const inProgressCount = posts.filter(p => !getIsCompleted(p)).length;
   const completedCount = posts.filter(p => getIsCompleted(p)).length;
-
-  const isTabLoading = loading || !loadedTabs.has(activeTab);
-  const showSkeletonOverlay = !isTabLoading && !imagesRendered;
-  const skeletonCount =
-    activeTab === 'inProgress' ? inProgressCount : completedCount;
-
-  const renderGridItem = ({item}: {item: PostListItem}) => (
-    <GridCell
-      item={item}
-      onPress={() =>
-        navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: item.id})
-      }
-      onFirstImageLoad={handleFirstImageLoad}
-    />
-  );
 
   return (
     <S.Container>
@@ -261,7 +221,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
         <S.TabContainer>
           <S.Tab
             active={activeTab === 'inProgress'}
-            onPress={() => handleTabChange('inProgress')}>
+            onPress={() => setActiveTab('inProgress')}>
             <S.TabText active={activeTab === 'inProgress'}>
               뜨개 중 ({inProgressCount})
             </S.TabText>
@@ -269,7 +229,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
           </S.Tab>
           <S.Tab
             active={activeTab === 'completed'}
-            onPress={() => handleTabChange('completed')}>
+            onPress={() => setActiveTab('completed')}>
             <S.TabText active={activeTab === 'completed'}>
               뜨개 완료 ({completedCount})
             </S.TabText>
@@ -278,63 +238,53 @@ export default function PostsScreen({route}: PostsScreenProps) {
         </S.TabContainer>
       )}
 
-      <View style={styles.gridArea}>
-        {/* FlatList는 항상 마운트, skeleton이 위에서 가림 */}
-        {!isTabLoading && (
-          <FlatList
-            data={filteredPosts}
-            renderItem={renderGridItem}
-            keyExtractor={item => item.id}
-            key={activeTab}
-            numColumns={3}
-            contentContainerStyle={{}}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-            }
-            ListEmptyComponent={
-              <S.EmptyContainer>
-                <S.EmptyIcon>📝</S.EmptyIcon>
-                <S.EmptyText>
-                  {isMyPage
-                    ? activeTab === 'inProgress'
-                      ? '진행 중인 뜨개가 없어요'
-                      : '완료된 뜨개가 없어요'
-                    : '작성한 게시물이 없어요'}
-                </S.EmptyText>
-                <S.EmptySubText>
-                  {isMyPage
-                    ? activeTab === 'inProgress'
-                      ? '첫 프로젝트를 시작해보세요! 🧶'
-                      : '뜨개를 완료해보세요!'
-                    : ''}
-                </S.EmptySubText>
-                {isMyPage && activeTab === 'inProgress' && (
-                  <S.EmptyAddButton onPress={handleCreatePost}>
-                    <S.EmptyAddButtonText>뜨개 추가하기</S.EmptyAddButtonText>
-                  </S.EmptyAddButton>
-                )}
-              </S.EmptyContainer>
+      <FlatList
+        data={filteredPosts}
+        renderItem={({item, index}) => (
+          <GridCell
+            item={item as PostListItem}
+            onPress={() =>
+              navigation.navigate(POST_ROUTES.POST_DETAIL, {
+                postId: (item as PostListItem).id,
+              })
             }
           />
         )}
-
-        {/* prefetch 중 또는 이미지 렌더링 전 skeleton overlay */}
-        {(isTabLoading || showSkeletonOverlay) && (
-          <View style={isTabLoading ? styles.fill : StyleSheet.absoluteFillObject}>
-            <PostsGridSkeleton count={skeletonCount} />
-          </View>
-        )}
-      </View>
+        keyExtractor={item => item.id}
+        key={activeTab}
+        numColumns={3}
+        contentContainerStyle={{}}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <S.EmptyContainer>
+              <S.EmptyIcon>📝</S.EmptyIcon>
+              <S.EmptyText>
+                {isMyPage
+                  ? activeTab === 'inProgress'
+                    ? '진행 중인 뜨개가 없어요'
+                    : '완료된 뜨개가 없어요'
+                  : '작성한 게시물이 없어요'}
+              </S.EmptyText>
+              <S.EmptySubText>
+                {isMyPage
+                  ? activeTab === 'inProgress'
+                    ? '첫 프로젝트를 시작해보세요! 🧶'
+                    : '뜨개를 완료해보세요!'
+                  : ''}
+              </S.EmptySubText>
+              {isMyPage && activeTab === 'inProgress' && (
+                <S.EmptyAddButton
+                  onPress={() => navigation.navigate(POST_ROUTES.CREATE_POST)}>
+                  <S.EmptyAddButtonText>뜨개 추가하기</S.EmptyAddButtonText>
+                </S.EmptyAddButton>
+              )}
+            </S.EmptyContainer>
+          ) : null
+        }
+      />
     </S.Container>
   );
 }
-
-const styles = StyleSheet.create({
-  gridArea: {
-    flex: 1,
-    position: 'relative',
-  },
-  fill: {
-    flex: 1,
-  },
-});

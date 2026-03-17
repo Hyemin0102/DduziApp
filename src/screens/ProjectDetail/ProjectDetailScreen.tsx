@@ -255,6 +255,10 @@ export default function ProjectDetailScreen() {
   const handleSaveRef = useRef<() => void>(() => {});
 
   useLayoutEffect(() => {
+    navigation.setOptions({
+      title: isCreateMode ? '프로젝트 생성' : project?.title ?? '',
+    });
+
     if (isDirty) {
       navigation.setOptions({
         headerRight: () => (
@@ -265,15 +269,10 @@ export default function ProjectDetailScreen() {
             <S.SubmitText>{isSubmitting ? '저장 중...' : '완료'}</S.SubmitText>
           </TouchableOpacity>
         ),
-        title: isCreateMode
-          ? '프로젝트 생성'
-          : project?.title || '프로젝트 상세',
       });
     } else {
       navigation.setOptions({
         headerRight: undefined,
-        title:
-          project?.title || (isCreateMode ? '프로젝트 생성' : '프로젝트 상세'),
       });
     }
   }, [isDirty, isSubmitting, isCreateMode, project?.title, navigation]);

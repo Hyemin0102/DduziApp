@@ -1,9 +1,5 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Keyboard,
-} from 'react-native';
+import {ActivityIndicator, FlatList, Keyboard} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
@@ -126,7 +122,9 @@ const Search = () => {
       return (
         <S.CenterContainer>
           <S.EmptyText>검색어를 입력해주세요</S.EmptyText>
-          <S.EmptySubText>제목 또는 작성자로 검색할 수 있습니다</S.EmptySubText>
+          <S.EmptySubText>
+            프로젝트 제목 또는 작성자로 검색할 수 있습니다
+          </S.EmptySubText>
         </S.CenterContainer>
       );
     }
@@ -137,15 +135,16 @@ const Search = () => {
   return (
     <S.Container>
       <S.SearchHeader>
-      <S.BackButton onPress={() => {
-          Keyboard.dismiss(); // 🔥 뒤로가기 버튼 클릭 시 키보드 닫기
-          navigation.goBack();
-        }}>
+        <S.BackButton
+          onPress={() => {
+            Keyboard.dismiss(); // 🔥 뒤로가기 버튼 클릭 시 키보드 닫기
+            navigation.goBack();
+          }}>
           <Icon name="chevron-left" size={28} color="#333" />
         </S.BackButton>
         <S.SearchInputContainer>
           <S.SearchInput
-            placeholder="제목 또는 작성자 검색"
+            placeholder="프로젝트 제목 또는 작성자 검색"
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={() => handleSearch(searchQuery)}
@@ -170,8 +169,6 @@ const Search = () => {
         renderItem={renderItem}
         ListEmptyComponent={renderEmptyComponent}
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: 20,
           flexGrow: 1,
         }}
         refreshControl={

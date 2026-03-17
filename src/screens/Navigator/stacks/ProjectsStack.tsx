@@ -16,6 +16,8 @@ const ProjectsStack = () => {
         headerStyle: {backgroundColor: '#fff'},
         headerTintColor: '#000',
         headerTitleStyle: {fontWeight: 'bold'},
+        headerBackTitle: '',
+        headerBackButtonDisplayMode: 'minimal',
       }}>
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECTS_MAIN}
@@ -25,8 +27,8 @@ const ProjectsStack = () => {
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
-        options={({route}) => ({
-          title: route.params?.projectTitle || '프로젝트 상세',
+        options={() => ({
+          title: '',
         })}
       />
       <Stack.Screen

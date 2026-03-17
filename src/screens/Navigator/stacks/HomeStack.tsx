@@ -44,6 +44,7 @@ const HomeStack = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        headerBackButtonDisplayMode: 'minimal',
         headerBackTitle: '',
       }}>
       <Stack.Screen
@@ -79,7 +80,7 @@ const HomeStack = () => {
         name={POST_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
         options={({route}) => ({
-          title: route.params?.projectTitle || '프로젝트 상세',
+          title: '',
         })}
       />
       <Stack.Screen

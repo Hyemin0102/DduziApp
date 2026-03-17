@@ -67,8 +67,6 @@ const Mypage = () => {
         contentContainerStyle={styles.scrollContent}>
         {/* 메뉴 섹션 */}
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>계정</Text>
-
           <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
             <Text style={styles.menuText}>프로필 편집</Text>
             <Text style={styles.menuArrow}>›</Text>

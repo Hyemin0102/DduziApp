@@ -1,12 +1,6 @@
-import React from 'react';
-import {ScrollView, TouchableOpacity, Dimensions} from 'react-native';
-
-import {useNavigation} from '@react-navigation/native';
-import {
-  HOME_ROUTES,
-  POST_ROUTES,
-  TAB_ROUTES,
-} from '@/constants/navigation.constant';
+import React, {useState} from 'react';
+import {ScrollView, TouchableOpacity, Dimensions, View} from 'react-native';
+import {POST_ROUTES} from '@/constants/navigation.constant';
 import styled from '@emotion/native';
 import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -18,10 +12,24 @@ interface PostCardProps {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-//홈, 탐색 페이지에서 사용
+// 이미지 개별 로드 placeholder
+const PostImage = ({uri}: {uri: string}) => {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <View style={{width: '100%', height: '100%', backgroundColor: '#f0f0f0'}}>
+      <S.PostImage
+        source={{uri}}
+        onLoadEnd={() => setLoaded(true)}
+        style={{opacity: loaded ? 1 : 0}}
+      />
+    </View>
+  );
+};
+
 const PostCard: React.FC<PostCardProps> = ({post}) => {
   const {navigation} = useCommonNavigation();
-  console.log('post', post);
+
   return (
     <S.CardContainer>
       {/* 프로필 영역 */}
@@ -48,10 +56,12 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
           style={{height: 200}}>
           {post.post_images.map((image, index) => (
             <S.ImageContainer key={index} style={{width: SCREEN_WIDTH - 36}}>
-              <S.PostImage source={{uri: image.image_url}} />
-              <S.ImageCounter>
-                {index + 1} / {post.post_images.length}
-              </S.ImageCounter>
+              <PostImage uri={image.image_url} />
+              {post.post_images.length > 1 && (
+                <S.ImageCounter>
+                  {index + 1} / {post.post_images.length}
+                </S.ImageCounter>
+              )}
             </S.ImageContainer>
           ))}
         </ScrollView>
@@ -87,7 +97,6 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
 const S = {
   CardContainer: styled.View`
-    //background-color: #fff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
@@ -109,7 +118,6 @@ const S = {
     color: #333;
   `,
   ImageContainer: styled.View`
-    width: ${SCREEN_WIDTH}px;
     height: 200px;
     position: relative;
   `,
@@ -129,12 +137,6 @@ const S = {
   `,
   ContentSection: styled.View`
     margin-top: 12px;
-  `,
-  Title: styled.Text`
-    font-weight: 700;
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 8px;
   `,
   Content: styled.Text`
     font-size: 14px;

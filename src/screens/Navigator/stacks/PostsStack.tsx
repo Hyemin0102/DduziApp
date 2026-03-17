@@ -28,6 +28,7 @@ const PostsStack = () => {
           fontWeight: 'bold',
         },
         headerBackTitle: '',
+        headerBackButtonDisplayMode: 'minimal',
       }}>
       <Stack.Screen
         name={POST_ROUTES.POSTS_MAIN}
@@ -63,7 +64,7 @@ const PostsStack = () => {
         name={POST_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
         options={({route}) => ({
-          title: route.params?.projectTitle || '프로젝트 상세',
+          title: '',
         })}
       />
       <Stack.Screen
