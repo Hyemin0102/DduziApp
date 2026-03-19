@@ -46,6 +46,8 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
     flex: 1,
   };
 
+  console.log('size', size);
+
   const textStyle: TextStyle = {
     color: focused ? activeColor : inactiveColor,
     fontWeight: focused ? 'bold' : 'normal',
@@ -72,7 +74,7 @@ const TabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          paddingTop: 14,
+          paddingTop: 10,
           borderTopColor: '#EAEEF4',
           borderWidth: 1,
           shadowColor: '#000',
@@ -103,7 +105,12 @@ const TabNavigator = () => {
         component={HomeStack}
         options={{
           tabBarIcon: ({focused}) => (
-            <TabIconWithLabel icon={SvgHomeTab} label="홈" focused={focused} />
+            <TabIconWithLabel
+              icon={SvgHomeTab}
+              label="홈"
+              focused={focused}
+              size={26}
+            />
           ),
         }}
       />
@@ -157,9 +164,10 @@ const TabNavigator = () => {
         options={{
           tabBarIcon: ({focused}) => (
             <TabIconWithLabel
-              icon={SvgMyPageTab}
+              icon={SvgDiscoverTab}
               label="내 뜨개"
               focused={focused}
+              size={28}
             />
           ),
         }}
@@ -173,6 +181,7 @@ const TabNavigator = () => {
               icon={SvgMyPageTab}
               label="마이페이지"
               focused={focused}
+              size={22}
             />
           ),
         }}

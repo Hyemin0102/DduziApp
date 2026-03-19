@@ -101,15 +101,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    paddingRight: 8,
+    height: 30,
   },
   logo: {
-    width: 80,
-    height: 32,
+    width: 30,
   },
-  searchButton: {
-    padding: 8,
-  },
+  searchButton: {},
 });
 
 export default HomeStack;
