@@ -109,9 +109,11 @@ export const PlaceholderText = styled.Text`
   line-height: 22px;
 `;
 
-export const LogItem = styled.View`
+export const LogItem = styled.View<{isEditable?: boolean}>`
   margin-bottom: 12px;
-  background-color: #fafafa;
+  background-color: ${({isEditable}) => (isEditable ? '#fff' : '#fafafa')};
+  border-width: ${({isEditable}) => (isEditable ? '1px' : '0px')};
+  border-color: #e5e5e5;
   padding: 12px;
   border-radius: 8px;
 `;
@@ -126,6 +128,15 @@ export const LogContent = styled.Text`
   font-size: 14px;
   color: #333;
   line-height: 20px;
+`;
+
+export const LogInputWrapper = styled.View<{isFocused: boolean}>`
+  margin-top: 6px;
+  background-color: ${({isFocused}) => (isFocused ? '#fff' : 'transparent')};
+  border-radius: ${({isFocused}) => (isFocused ? '8px' : '0px')};
+  border-width: ${({isFocused}) => (isFocused ? '1px' : '0px')};
+  border-color: #d0bfff;
+  padding: ${({isFocused}) => (isFocused ? '8px' : '0px')};
 `;
 
 export const LogEditItem = styled.View`
@@ -145,10 +156,8 @@ export const LogEditHeader = styled.View`
 `;
 
 export const LogInput = styled.TextInput`
-  padding: 8px 0 0;
   font-size: 14px;
   color: #000;
-  min-height: 64px;
 `;
 
 export const PostHeaderRow = styled.View`

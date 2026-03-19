@@ -7,6 +7,8 @@ import React, {
 } from 'react';
 import {
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   ActivityIndicator,
   Alert,
   TouchableOpacity,
@@ -29,6 +31,7 @@ import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import * as S from './ProjectDetailScreen.styles';
+import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 
 type RouteProps = RouteProp<
   {
@@ -43,9 +46,11 @@ type RouteProps = RouteProp<
 
 // 저장 전 임시 로그
 interface PendingLog {
-  id: string; // 오늘 로그 수정이면 기존 id, 새 로그면 임시 id
+  id: string;
   content: string;
-  isExisting: boolean; // true → UPDATE, false → INSERT
+  created_at?: string;
+  isExisting: boolean;
+  isEditable: boolean;
 }
 
 function checkDirty(
@@ -105,6 +110,7 @@ export default function ProjectDetailScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditingPatternUrl, setIsEditingPatternUrl] = useState(false);
   const hasFetchedRef = useRef(false);
+  const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
 
   console.log('프로젝트', project);
   console.log('프로젝트 로딩', loading);
@@ -183,35 +189,67 @@ export default function ProjectDetailScreen() {
     [updateDirty],
   );
 
-  // pendingLogs는 배열 내부 변경이 있어 별도 핸들러로 처리
-  const updatePendingLog = useCallback(
-    (id: string, text: string) => {
-      const next = pendingLogs.map(l =>
-        l.id === id ? {...l, content: text} : l,
-      );
-      setPendingLogs(next);
-      updateDirty({pendingLogs: next});
-    },
-    [pendingLogs, updateDirty],
-  );
+  // 로그 내용 수정 — 디바운스로 자동 UPDATE
+  const updatePendingLog = useCallback((id: string, text: string) => {
+    setPendingLogs(prev =>
+      prev.map(l => (l.id === id ? {...l, content: text} : l)),
+    );
+  }, []);
 
   const addPendingLog = useCallback(() => {
-    const next = [
-      ...pendingLogs,
-      {id: Date.now().toString(), content: '', isExisting: false},
-    ];
-    setPendingLogs(next);
-    updateDirty({pendingLogs: next});
-  }, [pendingLogs, updateDirty]);
+    const tempId = Date.now().toString();
+    setPendingLogs(prev => [
+      {id: tempId, content: '', isExisting: false, isEditable: true},
+      ...prev,
+    ]);
+  }, []);
 
-  const removePendingLog = useCallback(
-    (id: string) => {
-      const next = pendingLogs.filter(l => l.id !== id);
-      setPendingLogs(next);
-      updateDirty({pendingLogs: next});
-    },
-    [pendingLogs, updateDirty],
-  );
+  const removePendingLog = useCallback((log: PendingLog) => {
+    Alert.alert('로그 삭제', '이 로그를 삭제할까요?', [
+      {text: '취소', style: 'cancel'},
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          // 낙관적 업데이트
+          setPendingLogs(prev => prev.filter(l => l.id !== log.id));
+
+          if (log.isExisting) {
+            const {error} = await supabase
+              .from('knitting_logs')
+              .delete()
+              .eq('id', log.id);
+
+            if (error) {
+              // 실패 시 롤백
+              setPendingLogs(prev => [log, ...prev]);
+              Alert.alert('오류', '로그 삭제에 실패했습니다.');
+            }
+          }
+        },
+      },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    const editableLogs = pendingLogs.filter(
+      l => l.isEditable && l.isExisting && l.content.trim(), // ✅ 빈 content 제외
+    );
+    if (!editableLogs.length) return;
+
+    const timer = setTimeout(async () => {
+      await Promise.all(
+        editableLogs.map(l =>
+          supabase
+            .from('knitting_logs')
+            .update({content: l.content.trim()})
+            .eq('id', l.id),
+        ),
+      );
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [pendingLogs]);
 
   // ── populateForm
   const populateForm = useCallback((p: ProjectDetail) => {
@@ -240,24 +278,30 @@ export default function ProjectDetailScreen() {
     today.setHours(0, 0, 0, 0);
     const logs = p.knitting_logs || [];
 
-    const todayLogs = logs.filter(log => {
-      const d = new Date(log.created_at);
-      d.setHours(0, 0, 0, 0);
-      return d.getTime() === today.getTime();
-    });
+    const unified: PendingLog[] = logs
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      .map(l => {
+        const d = new Date(l.created_at);
+        d.setHours(0, 0, 0, 0);
+        const isToday = d.getTime() === today.getTime();
+        return {
+          id: l.id,
+          content: l.content,
+          created_at: l.created_at,
+          isExisting: true,
+          isEditable: isToday, // 오늘만 편집 가능
+        };
+      });
 
-    const todayLogIds = new Set(todayLogs.map(l => l.id));
-    setExistingReadOnlyLogs(logs.filter(l => !todayLogIds.has(l.id)));
-    setPendingLogs(
-      todayLogs.map(l => ({id: l.id, content: l.content, isExisting: true})),
-    );
-
-    //url입력 완료 후 수정 모드 해제
+    setPendingLogs(unified);
     setIsEditingPatternUrl(false);
   }, []);
 
   // 오늘 로그가 이미 있는지 (pendingLogs 중 isExisting인 것)
-  const hasTodayLog = pendingLogs.some(l => l.isExisting);
+  const hasTodayLog = pendingLogs.some(l => l.isEditable);
 
   // ── 헤더
   const handleSaveRef = useRef<() => void>(() => {});
@@ -394,21 +438,6 @@ export default function ProjectDetailScreen() {
         currentProjectId = projectId!;
       }
 
-      // 로그 저장: isExisting이면 UPDATE, 아니면 INSERT
-      for (const log of pendingLogs.filter(l => l.content.trim())) {
-        if (log.isExisting) {
-          await supabase
-            .from('knitting_logs')
-            .update({content: log.content.trim()})
-            .eq('id', log.id);
-        } else {
-          await supabase.from('knitting_logs').insert({
-            project_id: currentProjectId,
-            content: log.content.trim(),
-          });
-        }
-      }
-
       if (isCreateMode) {
         Alert.alert('성공', '프로젝트가 작성되었습니다!', [
           {
@@ -439,7 +468,6 @@ export default function ProjectDetailScreen() {
     patternUrl,
     formIsCompleted,
     formVisibility,
-    pendingLogs,
     isCreateMode,
     projectId,
     navigation,
@@ -540,9 +568,7 @@ export default function ProjectDetailScreen() {
 
   return (
     <S.Container>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+      <KeyboardAvoid>
         {/* ══ SNS 스타일: 제목 + 설명 ══════════════════════ */}
         <S.PostArea>
           {canEdit ? (
@@ -561,9 +587,7 @@ export default function ProjectDetailScreen() {
 
           {canEdit ? (
             <S.DescriptionInput
-              placeholder={
-                '어떤 작품인지 자유롭게 설명해주세요\n\n색상, 분위기, 만들게 된 이유 등...'
-              }
+              placeholder={'어떤 작품인지 자유롭게 설명해주세요'}
               value={content}
               onChangeText={v => setField('content', v)}
               multiline
@@ -774,8 +798,10 @@ export default function ProjectDetailScreen() {
         {/* ══ 뜨개 로그 ════════════════════════════════════ */}
         <S.Section>
           <S.PostHeaderRow>
-            <S.Label>뜨개 로그</S.Label>
-            {canEdit && (
+            <S.Label>
+              뜨개 로그({isCreateMode ? 0 : pendingLogs.length})
+            </S.Label>
+            {canEdit && !isCreateMode && (
               <S.AddButton
                 onPress={addPendingLog}
                 disabled={hasTodayLog}
@@ -786,60 +812,52 @@ export default function ProjectDetailScreen() {
             )}
           </S.PostHeaderRow>
 
-          {/* 기존 로그 – 읽기 전용 */}
-          {existingReadOnlyLogs
-            .slice()
-            .sort(
-              (a, b) =>
-                new Date(b.created_at).getTime() -
-                new Date(a.created_at).getTime(),
-            )
-            .map(log => (
+          {isCreateMode ? (
+            <S.EmptyPosts>
+              <S.EmptyText>프로젝트 저장 후 추가할 수 있어요</S.EmptyText>
+            </S.EmptyPosts>
+          ) : pendingLogs.length === 0 ? (
+            <S.EmptyPosts>
+              <S.EmptyText>아직 기록이 없어요</S.EmptyText>
+            </S.EmptyPosts>
+          ) : (
+            pendingLogs.map(log => (
               <S.LogItem key={log.id}>
-                <S.LogDate>
-                  {new Date(log.created_at).toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </S.LogDate>
-                <S.LogContent>{log.content}</S.LogContent>
-              </S.LogItem>
-            ))}
-
-          {/* 편집 중인 로그 (오늘 로그 수정 + 새 로그들) */}
-          {pendingLogs.map(log => (
-            <S.LogEditItem key={log.id}>
-              <S.LogEditHeader>
-                <S.LogDate>
-                  {log.isExisting ? '오늘 로그 수정 · ' : '새 로그 · '}
-                  {new Date().toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </S.LogDate>
-                {/* 새 로그만 삭제 가능 (오늘 로그 수정은 삭제 불가) */}
-                {!log.isExisting && (
-                  <TouchableOpacity onPress={() => removePendingLog(log.id)}>
-                    <Icon name="x" size={14} color="#bbb" />
-                  </TouchableOpacity>
+                <S.LogEditHeader>
+                  <S.LogDate>
+                    {log.isEditable
+                      ? `오늘 · ${new Date().toLocaleDateString('ko-KR', {
+                          month: 'long',
+                          day: 'numeric',
+                        })}`
+                      : new Date(log.created_at!).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                  </S.LogDate>
+                  {canEdit && log.isEditable && (
+                    <TouchableOpacity onPress={() => removePendingLog(log)}>
+                      <Icon name="x" size={14} color="#bbb" />
+                    </TouchableOpacity>
+                  )}
+                </S.LogEditHeader>
+                {log.isEditable ? (
+                  <S.LogInputWrapper isFocused={focusedLogId === log.id}>
+                    <S.LogInput
+                      placeholder="오늘 뜬 내용을 기록해보세요..."
+                      value={log.content}
+                      onChangeText={text => updatePendingLog(log.id, text)}
+                      onFocus={() => setFocusedLogId(log.id)}
+                      onBlur={() => setFocusedLogId(null)}
+                      placeholderTextColor="#ccc"
+                    />
+                  </S.LogInputWrapper>
+                ) : (
+                  <S.LogContent>{log.content}</S.LogContent>
                 )}
-              </S.LogEditHeader>
-              <S.LogInput
-                placeholder="오늘 뜬 내용을 기록해보세요..."
-                value={log.content}
-                onChangeText={text => updatePendingLog(log.id, text)}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                placeholderTextColor="#ccc"
-              />
-            </S.LogEditItem>
-          ))}
-
-          {!canEdit && existingReadOnlyLogs.length === 0 && (
-            <S.PlaceholderText>아직 기록이 없어요</S.PlaceholderText>
+              </S.LogItem>
+            ))
           )}
         </S.Section>
 
@@ -931,14 +949,14 @@ export default function ProjectDetailScreen() {
         </S.Section>
 
         {/* ══ 완료하기 ════════════════════════════════════ */}
-        {isMyProject && !project?.is_completed && !isDirty && (
+        {/* {isMyProject && !project?.is_completed && !isDirty && (
           <S.CompleteButton onPress={() => setCompleteModalVisible(true)}>
             <S.CompleteButtonText>완료하기</S.CompleteButtonText>
           </S.CompleteButton>
-        )}
+        )} */}
 
         <View style={{height: 40}} />
-      </ScrollView>
+      </KeyboardAvoid>
 
       {!isCreateMode && (
         <Modal
