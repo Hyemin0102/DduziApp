@@ -20,6 +20,12 @@ export interface NaverUserProfile {
   mobile_e164?: string | null;
 }
 
+export interface AppleUserProfile {
+  id: string;
+  email?: string | null;
+  fullName?: string | null;
+}
+
 // 통합 사용자 프로필 (공통 필드)
 export interface UserProfile {
   id: string;
@@ -30,7 +36,7 @@ export interface UserProfile {
   bio?: string;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
-  rawProfile: KakaoUserProfile | NaverUserProfile | GoogleUserProfile;
+  rawProfile: KakaoUserProfile | NaverUserProfile | GoogleUserProfile | AppleUserProfile;
 }
 
 // Auth Context 타입

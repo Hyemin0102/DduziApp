@@ -50,7 +50,14 @@ export const Input = styled.TextInput`
   border-color: #ddd;
   border-radius: 8px;
   padding: 10px;
+  margin-bottom: 8px;
+`;
+
+export const NicknameErrorText = styled.Text`
+  color: #e53935;
+  font-size: 12px;
   margin-bottom: 20px;
+  align-self: flex-start;
 `;
 
 export const TextArea = styled.TextInput`

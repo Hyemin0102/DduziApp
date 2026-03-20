@@ -1,7 +1,7 @@
 import NaverLogin from '@react-native-seoul/naver-login';
 import React, {useEffect, useState} from 'react';
 import * as S from './Login.style';
-import {Button, Linking, ScrollView, Text, View} from 'react-native';
+import {Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import {
@@ -12,6 +12,7 @@ import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import appleAuth from '@invertase/react-native-apple-authentication';
 
 import Config from 'react-native-config';
 import {initializeKakaoSDK} from '@react-native-kakao/core';
@@ -93,7 +94,7 @@ const Login = () => {
                     profileImageUrl:
                       kakaoProfile.profileImageUrl ||
                       kakaoProfile.thumbnailImageUrl,
-                  });
+                  }, 'kakao');
                   console.log('카카오 로그인 결과', result);
 
                   // UserProfile 객체 구성
@@ -115,11 +116,17 @@ const Login = () => {
                     await AsyncStorage.removeItem('needsProfileSetup');
                     setNeedsProfileSetup(false);
                   }
-                } catch (userError) {
-                  console.error(
-                    '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
-                    userError,
-                  );
+                } catch (userError: any) {
+                  if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
+                    const conflictProvider = userError.message.split(':')[1];
+                    await supabase.auth.signOut();
+                    Alert.alert(
+                      '이미 가입된 계정',
+                      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+                    );
+                  } else {
+                    console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
+                  }
                 }
               }
             } else {
@@ -147,7 +154,7 @@ const Login = () => {
                   const result = await createOrUpdateUser(data.user, {
                     nickname: data.user?.user_metadata.full_name,
                     profileImageUrl: data.user?.user_metadata.picture,
-                  });
+                  }, 'google');
                   console.log('구글 로그인 결과', result);
 
                   // UserProfile 객체 구성
@@ -170,11 +177,17 @@ const Login = () => {
                     await AsyncStorage.removeItem('needsProfileSetup');
                     setNeedsProfileSetup(false);
                   }
-                } catch (userError) {
-                  console.error(
-                    '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
-                    userError,
-                  );
+                } catch (userError: any) {
+                  if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
+                    const conflictProvider = userError.message.split(':')[1];
+                    await supabase.auth.signOut();
+                    Alert.alert(
+                      '이미 가입된 계정',
+                      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+                    );
+                  } else {
+                    console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
+                  }
                 }
               }
             } else {
@@ -182,6 +195,108 @@ const Login = () => {
             }
           } catch (error: any) {
             console.log('구글 error', error);
+          }
+          break;
+
+        case 'apple':
+          try {
+            const rawNonce = Array.from({length: 32}, () =>
+              'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.charAt(
+                Math.floor(Math.random() * 62),
+              ),
+            ).join('');
+
+            const appleAuthRequestResponse = await appleAuth.performRequest({
+              requestedOperation: appleAuth.Operation.LOGIN,
+              requestedScopes: [
+                appleAuth.Scope.FULL_NAME,
+                appleAuth.Scope.EMAIL,
+              ],
+              nonce: rawNonce,
+            });
+
+            const {identityToken, authorizationCode, fullName, email} = appleAuthRequestResponse;
+            console.log('fullname email:', fullName, email);
+
+            if (!identityToken) {
+              throw new Error('no identity token present!');
+            }
+
+            const {data, error} = await supabase.auth.signInWithIdToken({
+              provider: 'apple',
+              token: identityToken,
+              nonce: rawNonce,
+            });
+
+            console.log('supabase apple data:', data);
+            console.log('supabase apple error:', error);
+
+            if (data.user && data.session) {
+              try {
+                const appleFullName = fullName
+                  ? [fullName.givenName, fullName.familyName]
+                      .filter(Boolean)
+                      .join(' ')
+                  : undefined;
+
+                const result = await createOrUpdateUser(data.user, {
+                  nickname:
+                    appleFullName ||
+                    data.user.user_metadata?.full_name ||
+                    email ||
+                    undefined,
+                }, 'apple');
+                console.log('애플 로그인 결과', result);
+
+                const userProfile = createUserProfile({
+                  supabaseUser: data.user,
+                  dbUser: result.user,
+                  provider: 'apple',
+                  rawProfile: {
+                    id: data.user.id,
+                    email: email || data.user.email,
+                    fullName: appleFullName,
+                  },
+                });
+
+                await login(data.session.access_token, userProfile, 'apple');
+
+                // authorization_code → refresh_token 교환 후 저장 (탈퇴 시 revoke에 사용)
+                // authorization_code는 5분 내에만 유효하므로 로그인 직후 처리
+                if (authorizationCode) {
+                  supabase.functions
+                    .invoke('apple-auth', {
+                      body: {action: 'exchange', authorization_code: authorizationCode},
+                    })
+                    .catch(e => console.warn('Apple token exchange 실패:', e));
+                }
+
+                if (result.isNewUser) {
+                  await AsyncStorage.setItem('needsProfileSetup', 'true');
+                  setNeedsProfileSetup(true);
+                } else {
+                  await AsyncStorage.removeItem('needsProfileSetup');
+                  setNeedsProfileSetup(false);
+                }
+              } catch (userError: any) {
+                if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
+                  const conflictProvider = userError.message.split(':')[1];
+                  await supabase.auth.signOut();
+                  Alert.alert(
+                    '이미 가입된 계정',
+                    `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+                  );
+                } else {
+                  console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
+                }
+              }
+            }
+          } catch (error: any) {
+            if (error.code === appleAuth.Error.CANCELED) {
+              console.log('애플 로그인 취소됨');
+            } else {
+              console.log('애플 error', error);
+            }
           }
           break;
 
@@ -229,6 +344,14 @@ const Login = () => {
               <S.ButtonText provider="google">
                 Google 계정으로 로그인
               </S.ButtonText>
+            </S.SocialButton>
+
+            <S.SocialButton
+              provider="apple"
+              onPress={() => socialLoginHandle('apple')}
+              disabled={isLoading}
+              activeOpacity={0.8}>
+              <S.ButtonText provider="apple">Apple로 로그인</S.ButtonText>
             </S.SocialButton>
           </S.ButtonContainer>
         </S.InnerContainer>

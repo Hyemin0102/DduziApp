@@ -1,11 +1,12 @@
 //users DB 관련 함수
 
-import { supabase } from "../supabase";
+import {supabase} from '../supabase';
 import {
   UserProfile,
   KakaoUserProfile,
   GoogleUserProfile,
   NaverUserProfile,
+  AppleUserProfile,
 } from '../../@types/auth';
 
 const DEFAULT_IMAGE_COUNT = 5;
@@ -14,14 +15,18 @@ const DEFAULT_IMAGE_COUNT = 5;
 interface CreateUserProfileParams {
   supabaseUser: any; // Supabase Auth User 객체
   dbUser: any; // users 테이블 데이터
-  provider: 'kakao' | 'google' | 'naver';
-  rawProfile: KakaoUserProfile | GoogleUserProfile | NaverUserProfile;
+  provider: 'kakao' | 'google' | 'naver' | 'apple';
+  rawProfile:
+    | KakaoUserProfile
+    | GoogleUserProfile
+    | NaverUserProfile
+    | AppleUserProfile;
 }
 
 //기본 이미지 중 랜덤 지정
 export const getRandomDefaultImageUrl = (): string => {
   const randomNum = Math.floor(Math.random() * DEFAULT_IMAGE_COUNT) + 1;
-  
+
   const {data} = supabase.storage
     .from('profile')
     .getPublicUrl(`default/profile_${randomNum}.png`);
@@ -29,19 +34,18 @@ export const getRandomDefaultImageUrl = (): string => {
   return data.publicUrl;
 };
 
-
 // 🔥 users 테이블에 데이터 저장/업데이트
 export const createOrUpdateUser = async (
   user: any,
   profile?: {
     nickname?: string;
     profileImageUrl?: string;
-  }
-): Promise<{ user: any; isNewUser: boolean }> => {
+  },
+  intendedProvider?: string,
+): Promise<{user: any; isNewUser: boolean}> => {
   try {
-
     // 1. 기존 사용자 확인
-    const { data: existingUser, error: fetchError } = await supabase
+    const {data: existingUser, error: fetchError} = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
@@ -52,15 +56,15 @@ export const createOrUpdateUser = async (
       throw fetchError;
     }
 
-
-    if (!existingUser) {      
+    if (!existingUser) {
       const defaultImageUrl = getRandomDefaultImageUrl();
 
       //테이블 insert
-      const { data: newUser, error: insertError } = await supabase
+      const {data: newUser, error: insertError} = await supabase
         .from('users')
         .insert({
           id: user.id,
+          email: user.email || null,
           nickname: profile?.nickname || user.user_metadata?.name,
           bio: null,
           profile_image: defaultImageUrl,
@@ -76,21 +80,31 @@ export const createOrUpdateUser = async (
       }
 
       console.log('✅ 신규 사용자 생성 완료:', newUser);
-      return { user: newUser, isNewUser: true };
+      return {user: newUser, isNewUser: true};
     } else {
       // 🔥 기존 사용자 업데이트
+      // 다른 provider로 가입된 계정인지 확인
+      const providerToCheck = intendedProvider || user.app_metadata?.provider;
+      if (
+        existingUser.provider &&
+        providerToCheck &&
+        existingUser.provider !== providerToCheck
+      ) {
+        throw new Error(`PROVIDER_CONFLICT:${existingUser.provider}`);
+      }
 
-      const profileImageToUse = existingUser.profile_image 
-      ? existingUser.profile_image  // 기존 이미지가 있으면 덮어쓰지 않음
-      : (profile?.profileImageUrl ||  // 없을 때만 카카오 프로필 사용
-         user.user_metadata?.profile_image ||
-         user.user_metadata?.picture);
+      const profileImageToUse = existingUser.profile_image
+        ? existingUser.profile_image // 기존 이미지가 있으면 덮어쓰지 않음
+        : profile?.profileImageUrl || // 없을 때만 카카오 프로필 사용
+          user.user_metadata?.profile_image ||
+          user.user_metadata?.picture;
 
-      const { data: updatedUser, error: updateError } = await supabase
+      const {data: updatedUser, error: updateError} = await supabase
         .from('users')
         .update({
           profile_image: profileImageToUse,
           provider: user.app_metadata?.provider || existingUser.provider,
+          ...(!existingUser.email && user.email ? {email: user.email} : {}),
         })
         .eq('id', user.id)
         .select()
@@ -102,10 +116,12 @@ export const createOrUpdateUser = async (
       }
 
       console.log('✅ 기존 사용자 업데이트 완료:', updatedUser);
-      return { user: updatedUser, isNewUser: false };
+      return {user: updatedUser, isNewUser: false};
     }
-  } catch (error) {
-    console.error('❌ createOrUpdateUser 에러:', error);
+  } catch (error: any) {
+    if (!error?.message?.startsWith('PROVIDER_CONFLICT:')) {
+      console.error('❌ createOrUpdateUser 에러:', error);
+    }
     throw error;
   }
 };
@@ -120,7 +136,7 @@ export const createUserProfile = ({
   const baseProfile = {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
-    nickname: dbUser.nickname || '',  // DB에 저장된 닉네임
+    nickname: dbUser.nickname || '', // DB에 저장된 닉네임
     bio: dbUser.bio || null,
     provider,
   };
@@ -134,23 +150,34 @@ export const createUserProfile = ({
         dbUser.profile_image ||
         kakaoProfile.profileImageUrl ||
         kakaoProfile.thumbnailImageUrl,
-      rawProfile: { id: kakaoProfile.id } as KakaoUserProfile,
+      rawProfile: {id: kakaoProfile.id} as KakaoUserProfile,
     };
   } else if (provider === 'google') {
     const googleProfile = rawProfile as GoogleUserProfile;
-    
+
     return {
       ...baseProfile,
-      profile_image: dbUser.profile_image || supabaseUser.user_metadata?.picture,
-      rawProfile: { id: googleProfile.id } as GoogleUserProfile,
+      profile_image:
+        dbUser.profile_image || supabaseUser.user_metadata?.picture,
+      rawProfile: {id: googleProfile.id} as GoogleUserProfile,
+    };
+  } else if (provider === 'apple') {
+    const appleProfile = rawProfile as AppleUserProfile;
+    return {
+      ...baseProfile,
+      profile_image: dbUser.profile_image || undefined,
+      rawProfile: {id: appleProfile.id} as AppleUserProfile,
     };
   } else {
     // Naver
     const naverProfile = rawProfile as NaverUserProfile;
     return {
       ...baseProfile,
-      profile_image: dbUser.profile_image || naverProfile.profile_image || supabaseUser.user_metadata?.picture,
-      rawProfile: { id: naverProfile.id } as NaverUserProfile,
+      profile_image:
+        dbUser.profile_image ||
+        naverProfile.profile_image ||
+        supabaseUser.user_metadata?.picture,
+      rawProfile: {id: naverProfile.id} as NaverUserProfile,
     };
   }
 };
@@ -158,7 +185,7 @@ export const createUserProfile = ({
 // 🔥 사용자 정보 조회
 export const getUserById = async (userId: string) => {
   try {
-    const { data, error } = await supabase
+    const {data, error} = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
@@ -176,10 +203,25 @@ export const getUserById = async (userId: string) => {
   }
 };
 
+// 🔥 닉네임 중복 확인
+export const checkNicknameDuplicate = async (
+  nickname: string,
+  currentUserId: string,
+): Promise<boolean> => {
+  const {data} = await supabase
+    .from('users')
+    .select('id')
+    .eq('nickname', nickname)
+    .neq('id', currentUserId)
+    .maybeSingle();
+
+  return !!data; // true면 중복
+};
+
 // 🔥 사용자 닉네임 업데이트
 export const updateNickname = async (userId: string, newNickname: string) => {
   try {
-    const { data, error } = await supabase
+    const {data, error} = await supabase
       .from('users')
       .update({
         nickname: newNickname,

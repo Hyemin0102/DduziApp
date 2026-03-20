@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {FlatList, StyleSheet, View} from 'react-native';
+import {FlatList} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import * as S from './Home.style';
 import {supabase} from '@/lib/supabase';
@@ -70,7 +70,7 @@ const Home = () => {
   return (
     <S.Container>
       {loading ? (
-        <View style={styles.fill}>
+        <S.Fill>
           <FlatList
             data={new Array(5).fill('')}
             keyExtractor={(_, idx) => String(idx)}
@@ -78,7 +78,7 @@ const Home = () => {
             contentContainerStyle={{paddingVertical: 16}}
             scrollEnabled={false}
           />
-        </View>
+        </S.Fill>
       ) : (
         <FlatList
           data={posts}
@@ -104,9 +104,3 @@ const Home = () => {
 };
 
 export default Home;
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

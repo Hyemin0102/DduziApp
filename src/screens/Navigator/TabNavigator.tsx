@@ -46,8 +46,6 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
     flex: 1,
   };
 
-  console.log('size', size);
-
   const textStyle: TextStyle = {
     color: focused ? activeColor : inactiveColor,
     fontWeight: focused ? 'bold' : 'normal',

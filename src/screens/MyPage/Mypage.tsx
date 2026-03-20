@@ -1,23 +1,14 @@
-import React from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import React, {useState} from 'react';
+import {Alert, ActivityIndicator} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
-import UserProfileCard from '../../components/common/UserProfileCard';
-import {useNavigation} from '@react-navigation/native';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {deleteAccount} from '@/lib/auth/deleteAccount';
+import * as S from './Mypage.style';
 
 const Mypage = () => {
   const {user, provider, logout} = useAuth();
   const {navigation} = useCommonNavigation();
-
-  console.log('auth!!!', user);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');
@@ -29,10 +20,7 @@ const Mypage = () => {
 
   const handleLogout = async () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-      {
-        text: '취소',
-        style: 'cancel',
-      },
+      {text: '취소', style: 'cancel'},
       {
         text: '로그아웃',
         style: 'destructive',
@@ -48,137 +36,84 @@ const Mypage = () => {
     ]);
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '회원탈퇴',
+      '정말 탈퇴하시겠습니까?\n\n작성한 게시물, 프로젝트 등 모든 데이터가 삭제되며 복구할 수 없습니다.',
+      [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '탈퇴하기',
+          style: 'destructive',
+          onPress: confirmDeleteAccount,
+        },
+      ],
+    );
+  };
+
+  const confirmDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount(provider);
+    } catch (error) {
+      console.error('회원탈퇴 에러:', error);
+      Alert.alert('오류', '회원탈퇴 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>
-            사용자 정보를 불러올 수 없습니다.
-          </Text>
-        </View>
-      </SafeAreaView>
+      <S.Container>
+        <S.CenterContainer>
+          <S.ErrorText>사용자 정보를 불러올 수 없습니다.</S.ErrorText>
+        </S.CenterContainer>
+      </S.Container>
+    );
+  }
+
+  if (isDeleting) {
+    return (
+      <S.Container>
+        <S.CenterContainer>
+          <ActivityIndicator size="large" color="#999" />
+          <S.ErrorText>탈퇴 처리 중...</S.ErrorText>
+        </S.CenterContainer>
+      </S.Container>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}>
-        {/* 메뉴 섹션 */}
-        <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
-            <Text style={styles.menuText}>프로필 편집</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
+    <S.Container>
+      <S.ScrollView contentContainerStyle={{padding: 16, gap: 16}}>
+        <S.MenuSection>
+          <S.MenuItem onPress={handleProfile}>
+            <S.MenuText>프로필 편집</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
 
-          <TouchableOpacity style={styles.menuItem} onPress={handleProject}>
-            <Text style={styles.menuText}>프로젝트 관리</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
+          <S.MenuItem onPress={handleProject}>
+            <S.MenuText>프로젝트 관리</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>설정</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+          <S.MenuItem>
+            <S.MenuText>설정</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+        </S.MenuSection>
 
-        {/* 로그아웃 버튼 */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>로그아웃</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        <S.LogoutButton onPress={handleLogout}>
+          <S.LogoutButtonText>로그아웃</S.LogoutButtonText>
+        </S.LogoutButton>
+
+        <S.DeleteButton onPress={handleDeleteAccount}>
+          <S.DeleteButtonText>회원탈퇴</S.DeleteButtonText>
+        </S.DeleteButton>
+      </S.ScrollView>
+    </S.Container>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  menuSection: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  menuText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  menuArrow: {
-    fontSize: 24,
-    color: '#999',
-  },
-  logoutButton: {
-    backgroundColor: '#ff4444',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  debugSection: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    borderWidth: 2,
-    borderColor: '#ffa500',
-  },
-  debugTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#ffa500',
-    marginBottom: 8,
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'monospace',
-    marginBottom: 4,
-  },
-});
 
 export default Mypage;

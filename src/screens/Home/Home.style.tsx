@@ -97,6 +97,10 @@ export const EmptySubText = styled.Text`
   color: #999;
 `;
 
+export const Fill = styled.View`
+  flex: 1;
+`;
+
 export const ImageCounter = styled.Text`
   position: absolute;
   bottom: 16px;

@@ -1,6 +1,6 @@
 // screens/Profile.tsx
-import React, {useState, useEffect} from 'react';
-import {View, Text, Image, TextInput, Button} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {Button, Alert} from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../../contexts/AuthContext';
@@ -17,6 +17,7 @@ import {uploadImage} from '@/lib/uploadImage';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {checkNicknameDuplicate} from '@/lib/auth/userService';
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
@@ -39,6 +40,27 @@ const ProfileScreen = () => {
   const [bio, setBio] = useState(user.bio || '');
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
+  const [nicknameChecking, setNicknameChecking] = useState(false);
+  const nicknameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const trimmed = nickname.trim();
+    if (!trimmed || trimmed === user.nickname) {
+      setNicknameError(null);
+      return;
+    }
+    if (nicknameTimer.current) clearTimeout(nicknameTimer.current);
+    setNicknameChecking(true);
+    nicknameTimer.current = setTimeout(async () => {
+      const isDuplicate = await checkNicknameDuplicate(trimmed, user.id);
+      setNicknameError(isDuplicate ? '이미 사용 중인 닉네임입니다.' : null);
+      setNicknameChecking(false);
+    }, 500);
+    return () => {
+      if (nicknameTimer.current) clearTimeout(nicknameTimer.current);
+    };
+  }, [nickname]);
 
   const displayImage = imageUri || user.profile_image;
 
@@ -83,6 +105,11 @@ const ProfileScreen = () => {
 
   const handleSave = async () => {
     if (!user) return;
+    if (nicknameError) {
+      Alert.alert('닉네임 오류', nicknameError);
+      return;
+    }
+    if (nicknameChecking) return;
     setLoading(true);
     try {
       let profileImageUrl = user.profile_image;
@@ -145,6 +172,9 @@ const ProfileScreen = () => {
             value={nickname}
             onChangeText={setNickname}
           />
+          {nicknameError && (
+            <S.NicknameErrorText>{nicknameError}</S.NicknameErrorText>
+          )}
 
           <S.Label>자기소개</S.Label>
           <S.TextArea
@@ -157,7 +187,13 @@ const ProfileScreen = () => {
           <Button
             title={loading ? '저장 중...' : '완료'}
             onPress={handleSave}
-            disabled={loading || !nickname.trim() || !bio.trim()}
+            disabled={
+              loading ||
+              !nickname.trim() ||
+              !bio.trim() ||
+              !!nicknameError ||
+              nicknameChecking
+            }
           />
         </S.Inner>
       </KeyboardAvoid>
