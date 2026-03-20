@@ -112,8 +112,6 @@ export default function ProjectDetailScreen() {
   const hasFetchedRef = useRef(false);
   const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
 
-  console.log('프로젝트', project);
-  console.log('프로젝트 로딩', loading);
   // ── 폼 필드
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -553,7 +551,7 @@ export default function ProjectDetailScreen() {
   if (loading) {
     return (
       <S.Container>
-        <ActivityIndicator size="large" color="#6b4fbb" />
+        <ActivityIndicator size="large" color="#191919" />
       </S.Container>
     );
   }

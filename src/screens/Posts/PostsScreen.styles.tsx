@@ -53,7 +53,7 @@ export const EmptySubText = styled.Text`
 
 export const EmptyAddButton = styled.TouchableOpacity`
   margin-top: 8px;
-  background-color: #6b4fbb;
+  background-color: #191919;
   padding: 12px 28px;
   border-radius: 24px;
 `;
@@ -148,12 +148,12 @@ export const FloatingButton = styled.TouchableOpacity`
   width: 60px;
   height: 60px;
   border-radius: 30px;
-  background-color: #0070f3;
+  background-color: #191919;
   align-items: center;
   justify-content: center;
   shadow-color: #000;
   shadow-offset: 0px 4px;
-  shadow-opacity: 0.3;
+  shadow-opacity: 0.2;
   shadow-radius: 8px;
   elevation: 8;
 `;
@@ -207,7 +207,7 @@ export const ViewModeToggle = styled.View`
 export const ViewModeButton = styled.TouchableOpacity<{active: boolean}>`
   padding: 8px;
   border-radius: 8px;
-  background-color: ${props => (props.active ? '#F0F8FF' : 'transparent')};
+  background-color: ${props => (props.active ? '#f1f1ef' : 'transparent')};
 `;
 
 export const GridItem = styled.TouchableOpacity`

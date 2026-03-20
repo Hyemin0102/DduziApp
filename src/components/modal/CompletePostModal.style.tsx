@@ -47,8 +47,8 @@ export const VisibilityOption = styled.TouchableOpacity<{selected: boolean}>`
   padding: 16px;
   border-radius: 12px;
   border-width: 2px;
-  border-color: ${props => (props.selected ? '#007AFF' : '#E5E5EA')};
-  background-color: ${props => (props.selected ? '#F0F8FF' : '#fff')};
+  border-color: ${props => (props.selected ? '#191919' : '#E5E5EA')};
+  background-color: ${props => (props.selected ? '#f1f1ef' : '#fff')};
   margin-bottom: 12px;
 `;
 
@@ -57,7 +57,7 @@ export const Radio = styled.View<{selected: boolean}>`
   height: 24px;
   border-radius: 12px;
   border-width: 2px;
-  border-color: ${props => (props.selected ? '#007AFF' : '#C7C7CC')};
+  border-color: ${props => (props.selected ? '#191919' : '#C7C7CC')};
   background-color: #fff;
   justify-content: center;
   align-items: center;
@@ -68,7 +68,7 @@ export const RadioDot = styled.View`
   width: 12px;
   height: 12px;
   border-radius: 6px;
-  background-color: #007aff;
+  background-color: #191919;
 `;
 
 export const OptionContent = styled.View`
@@ -110,7 +110,7 @@ export const ConfirmButton = styled.TouchableOpacity`
   flex: 1;
   padding: 16px;
   border-radius: 12px;
-  background-color: #007aff;
+  background-color: #191919;
   align-items: center;
 `;
 

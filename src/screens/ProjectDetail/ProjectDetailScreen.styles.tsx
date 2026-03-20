@@ -52,11 +52,11 @@ export const StatusBadge = styled.View<{
   background-color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#f0ecff';
+        return '#f1f1ef';
       case 'completed':
         return '#e8f5e9';
       case 'public':
-        return '#e3f2fd';
+        return '#f1f1ef';
       case 'private':
         return '#f5f5f5';
     }
@@ -71,11 +71,11 @@ export const StatusText = styled.Text<{
   color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#6b4fbb';
+        return '#191919';
       case 'completed':
         return '#4CAF50';
       case 'public':
-        return '#1976D2';
+        return '#555';
       case 'private':
         return '#999';
     }
@@ -97,7 +97,7 @@ export const Body = styled.Text`
 
 export const Link = styled.Text`
   font-size: 15px;
-  color: #007aff;
+  color: #191919;
   line-height: 22px;
   text-decoration-line: underline;
   flex-shrink: 1;
@@ -135,7 +135,7 @@ export const LogInputWrapper = styled.View<{isFocused: boolean}>`
   background-color: ${({isFocused}) => (isFocused ? '#fff' : 'transparent')};
   border-radius: ${({isFocused}) => (isFocused ? '8px' : '0px')};
   border-width: ${({isFocused}) => (isFocused ? '1px' : '0px')};
-  border-color: #d0bfff;
+  border-color: #e9e9e7;
   padding: ${({isFocused}) => (isFocused ? '8px' : '0px')};
 `;
 
@@ -170,7 +170,7 @@ export const PostHeaderRow = styled.View`
 export const AddButton = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
-  background-color: #6b4fbb;
+  background-color: #191919;
   padding-horizontal: 12px;
   padding-vertical: 6px;
   border-radius: 16px;
@@ -195,7 +195,7 @@ export const EmptyText = styled.Text`
 `;
 
 export const EmptyAddButton = styled.TouchableOpacity`
-  background-color: #6b4fbb;
+  background-color: #191919;
   padding-horizontal: 20px;
   padding-vertical: 10px;
   border-radius: 20px;
@@ -252,7 +252,7 @@ export const PostDate = styled.Text`
 
 export const CompleteButton = styled.TouchableOpacity`
   margin: 20px;
-  background-color: #6b4fbb;
+  background-color: #191919;
   padding: 16px;
   border-radius: 12px;
   align-items: center;
@@ -323,7 +323,7 @@ export const CancelBtn = styled.TouchableOpacity`
 
 export const CancelText = styled.Text`
   font-size: 17px;
-  color: #007aff;
+  color: #191919;
   font-weight: 600;
   text-align: center;
 `;
@@ -331,7 +331,7 @@ export const CancelText = styled.Text`
 export const SubmitText = styled.Text`
   font-size: 15px;
   font-weight: 600;
-  color: #6b4fbb;
+  color: #191919;
 `;
 
 // ─── SNS 스타일 상단 영역 ─────────────────────────────────

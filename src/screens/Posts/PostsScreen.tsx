@@ -131,7 +131,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
 
-  console.log('posts', posts);
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;

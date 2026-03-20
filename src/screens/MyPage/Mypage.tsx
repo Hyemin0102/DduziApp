@@ -1,14 +1,12 @@
-import React, {useState} from 'react';
-import {Alert, ActivityIndicator} from 'react-native';
+import React from 'react';
+import {Alert} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {deleteAccount} from '@/lib/auth/deleteAccount';
 import * as S from './Mypage.style';
 
 const Mypage = () => {
-  const {user, provider, logout} = useAuth();
+  const {user, logout} = useAuth();
   const {navigation} = useCommonNavigation();
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleProfile = () => {
     navigation.navigate('ProfileEdit');
@@ -16,6 +14,10 @@ const Mypage = () => {
 
   const handleProject = () => {
     navigation.navigate('ProjectsMain');
+  };
+
+  const handleSettings = () => {
+    navigation.navigate('Settings');
   };
 
   const handleLogout = async () => {
@@ -36,33 +38,6 @@ const Mypage = () => {
     ]);
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      '회원탈퇴',
-      '정말 탈퇴하시겠습니까?\n\n작성한 게시물, 프로젝트 등 모든 데이터가 삭제되며 복구할 수 없습니다.',
-      [
-        {text: '취소', style: 'cancel'},
-        {
-          text: '탈퇴하기',
-          style: 'destructive',
-          onPress: confirmDeleteAccount,
-        },
-      ],
-    );
-  };
-
-  const confirmDeleteAccount = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteAccount(provider);
-    } catch (error) {
-      console.error('회원탈퇴 에러:', error);
-      Alert.alert('오류', '회원탈퇴 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   if (!user) {
     return (
       <S.Container>
@@ -73,20 +48,9 @@ const Mypage = () => {
     );
   }
 
-  if (isDeleting) {
-    return (
-      <S.Container>
-        <S.CenterContainer>
-          <ActivityIndicator size="large" color="#999" />
-          <S.ErrorText>탈퇴 처리 중...</S.ErrorText>
-        </S.CenterContainer>
-      </S.Container>
-    );
-  }
-
   return (
     <S.Container>
-      <S.ScrollView contentContainerStyle={{padding: 16, gap: 16}}>
+      <S.ScrollView>
         <S.MenuSection>
           <S.MenuItem onPress={handleProfile}>
             <S.MenuText>프로필 편집</S.MenuText>
@@ -98,19 +62,15 @@ const Mypage = () => {
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
 
-          <S.MenuItem>
+          <S.MenuItem onPress={handleSettings}>
             <S.MenuText>설정</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
+
+          <S.LogoutMenuItem onPress={handleLogout}>
+            <S.LogoutText>로그아웃</S.LogoutText>
+          </S.LogoutMenuItem>
         </S.MenuSection>
-
-        <S.LogoutButton onPress={handleLogout}>
-          <S.LogoutButtonText>로그아웃</S.LogoutButtonText>
-        </S.LogoutButton>
-
-        <S.DeleteButton onPress={handleDeleteAccount}>
-          <S.DeleteButtonText>회원탈퇴</S.DeleteButtonText>
-        </S.DeleteButton>
       </S.ScrollView>
     </S.Container>
   );

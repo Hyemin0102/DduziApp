@@ -16,7 +16,7 @@ export const ProfileImage = styled.Image`
   height: 72px;
   border-radius: 36px;
   border-width: 1px;
-  border-color: #dde1e9;
+  border-color: #e9e9e7;
   margin-right: 16px;
 `;
 
@@ -24,7 +24,7 @@ export const ProfileImagePlaceholder = styled.View`
   width: 72px;
   height: 72px;
   border-radius: 36px;
-  background-color: #e8e4f8;
+  background-color: #f1f1ef;
   justify-content: center;
   align-items: center;
   margin-right: 16px;
@@ -33,7 +33,7 @@ export const ProfileImagePlaceholder = styled.View`
 export const ProfileImagePlaceholderText = styled.Text`
   font-size: 28px;
   font-weight: bold;
-  color: #6b4fbb;
+  color: #191919;
 `;
 
 export const InfoContainer = styled.View`
@@ -81,7 +81,7 @@ export const OutlineButton = styled.TouchableOpacity`
   padding-vertical: 8px;
   border-radius: 10px;
   border-width: 1px;
-  border-color: #ddd;
+  border-color: #e9e9e7;
   background-color: #fff;
 `;
 
@@ -100,7 +100,7 @@ export const FillButton = styled.TouchableOpacity`
   gap: 4px;
   padding-vertical: 8px;
   border-radius: 10px;
-  background-color: #6b4fbb;
+  background-color: #191919;
 `;
 
 export const FillButtonIcon = styled.Text`

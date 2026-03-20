@@ -46,7 +46,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
     fetchUserProfile();
   }, [userId]);
 
-  if (loading) return <ActivityIndicator size="small" color="#6b4fbb" />;
+  if (loading) return <ActivityIndicator size="small" color="#191919" />;
   if (!userId || !user) return <Text>프로필을 불러올 수 없습니다</Text>;
 
   return (

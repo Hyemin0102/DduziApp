@@ -58,7 +58,7 @@ export default function ProjectsScreen() {
   if (loading) {
     return (
       <S.Center>
-        <ActivityIndicator size="large" color="#6b4fbb" />
+        <ActivityIndicator size="large" color="#191919" />
       </S.Center>
     );
   }

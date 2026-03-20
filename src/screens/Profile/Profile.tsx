@@ -1,23 +1,23 @@
 // screens/Profile.tsx
 import React, {useState, useEffect, useRef} from 'react';
-import {Button, Alert} from 'react-native';
+import {Alert, ActivityIndicator} from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../../contexts/AuthContext';
 import {supabase} from '../../lib/supabase';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useRoute} from '@react-navigation/native';
 import * as S from './Profile.style';
 
 import {
-  ImagePickerResponse,
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
 import {uploadImage} from '@/lib/uploadImage';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {checkNicknameDuplicate} from '@/lib/auth/userService';
+
+const MAX_BIO_LENGTH = 100;
 
 const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
@@ -29,9 +29,13 @@ const ProfileScreen = () => {
   if (!user) {
     return (
       <S.Container>
-        <S.Inner>
-          <S.PageTitle>사용자 정보를 불러오는 중...</S.PageTitle>
-        </S.Inner>
+        <S.ScrollView>
+          <S.FormSection>
+            <S.FormRow>
+              <S.Label>사용자 정보를 불러오는 중...</S.Label>
+            </S.FormRow>
+          </S.FormSection>
+        </S.ScrollView>
       </S.Container>
     );
   }
@@ -145,57 +149,115 @@ const ProfileScreen = () => {
       }
     } catch (error) {
       console.error('프로필 저장 에러:', error);
+      Alert.alert('오류', '프로필 저장 중 문제가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
+  const isSaveDisabled =
+    loading ||
+    !nickname.trim() ||
+    !!nicknameError ||
+    nicknameChecking;
+
+  const nicknameChanged = nickname.trim() !== user.nickname;
+
   return (
     <S.Container>
       <KeyboardAvoid>
-        <S.Inner>
-          {/* <S.PageTitle>프로필 설정</S.PageTitle> */}
-
+        <S.ScrollView
+          contentContainerStyle={{paddingBottom: 40}}
+          keyboardShouldPersistTaps="handled">
+          {/* 프로필 이미지 */}
           <S.ImageSection>
-            {displayImage ? (
-              <S.ProfileImage source={{uri: displayImage}} />
-            ) : (
-              <S.ProfileImagePlaceholder />
-            )}
-            <Button title="갤러리에서 선택" onPress={selectImage} />
-            <Button title="카메라로 촬영" onPress={takePhoto} />
+            <S.ImageWrapper>
+              {displayImage ? (
+                <S.ProfileImage source={{uri: displayImage}} />
+              ) : (
+                <S.ProfileImagePlaceholder>
+                  <S.ProfileImagePlaceholderText>
+                    {nickname.trim().charAt(0)?.toUpperCase() || '?'}
+                  </S.ProfileImagePlaceholderText>
+                </S.ProfileImagePlaceholder>
+              )}
+              <S.ImageEditBadge onPress={selectImage}>
+                <S.ImageEditBadgeText>✎</S.ImageEditBadgeText>
+              </S.ImageEditBadge>
+            </S.ImageWrapper>
+
+            <S.ImageButtonRow>
+              <S.ImageButton onPress={selectImage}>
+                <S.ImageButtonText>갤러리</S.ImageButtonText>
+              </S.ImageButton>
+              <S.ImageButton onPress={takePhoto}>
+                <S.ImageButtonText>카메라</S.ImageButtonText>
+              </S.ImageButton>
+            </S.ImageButtonRow>
           </S.ImageSection>
 
-          <S.Label>닉네임</S.Label>
-          <S.Input
-            placeholder="닉네임을 입력하세요"
-            value={nickname}
-            onChangeText={setNickname}
-          />
-          {nicknameError && (
-            <S.NicknameErrorText>{nicknameError}</S.NicknameErrorText>
-          )}
+          {/* 입력 폼 */}
+          <S.FormSection>
+            {/* 닉네임 */}
+            <S.FormRow>
+              <S.Label>닉네임</S.Label>
+              <S.NicknameRow>
+                <S.Input
+                  placeholder="닉네임을 입력하세요"
+                  placeholderTextColor="#ccc"
+                  value={nickname}
+                  onChangeText={setNickname}
+                  maxLength={20}
+                  autoCorrect={false}
+                />
+                <S.CharCount>{nickname.length}/20</S.CharCount>
+              </S.NicknameRow>
+              {nicknameChecking && (
+                <S.NicknameStatus isError={false}>확인 중...</S.NicknameStatus>
+              )}
+              {!nicknameChecking && nicknameError && (
+                <S.NicknameStatus isError={true}>{nicknameError}</S.NicknameStatus>
+              )}
+              {!nicknameChecking && !nicknameError && nicknameChanged && nickname.trim() && (
+                <S.NicknameStatus isError={false}>사용 가능한 닉네임입니다.</S.NicknameStatus>
+              )}
+            </S.FormRow>
 
-          <S.Label>자기소개</S.Label>
-          <S.TextArea
-            multiline
-            placeholder="자기소개를 입력하세요"
-            value={bio}
-            onChangeText={setBio}
-          />
+            {/* 자기소개 */}
+            <S.FormRow>
+              <S.NicknameRow>
+                <S.Label>자기소개</S.Label>
+                <S.CharCount>{bio.length}/{MAX_BIO_LENGTH}</S.CharCount>
+              </S.NicknameRow>
+              <S.TextArea
+                placeholder="자신을 소개해주세요"
+                placeholderTextColor="#ccc"
+                value={bio}
+                onChangeText={text =>
+                  setBio(text.slice(0, MAX_BIO_LENGTH))
+                }
+                multiline
+                scrollEnabled={false}
+              />
+            </S.FormRow>
+          </S.FormSection>
 
-          <Button
-            title={loading ? '저장 중...' : '완료'}
-            onPress={handleSave}
-            disabled={
-              loading ||
-              !nickname.trim() ||
-              !bio.trim() ||
-              !!nicknameError ||
-              nicknameChecking
-            }
-          />
-        </S.Inner>
+          {/* 저장 버튼 */}
+          <S.Footer>
+            <S.SaveButton
+              onPress={handleSave}
+              disabled={isSaveDisabled}
+              activeOpacity={isSaveDisabled ? 1 : 0.8}>
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <S.SaveButtonText disabled={isSaveDisabled}>
+                  {isInitialSetup ? '프로필 설정 완료' : '저장'}
+                </S.SaveButtonText>
+              )}
+            </S.SaveButton>
+          </S.Footer>
+        </S.ScrollView>
       </KeyboardAvoid>
     </S.Container>
   );

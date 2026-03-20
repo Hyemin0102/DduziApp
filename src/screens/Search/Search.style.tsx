@@ -55,7 +55,7 @@ export const ClearButtonText = styled.Text`
 export const SearchButton = styled.TouchableOpacity`
   height: 44px;
   padding: 0 16px;
-  background-color: #007aff;
+  background-color: #191919;
   border-radius: 12px;
   justify-content: center;
   align-items: center;

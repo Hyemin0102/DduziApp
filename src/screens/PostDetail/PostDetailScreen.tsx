@@ -34,10 +34,8 @@ export default function PostDetailScreen() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const hasFetchedRef = useRef(false);
-
-  console.log('포스트상세', post);
-  console.log('포스트 로딩', loading);
 
   const isMyPost = post && user && post.user_id === user.id;
 
@@ -200,7 +198,7 @@ export default function PostDetailScreen() {
   if (loading) {
     return (
       <S.LoadingContainer>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#191919" />
         <S.LoadingText>로딩 중...</S.LoadingText>
       </S.LoadingContainer>
     );
@@ -252,22 +250,43 @@ export default function PostDetailScreen() {
 
         {/* 이미지 갤러리 */}
         {post.images.length > 0 && (
-          <S.ImageGallery
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}>
-            {post.images.map((image, index) => (
-              <S.ImageWrapper key={image.id}>
-                <S.PostImage
-                  source={{uri: image.image_url}}
-                  resizeMode="cover"
-                />
-                <S.ImageCounter>
-                  {index + 1} / {post.images.length}
-                </S.ImageCounter>
-              </S.ImageWrapper>
-            ))}
-          </S.ImageGallery>
+          <>
+            <S.ImageGallery
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onScroll={e => {
+                const idx = Math.round(
+                  e.nativeEvent.contentOffset.x /
+                    e.nativeEvent.layoutMeasurement.width,
+                );
+                setActiveImageIndex(idx);
+              }}>
+              {post.images.map((image, index) => (
+                <S.ImageWrapper key={image.id}>
+                  <S.PostImage
+                    source={{uri: image.image_url}}
+                    resizeMode="cover"
+                  />
+                  {post.images.length > 1 && (
+                    <S.ImageCounter>
+                      <S.ImageCounterText>
+                        {index + 1} / {post.images.length}
+                      </S.ImageCounterText>
+                    </S.ImageCounter>
+                  )}
+                </S.ImageWrapper>
+              ))}
+            </S.ImageGallery>
+            {post.images.length > 1 && (
+              <S.DotsRow>
+                {post.images.map((_, i) => (
+                  <S.Dot key={i} active={i === activeImageIndex} />
+                ))}
+              </S.DotsRow>
+            )}
+          </>
         )}
 
         {/* 게시물 내용 */}
@@ -285,7 +304,7 @@ export default function PostDetailScreen() {
         {post.project_id && (
           <S.ProjectBanner onPress={handleGoToProject} activeOpacity={0.8}>
             <S.ProjectBannerLeft>
-              <Icon name="folder" size={18} color="#8b5cf6" />
+              <Icon name="folder" size={18} color="#555" />
               <S.ProjectBannerTextGroup>
                 <S.ProjectBannerLabel>연결된 프로젝트</S.ProjectBannerLabel>
                 <S.ProjectBannerTitle numberOfLines={1}>

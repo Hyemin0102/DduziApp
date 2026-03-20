@@ -23,7 +23,7 @@ export const HeaderTitle = styled.Text`
 export const SubmitText = styled.Text`
   font-size: 16px;
   font-weight: 600;
-  color: #0070f3;
+  color: #191919;
 `;
 
 export const Section = styled.View`
@@ -132,7 +132,7 @@ export const AddLogButton = styled.View`
 export const AddLogText = styled.Text`
   font-size: 14px;
   font-weight: 600;
-  color: #0070f3;
+  color: #191919;
 `;
 
 export const LogItem = styled.View`
@@ -153,7 +153,7 @@ export const LogHeader = styled.View`
 export const LogNumber = styled.Text`
   font-size: 16px;
   font-weight: 700;
-  color: #0070f3;
+  color: #191919;
 `;
 
 export const DateButton = styled.View`
@@ -205,7 +205,7 @@ export const ExistingLogContent = styled.Text`
 
 export const NewLogLabel = styled.Text`
   font-size: 13px;
-  color: #0070f3;
+  color: #191919;
   font-weight: 600;
   margin-bottom: 12px;
   margin-top: 8px;

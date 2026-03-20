@@ -123,6 +123,7 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT]:
     | {projectId?: string; projectTitle?: string}
     | undefined;
+  [MY_PAGE_ROUTES.SETTINGS]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 

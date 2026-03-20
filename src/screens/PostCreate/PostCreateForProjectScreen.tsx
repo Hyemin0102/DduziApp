@@ -4,6 +4,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Feather';
@@ -244,7 +245,7 @@ export default function PostCreateForProjectScreen() {
         </S.SubmitButton>
       </S.Header>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <KeyboardAvoid>
         {!presetProjectId || isEditMode ? (
           <S.Section>
             <S.Label>프로젝트 *</S.Label>
@@ -263,7 +264,7 @@ export default function PostCreateForProjectScreen() {
             {showProjectPicker && (
               <S.ProjectList>
                 {loadingProjects ? (
-                  <ActivityIndicator size="small" color="#6b4fbb" />
+                  <ActivityIndicator size="small" color="#191919" />
                 ) : (
                   <>
                     {projects.map(p => (
@@ -279,7 +280,7 @@ export default function PostCreateForProjectScreen() {
                           {p.title}
                         </S.ProjectItemText>
                         {selectedProjectId === p.id && (
-                          <Icon name="check" size={16} color="#6b4fbb" />
+                          <Icon name="check" size={16} color="#191919" />
                         )}
                       </S.ProjectItem>
                     ))}
@@ -341,12 +342,12 @@ export default function PostCreateForProjectScreen() {
             value={content}
             onChangeText={setContent}
             multiline
-            numberOfLines={6}
+            numberOfLines={10}
             textAlignVertical="top"
             placeholderTextColor="#999"
           />
         </S.Section>
-      </ScrollView>
+      </KeyboardAvoid>
     </S.Container>
   );
 }

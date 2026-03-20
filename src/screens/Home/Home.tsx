@@ -67,6 +67,8 @@ const Home = () => {
 
   const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
 
+  
+
   return (
     <S.Container>
       {loading ? (
@@ -84,12 +86,12 @@ const Home = () => {
           data={posts}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
-          contentContainerStyle={{paddingVertical: 16, flexGrow: 1}}
+          contentContainerStyle={{flexGrow: 1}}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#007AFF"
+              tintColor="#191919"
             />
           }
           ListEmptyComponent={

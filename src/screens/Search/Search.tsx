@@ -104,7 +104,7 @@ const Search = () => {
     if (loading) {
       return (
         <S.CenterContainer>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color="#191919" />
         </S.CenterContainer>
       );
     }
@@ -175,7 +175,7 @@ const Search = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#007AFF"
+            tintColor="#191919"
           />
         }
         onScrollBeginDrag={Keyboard.dismiss}

@@ -25,7 +25,7 @@ export const SubmitButton = styled.TouchableOpacity``;
 export const SubmitText = styled.Text<{disabled?: boolean}>`
   font-size: 16px;
   font-weight: 600;
-  color: ${({disabled}) => (disabled ? '#bbb' : '#6b4fbb')};
+  color: ${({disabled}) => (disabled ? '#bbb' : '#191919')};
 `;
 
 export const Section = styled.View`
@@ -71,25 +71,25 @@ export const ProjectItem = styled.TouchableOpacity<{selected?: boolean}>`
   padding: 12px 14px;
   border-bottom-width: 1px;
   border-bottom-color: #f0f0f0;
-  background-color: ${({selected}) => (selected ? '#f3f0ff' : 'transparent')};
+  background-color: ${({selected}) => (selected ? '#f1f1ef' : 'transparent')};
 `;
 
 export const ProjectItemText = styled.Text<{selected?: boolean}>`
   font-size: 15px;
-  color: ${({selected}) => (selected ? '#6b4fbb' : '#333')};
+  color: ${({selected}) => (selected ? '#191919' : '#333')};
   font-weight: ${({selected}) => (selected ? '600' : '400')};
 `;
 
 export const ProjectBadge = styled.View`
   align-self: flex-start;
-  background-color: #f3f0ff;
+  background-color: #f1f1ef;
   padding: 6px 12px;
   border-radius: 16px;
 `;
 
 export const ProjectBadgeText = styled.Text`
   font-size: 14px;
-  color: #6b4fbb;
+  color: #191919;
   font-weight: 600;
 `;
 
@@ -103,7 +103,7 @@ export const AddProjectItem = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   align-self: flex-start;
-  background-color: #6b4fbb;
+  background-color: #191919;
   padding: 6px 12px;
   border-radius: 16px;
   gap: 4px;
@@ -158,5 +158,5 @@ export const TextArea = styled.TextInput`
   padding: 12px;
   font-size: 15px;
   color: #333;
-  min-height: 120px;
+  min-height: 200px;
 `;

@@ -1,6 +1,7 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MyPageScreen from '../../MyPage/Mypage';
 import ProfileScreen from '../../Profile/Profile';
+import SettingsScreen from '../../Settings/Settings';
 import {MyPageStackParamList} from '../../../@types/navigation';
 import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 
@@ -50,6 +51,11 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT}
         component={PostCreateForProjectScreen}
         options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.SETTINGS}
+        component={SettingsScreen}
+        options={{title: '설정'}}
       />
       <Stack.Screen
         name={POST_ROUTES.POST_DETAIL}

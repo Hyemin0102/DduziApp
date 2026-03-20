@@ -5,7 +5,7 @@ const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 export const Container = styled.SafeAreaView`
   flex: 1;
-  background-color: #f8f9fa;
+  background-color: #fff;
 `;
 
 export const SearchContainer = styled.View`
@@ -28,7 +28,7 @@ export const SearchInput = styled.TextInput`
 export const SearchButton = styled.TouchableOpacity`
   height: 44px;
   padding: 0 20px;
-  background-color: #007aff;
+  background-color: #191919;
   border-radius: 12px;
   justify-content: center;
   align-items: center;
@@ -48,7 +48,7 @@ export const ClearButton = styled.TouchableOpacity`
 `;
 
 export const ClearButtonText = styled.Text`
-  color: #007aff;
+  color: #191919;
   font-size: 14px;
 `;
 

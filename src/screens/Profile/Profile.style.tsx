@@ -2,71 +2,158 @@ import styled from '@emotion/native';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
+  background-color: #f8f8f8;
 `;
 
-export const Inner = styled.View`
-  flex-grow: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+export const ScrollView = styled.ScrollView`
+  flex: 1;
 `;
 
-export const PageTitle = styled.Text`
-  font-size: 24px;
-  margin-bottom: 20px;
-`;
+// ─── 프로필 이미지 영역 ───────────────────────────────────
 
 export const ImageSection = styled.View`
-  flex: 1;
   align-items: center;
-  justify-content: center;
+  padding: 40px 20px 28px;
+  background-color: #fff;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+`;
+
+export const ImageWrapper = styled.View`
+  position: relative;
+  margin-bottom: 20px;
 `;
 
 export const ProfileImage = styled.Image`
-  width: 120px;
-  height: 120px;
-  border-radius: 60px;
-  margin-bottom: 20px;
+  width: 140px;
+  height: 140px;
+  border-radius: 70px;
 `;
 
 export const ProfileImagePlaceholder = styled.View`
-  width: 120px;
-  height: 120px;
-  border-radius: 60px;
-  background-color: #ddd;
-  margin-bottom: 20px;
+  width: 140px;
+  height: 140px;
+  border-radius: 70px;
+  background-color: #f1f1ef;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const ProfileImagePlaceholderText = styled.Text`
+  font-size: 52px;
+  font-weight: bold;
+  color: #191919;
+`;
+
+export const ImageEditBadge = styled.TouchableOpacity`
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: #191919;
+  border-width: 2.5px;
+  border-color: #fff;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const ImageEditBadgeText = styled.Text`
+  font-size: 15px;
+  color: #fff;
+`;
+
+export const ImageButtonRow = styled.View`
+  flex-direction: row;
+  gap: 8px;
+`;
+
+export const ImageButton = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: #e9e9e7;
+  background-color: #fff;
+`;
+
+export const ImageButtonText = styled.Text`
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+`;
+
+// ─── 입력 폼 영역 ─────────────────────────────────────────
+
+export const FormSection = styled.View`
+  background-color: #fff;
+  margin-top: 12px;
+`;
+
+export const FormRow = styled.View`
+  padding: 16px 20px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
 `;
 
 export const Label = styled.Text`
-  font-size: 16px;
-  margin-bottom: 10px;
-  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 export const Input = styled.TextInput`
-  width: 100%;
-  height: 50px;
-  border-width: 1px;
-  border-color: #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 8px;
-`;
-
-export const NicknameErrorText = styled.Text`
-  color: #e53935;
-  font-size: 12px;
-  margin-bottom: 20px;
-  align-self: flex-start;
+  font-size: 16px;
+  color: #191919;
+  padding: 0;
 `;
 
 export const TextArea = styled.TextInput`
-  width: 100%;
-  height: 100px;
-  border-width: 1px;
-  border-color: #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 20px;
+  font-size: 16px;
+  color: #191919;
+  padding: 0;
+  min-height: 80px;
   text-align-vertical: top;
+`;
+
+export const NicknameRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const NicknameStatus = styled.Text<{isError: boolean}>`
+  font-size: 12px;
+  color: ${({isError}) => (isError ? '#e53935' : '#4CAF50')};
+  margin-top: 6px;
+`;
+
+export const CharCount = styled.Text`
+  font-size: 12px;
+  color: #999;
+`;
+
+// ─── 저장 버튼 ────────────────────────────────────────────
+
+export const Footer = styled.View`
+  padding: 20px 20px 8px;
+`;
+
+export const SaveButton = styled.TouchableOpacity<{disabled?: boolean}>`
+  background-color: ${({disabled}) => (disabled ? '#e9e9e7' : '#191919')};
+  border-radius: 12px;
+  padding: 16px;
+  align-items: center;
+`;
+
+export const SaveButtonText = styled.Text<{disabled?: boolean}>`
+  font-size: 16px;
+  font-weight: 600;
+  color: ${({disabled}) => (disabled ? '#999' : '#fff')};
 `;

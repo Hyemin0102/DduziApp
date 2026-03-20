@@ -41,7 +41,7 @@ export const SummaryDivider = styled.View`
 export const SummaryCount = styled.Text`
   font-size: 24px;
   font-weight: 700;
-  color: #6b4fbb;
+  color: #191919;
 `;
 
 export const SummaryLabel = styled.Text`
@@ -80,7 +80,7 @@ export const EmptySubText = styled.Text`
 
 export const EmptyButton = styled.TouchableOpacity`
   margin-top: 8px;
-  background-color: #6b4fbb;
+  background-color: #191919;
   padding-horizontal: 28px;
   padding-vertical: 12px;
   border-radius: 24px;
@@ -118,7 +118,7 @@ export const StatusDot = styled.View<{completed: boolean}>`
   width: 10px;
   height: 10px;
   border-radius: 5px;
-  background-color: ${({completed}) => (completed ? '#4CAF50' : '#6b4fbb')};
+  background-color: ${({completed}) => (completed ? '#4CAF50' : '#191919')};
 `;
 
 export const CardInfo = styled.View`
@@ -155,11 +155,11 @@ export const StatusBadge = styled.Text<{
   background-color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#f0ecff';
+        return '#f1f1ef';
       case 'completed':
         return '#e8f5e9';
       case 'public':
-        return '#e3f2fd';
+        return '#f1f1ef';
       case 'private':
         return '#f5f5f5';
     }
@@ -167,11 +167,11 @@ export const StatusBadge = styled.Text<{
   color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#6b4fbb';
+        return '#191919';
       case 'completed':
         return '#4CAF50';
       case 'public':
-        return '#1976D2';
+        return '#555';
       case 'private':
         return '#999';
     }
@@ -185,12 +185,12 @@ export const FAB = styled.TouchableOpacity`
   width: 52px;
   height: 52px;
   border-radius: 26px;
-  background-color: #6b4fbb;
+  background-color: #191919;
   align-items: center;
   justify-content: center;
   elevation: 6;
-  shadow-color: #6b4fbb;
+  shadow-color: #000;
   shadow-offset: 0px 4px;
-  shadow-opacity: 0.3;
+  shadow-opacity: 0.2;
   shadow-radius: 8px;
 `;

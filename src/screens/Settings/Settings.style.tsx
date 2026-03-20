@@ -2,18 +2,23 @@ import styled from '@emotion/native';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
-  background-color: #f8f8f8;
+  background-color: #f5f5f5;
 `;
 
 export const ScrollView = styled.ScrollView`
   flex: 1;
 `;
 
+export const SectionLabel = styled.Text`
+  font-size: 13px;
+  color: #999;
+  padding: 16px 16px 8px;
+`;
+
 export const MenuSection = styled.View`
   background-color: #fff;
   border-radius: 12px;
-  margin: 16px 16px 0;
-  overflow: hidden;
+  margin: 0 16px;
 `;
 
 export const MenuItem = styled.TouchableOpacity`
@@ -27,33 +32,33 @@ export const MenuItem = styled.TouchableOpacity`
 
 export const MenuText = styled.Text`
   font-size: 16px;
-  color: #191919;
+  color: #333;
 `;
 
 export const MenuArrow = styled.Text`
-  font-size: 20px;
-  color: #ccc;
+  font-size: 24px;
+  color: #999;
 `;
 
-export const LogoutMenuItem = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: space-between;
+export const MenuValue = styled.Text`
+  font-size: 14px;
+  color: #999;
+`;
+
+export const DeleteButton = styled.TouchableOpacity`
   align-items: center;
-  padding: 14px 16px;
+  padding: 20px;
+  margin-top: 8px;
 `;
 
-export const LogoutText = styled.Text`
-  font-size: 16px;
-  color: #e53935;
+export const DeleteButtonText = styled.Text`
+  color: #999;
+  font-size: 14px;
+  text-decoration-line: underline;
 `;
 
 export const CenterContainer = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
-`;
-
-export const ErrorText = styled.Text`
-  font-size: 16px;
-  color: #666;
 `;

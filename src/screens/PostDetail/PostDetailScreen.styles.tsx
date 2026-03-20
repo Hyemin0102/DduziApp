@@ -18,12 +18,12 @@ export const LoadingContainer = styled.View`
 export const LoadingText = styled.Text`
   margin-top: 12px;
   font-size: 16px;
-  color: #666666;
+  color: #666;
 `;
 
 export const ErrorText = styled.Text`
   font-size: 16px;
-  color: #666666;
+  color: #666;
 `;
 
 // 작성자 섹션
@@ -44,7 +44,7 @@ export const AuthorInfo = styled.View`
 
 export const MoreButton = styled.Text`
   font-size: 24px;
-  color: #666666;
+  color: #666;
   padding: 8px;
 `;
 
@@ -58,7 +58,7 @@ export const ProfilePlaceholder = styled.View`
   width: 48px;
   height: 48px;
   border-radius: 24px;
-  background-color: #e0e0e0;
+  background-color: #f1f1ef;
   justify-content: center;
   align-items: center;
 `;
@@ -66,7 +66,7 @@ export const ProfilePlaceholder = styled.View`
 export const ProfilePlaceholderText = styled.Text`
   font-size: 20px;
   font-weight: bold;
-  color: #666666;
+  color: #555;
 `;
 
 export const AuthorTextContainer = styled.View`
@@ -83,7 +83,7 @@ export const Username = styled.Text`
 
 export const Date = styled.Text`
   font-size: 13px;
-  color: #666666;
+  color: #666;
 `;
 
 // 이미지 갤러리
@@ -103,14 +103,33 @@ export const PostImage = styled.Image`
   height: 100%;
 `;
 
-export const ImageCounter = styled.Text`
+export const ImageCounter = styled.View`
   position: absolute;
-  bottom: 16px;
-  right: 16px;
-  background-color: rgba(0, 0, 0, 0.6);
-  padding: 6px 12px;
-  border-radius: 16px;
-  color: #ffffff;
+  top: 12px;
+  right: 12px;
+  background-color: rgba(0, 0, 0, 0.55);
+  padding: 4px 10px;
+  border-radius: 12px;
+`;
+
+export const ImageCounterText = styled.Text`
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+export const DotsRow = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  gap: 5px;
+  padding-vertical: 8px;
+`;
+
+export const Dot = styled.View<{active: boolean}>`
+  width: ${({active}) => (active ? 6 : 5)}px;
+  height: ${({active}) => (active ? 6 : 5)}px;
+  border-radius: 3px;
+  background-color: ${({active}) => (active ? '#191919' : '#d4d4d4')};
 `;
 
 // 프로젝트 링크 배너
@@ -120,10 +139,10 @@ export const ProjectBanner = styled.TouchableOpacity`
   justify-content: space-between;
   margin: 0 16px 16px;
   padding: 12px 16px;
-  background-color: #f5f0ff;
+  background-color: #f1f1ef;
   border-radius: 12px;
   border-width: 1px;
-  border-color: #e0d4ff;
+  border-color: #e9e9e7;
 `;
 
 export const ProjectBannerLeft = styled.View`
@@ -134,14 +153,14 @@ export const ProjectBannerLeft = styled.View`
 
 export const ProjectBannerLabel = styled.Text`
   font-size: 11px;
-  color: #8b5cf6;
+  color: #555;
   font-weight: 600;
   margin-bottom: 2px;
 `;
 
 export const ProjectBannerTitle = styled.Text`
   font-size: 14px;
-  color: #4c1d95;
+  color: #191919;
   font-weight: 600;
 `;
 
@@ -152,7 +171,7 @@ export const ProjectBannerTextGroup = styled.View`
 
 export const ProjectBannerChevron = styled.Text`
   font-size: 16px;
-  color: #8b5cf6;
+  color: #555;
   margin-left: 8px;
 `;
 
@@ -171,7 +190,7 @@ export const Title = styled.Text`
 
 export const Content = styled.Text`
   font-size: 16px;
-  color: #333333;
+  color: #333;
   line-height: 24px;
 `;
 
@@ -215,7 +234,7 @@ export const InfoRow = styled.View`
 export const InfoLabel = styled.Text`
   font-size: 14px;
   font-weight: 600;
-  color: #666666;
+  color: #666;
   margin-bottom: 6px;
 `;
 
@@ -265,8 +284,8 @@ export const TimelineDot = styled.View<{isFirst: boolean}>`
   width: 12px;
   height: 12px;
   border-radius: 6px;
-  background-color: ${props => (props.isFirst ? '#4F46E5' : '#9CA3AF')};
-  border: 2px solid ${props => (props.isFirst ? '#4F46E5' : '#D1D5DB')};
+  background-color: ${props => (props.isFirst ? '#191919' : '#999')};
+  border: 2px solid ${props => (props.isFirst ? '#191919' : '#e9e9e7')};
 `;
 
 export const TimelineLine = styled.View`
@@ -275,27 +294,27 @@ export const TimelineLine = styled.View`
   top: 16px;
   bottom: -8px;
   width: 2px;
-  background-color: #e5e7eb;
+  background-color: #e9e9e7;
 `;
 
 // 로그 내용
 export const LogContent = styled.View`
-  background-color: #f9fafb;
+  background-color: #fafafa;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e9e9e7;
 `;
 
 export const LogDate = styled.Text`
   font-size: 12px;
-  color: #6b7280;
+  color: #666;
   margin-bottom: 6px;
   font-weight: 600;
 `;
 
 export const LogText = styled.Text`
   font-size: 14px;
-  color: #374151;
+  color: #333;
   line-height: 20px;
 `;
 
@@ -360,6 +379,6 @@ export const ActionSheetCancelButton = styled.TouchableOpacity`
 
 export const ActionSheetCancelText = styled.Text`
   font-size: 17px;
-  color: #007aff;
+  color: #191919;
   font-weight: 600;
 `;
