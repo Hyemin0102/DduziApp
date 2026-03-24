@@ -5,10 +5,12 @@ import HomeScreen from '../../Home/Home';
 import PostDetailScreen from '../../PostDetail/PostDetailScreen';
 import SearchScreen from '../../Search/Search';
 import {HomeStackParamList} from '../../../@types/navigation';
-import {HOME_ROUTES, POST_ROUTES} from '../../../constants/navigation.constant';
+import {HOME_ROUTES, POST_ROUTES, PROJECTS_ROUTES} from '../../../constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PostsScreen from '@/screens/Posts/PostsScreen';
 import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
+import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
+import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import * as S from './HomeStack.style';
 
@@ -76,9 +78,7 @@ const HomeStack = () => {
       <Stack.Screen
         name={POST_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
-        options={({route}) => ({
-          title: '',
-        })}
+        options={{title: ''}}
       />
       <Stack.Screen
         name={POST_ROUTES.CREATE_POST_FOR_PROJECT}
@@ -87,6 +87,16 @@ const HomeStack = () => {
           title: '게시물 작성',
           headerShown: false,
         }}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
+        component={ProjectLogsAllScreen}
+        options={{title: '뜨개 로그 전체'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
+        component={ProjectPostsAllScreen}
+        options={{title: '게시물 전체'}}
       />
     </Stack.Navigator>
   );

@@ -167,6 +167,14 @@ export const PostHeaderRow = styled.View`
   margin-bottom: 12px;
 `;
 
+export const InfoHeaderRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  //margin-bottom: 12px;
+  margin-top: 20px;
+`;
+
 export const AddButton = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
@@ -240,7 +248,15 @@ export const PostContent = styled.Text`
   font-size: 14px;
   color: #333;
   padding: 12px;
+  padding-bottom: 2px;
   line-height: 20px;
+`;
+
+export const PostMore = styled.Text`
+  font-size: 14px;
+  color: #999;
+  padding-horizontal: 12px;
+  padding-bottom: 4px;
 `;
 
 export const PostDate = styled.Text`
@@ -401,12 +417,12 @@ export const MetaRow = styled.View`
 /** 라벨 + 부연설명을 세로로 쌓는 왼쪽 영역 */
 export const MetaRowLeft = styled.View`
   flex: 1;
-  //gap: 3px;
 `;
 
 export const MetaRowTitle = styled.Text`
-  font-size: 15px;
-  color: #222;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
 `;
 
 export const MetaRowSub = styled.Text`
@@ -420,6 +436,7 @@ export const InfoSection = styled.View`
   border-bottom-width: 6px;
   border-bottom-color: #f5f5f5;
   padding-horizontal: 20px;
+  //background: yellow;
 `;
 
 export const InfoRow = styled.View`
@@ -479,4 +496,79 @@ export const LinkRow = styled.View`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+`;
+
+// ─── 뜨개 로그 타임라인 ───────────────────────────────────
+
+export const LogTimelineRow = styled.View`
+  flex-direction: row;
+`;
+
+export const LogTimelineDotCol = styled.View`
+  width: 20px;
+  align-items: center;
+`;
+
+export const LogTimelineDot = styled.View<{active?: boolean}>`
+  width: 9px;
+  height: 9px;
+  border-radius: 5px;
+  background-color: ${({active}) => (active ? '#191919' : '#c8c8c8')};
+  margin-top: 3px;
+`;
+
+export const LogTimelineLine = styled.View`
+  flex: 1;
+  width: 1.5px;
+  background-color: #e5e5e5;
+  margin-top: 6px;
+  margin-bottom: 0px;
+`;
+
+export const LogTimelineContent = styled.View`
+  flex: 1;
+  padding-left: 10px;
+  padding-bottom: 20px;
+`;
+
+export const LogTimelineDateRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+`;
+
+export const LogTimelineDate = styled.Text<{active?: boolean}>`
+  font-size: 12px;
+  font-weight: ${({active}) => (active ? '700' : '500')};
+  color: ${({active}) => (active ? '#191919' : '#999')};
+`;
+
+// ─── 게시물 날짜 배지 ─────────────────────────────────────
+
+export const PostDateRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 12px 4px;
+  gap: 6px;
+`;
+
+export const PostDateText = styled.Text`
+  font-size: 12px;
+  font-weight: 600;
+  color: #191919;
+`;
+
+export const ViewAllButton = styled.TouchableOpacity`
+  margin-top: 8px;
+  padding-vertical: 10px;
+  align-items: center;
+  border-top-width: 1px;
+  border-top-color: #f0f0f0;
+`;
+
+export const ViewAllButtonText = styled.Text`
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
 `;

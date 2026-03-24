@@ -6,9 +6,11 @@ import PostsScreen from '@/screens/Posts/PostsScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import PostCreateScreen from '@/screens/PostCreate/PostCreateScreen';
 import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
+import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
+import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import {PostsStackParamList} from '@/@types/navigation';
-import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import {MY_PAGE_ROUTES, POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import ProfileScreen from '@/screens/Profile/Profile';
 import {TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -79,6 +81,16 @@ const PostsStack = () => {
         name={MY_PAGE_ROUTES.PROFILE_EDIT}
         component={ProfileScreen}
         options={{title: '프로필 편집'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
+        component={ProjectLogsAllScreen}
+        options={{title: '뜨개 로그 전체'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
+        component={ProjectPostsAllScreen}
+        options={{title: '게시물 전체'}}
       />
     </Stack.Navigator>
   );

@@ -57,10 +57,10 @@ const Mypage = () => {
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
 
-          <S.MenuItem onPress={handleProject}>
+          {/* <S.MenuItem onPress={handleProject}>
             <S.MenuText>프로젝트 관리</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
+          </S.MenuItem> */}
 
           <S.MenuItem onPress={handleSettings}>
             <S.MenuText>설정</S.MenuText>

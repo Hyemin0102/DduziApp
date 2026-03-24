@@ -7,7 +7,7 @@ import * as S from './Settings.style';
 const APP_VERSION = '0.0.1';
 
 const Settings = () => {
-  const {user, provider} = useAuth();
+  const {provider} = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = () => {
@@ -52,7 +52,7 @@ const Settings = () => {
       <S.ScrollView contentContainerStyle={{paddingVertical: 16, gap: 8}}>
         <S.SectionLabel>계정</S.SectionLabel>
         <S.MenuSection>
-          <S.MenuItem>
+          <S.MenuItem activeOpacity={1}>
             <S.MenuText>연결된 소셜 계정</S.MenuText>
             <S.MenuValue>{provider}</S.MenuValue>
           </S.MenuItem>

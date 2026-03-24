@@ -25,6 +25,8 @@ export const PROJECTS_ROUTES = {
   PROJECTS_MAIN: 'ProjectsMain',
   PROJECT_DETAIL: 'ProjectDetail',
   CREATE_POST_FOR_PROJECT: 'CreatePostForProject',
+  PROJECT_LOGS_ALL: 'ProjectLogsAll',
+  PROJECT_POSTS_ALL: 'ProjectPostsAll',
 } as const;
 
 // ============= Home Stack Routes =============

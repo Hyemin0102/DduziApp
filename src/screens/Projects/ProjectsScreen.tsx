@@ -63,6 +63,9 @@ export default function ProjectsScreen() {
     );
   }
 
+  console.log(projects);
+  
+
   return (
     <S.Container>
       {projects.length > 0 && (
@@ -112,7 +115,7 @@ export default function ProjectsScreen() {
               <S.CardInfo>
                 <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
                 <S.CardDate>
-                  {new Date(item.updated_at).toLocaleDateString('ko-KR')}
+                  {new Date(item.created_at).toLocaleDateString('ko-KR')}
                 </S.CardDate>
               </S.CardInfo>
             </S.CardLeft>

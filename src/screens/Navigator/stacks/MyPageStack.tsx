@@ -3,9 +3,11 @@ import MyPageScreen from '../../MyPage/Mypage';
 import ProfileScreen from '../../Profile/Profile';
 import SettingsScreen from '../../Settings/Settings';
 import {MyPageStackParamList} from '../../../@types/navigation';
-import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import {MY_PAGE_ROUTES, POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 
 import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
+import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
+import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
@@ -61,6 +63,16 @@ const MyPageStack = () => {
         name={POST_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '게시물 상세'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
+        component={ProjectLogsAllScreen}
+        options={{title: '뜨개 로그 전체'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
+        component={ProjectPostsAllScreen}
+        options={{title: '게시물 전체'}}
       />
     </Stack.Navigator>
   );

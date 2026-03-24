@@ -35,6 +35,11 @@ export const MenuArrow = styled.Text`
   color: #ccc;
 `;
 
+export const MenuValue = styled.Text`
+  font-size: 14px;
+  color: #999;
+`;
+
 export const LogoutMenuItem = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: space-between;

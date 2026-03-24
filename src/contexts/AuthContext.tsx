@@ -212,6 +212,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       setNeedsProfileSetup(false);
 
       try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error('❌ Supabase signOut 실패:', signOutError);
+      }
+
+      try {
         await AsyncStorage.removeItem('authToken');
         await AsyncStorage.removeItem('user');
         await AsyncStorage.removeItem('provider');

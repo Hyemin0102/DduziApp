@@ -6,7 +6,7 @@ import PostsStack from './stacks/PostsStack';
 import SvgHomeTab from '../../components/Icons/HomeTab';
 import SvgDiscoverTab from '../../components/Icons/DiscoverTab';
 import SvgMyPageTab from '../../components/Icons/MyPageTab';
-import {Text, TextStyle, TouchableOpacity, View, ViewStyle} from 'react-native';
+import {DeviceEventEmitter, Image, Text, TextStyle, TouchableOpacity, View, ViewStyle} from 'react-native';
 import {SvgProps} from 'react-native-svg';
 import {JSX} from 'react';
 import {TabParamList} from '../../@types/navigation';
@@ -14,6 +14,8 @@ import PostCreateForProjectScreen from '../PostCreate/PostCreateForProjectScreen
 import SearchScreen from '../Search/Search';
 import Icon from 'react-native-vector-icons/Feather';
 import {TAB_ROUTES} from '@/constants/navigation.constant';
+import ProjectsScreen from '../Projects/ProjectsScreen';
+import ProjectsStack from './stacks/ProjectsStack';
 
 interface TabIconComponent {
   (props: SvgProps): JSX.Element;
@@ -111,6 +113,13 @@ const TabNavigator = () => {
             />
           ),
         }}
+        listeners={({navigation}) => ({
+          tabPress: () => {
+            if (navigation.isFocused()) {
+              DeviceEventEmitter.emit('homeTabRepress');
+            }
+          },
+        })}
       />
       {/* <Tab.Screen
         name="PostCreatePlaceholder"
@@ -167,6 +176,24 @@ const TabNavigator = () => {
               focused={focused}
               size={28}
             />
+          ),
+        }}
+      />
+        <Tab.Screen
+        name="ProjectsTab"
+        component={ProjectsStack}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', paddingVertical: 4, width: '100%', flex: 1}}>
+              <Image
+                source={require('../../assets/images/dduzi_logo.png')}
+                style={{width: 26, height: 26}}
+                resizeMode="contain"
+              />
+              <Text style={{color: focused ? '#000' : '#82879B', fontWeight: focused ? 'bold' : 'normal', fontSize: 10, marginTop: 4, textAlign: 'center'}}>
+                프로젝트 관리
+              </Text>
+            </View>
           ),
         }}
       />

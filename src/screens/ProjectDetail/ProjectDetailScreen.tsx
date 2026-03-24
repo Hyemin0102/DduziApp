@@ -124,6 +124,9 @@ export default function ProjectDetailScreen() {
     'private',
   );
 
+  const MAX_LENGTH_LOG = 3;
+  const MAX_LENGTH_POST = 2;
+
   // ── 뜨개 로그
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
   const [existingReadOnlyLogs, setExistingReadOnlyLogs] = useState<
@@ -194,6 +197,9 @@ export default function ProjectDetailScreen() {
     );
   }, []);
 
+  console.log(pendingLogs);
+  
+
   const addPendingLog = useCallback(() => {
     const tempId = Date.now().toString();
     setPendingLogs(prev => [
@@ -230,24 +236,50 @@ export default function ProjectDetailScreen() {
   }, []);
 
   useEffect(() => {
-    const editableLogs = pendingLogs.filter(
-      l => l.isEditable && l.isExisting && l.content.trim(), // ✅ 빈 content 제외
+    const newLogs = pendingLogs.filter(
+      l => l.isEditable && !l.isExisting && l.content.trim(),
     );
-    if (!editableLogs.length) return;
+    const existingLogs = pendingLogs.filter(
+      l => l.isEditable && l.isExisting && l.content.trim(),
+    );
+    if (!newLogs.length && !existingLogs.length) return;
 
     const timer = setTimeout(async () => {
-      await Promise.all(
-        editableLogs.map(l =>
-          supabase
-            .from('knitting_logs')
-            .update({content: l.content.trim()})
-            .eq('id', l.id),
-        ),
-      );
+      // 새 로그 INSERT
+      if (newLogs.length && projectId) {
+        await Promise.all(
+          newLogs.map(async l => {
+            const {data, error} = await supabase
+              .from('knitting_logs')
+              .insert({project_id: projectId, content: l.content.trim()})
+              .select('id')
+              .single();
+            if (!error && data) {
+              // 임시 ID를 실제 UUID로 교체
+              setPendingLogs(prev =>
+                prev.map(p =>
+                  p.id === l.id ? {...p, id: data.id, isExisting: true} : p,
+                ),
+              );
+            }
+          }),
+        );
+      }
+      // 기존 로그 UPDATE
+      if (existingLogs.length) {
+        await Promise.all(
+          existingLogs.map(l =>
+            supabase
+              .from('knitting_logs')
+              .update({content: l.content.trim()})
+              .eq('id', l.id),
+          ),
+        );
+      }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [pendingLogs]);
+  }, [pendingLogs, projectId]);
 
   // ── populateForm
   const populateForm = useCallback((p: ProjectDetail) => {
@@ -684,6 +716,9 @@ export default function ProjectDetailScreen() {
 
         {/* ══ 정보 섹션: 실 · 바늘 · 도안 ══════════════════ */}
         <S.InfoSection>
+        <S.InfoHeaderRow> 
+          <S.Label>뜨개 정보</S.Label>
+          </S.InfoHeaderRow>
           <S.InfoRow>
             <S.InfoIconBox style={{backgroundColor: '#f3eeff'}}>
               <S.InfoIcon>🧶</S.InfoIcon>
@@ -819,43 +854,75 @@ export default function ProjectDetailScreen() {
               <S.EmptyText>아직 기록이 없어요</S.EmptyText>
             </S.EmptyPosts>
           ) : (
-            pendingLogs.map(log => (
-              <S.LogItem key={log.id}>
-                <S.LogEditHeader>
-                  <S.LogDate>
-                    {log.isEditable
-                      ? `오늘 · ${new Date().toLocaleDateString('ko-KR', {
-                          month: 'long',
-                          day: 'numeric',
-                        })}`
-                      : new Date(log.created_at!).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                  </S.LogDate>
-                  {canEdit && log.isEditable && (
-                    <TouchableOpacity onPress={() => removePendingLog(log)}>
-                      <Icon name="x" size={14} color="#bbb" />
-                    </TouchableOpacity>
-                  )}
-                </S.LogEditHeader>
-                {log.isEditable ? (
-                  <S.LogInputWrapper isFocused={focusedLogId === log.id}>
-                    <S.LogInput
-                      placeholder="오늘 뜬 내용을 기록해보세요..."
-                      value={log.content}
-                      onChangeText={text => updatePendingLog(log.id, text)}
-                      onFocus={() => setFocusedLogId(log.id)}
-                      onBlur={() => setFocusedLogId(null)}
-                      placeholderTextColor="#ccc"
-                    />
-                  </S.LogInputWrapper>
-                ) : (
-                  <S.LogContent>{log.content}</S.LogContent>
-                )}
-              </S.LogItem>
-            ))
+            <>
+              {pendingLogs.slice(0, MAX_LENGTH_LOG).map((log, index) => {
+                const isLast =
+                  index === Math.min(pendingLogs.length, MAX_LENGTH_LOG) - 1 &&
+                  pendingLogs.length <= MAX_LENGTH_LOG;
+                return (
+                  <S.LogTimelineRow key={log.id}>
+                    <S.LogTimelineDotCol>
+                      <S.LogTimelineDot active={log.isEditable} />
+                      {!isLast && <S.LogTimelineLine />}
+                    </S.LogTimelineDotCol>
+                    <S.LogTimelineContent>
+                      <S.LogTimelineDateRow>
+                        <S.LogTimelineDate active={log.isEditable}>
+                          {log.isEditable
+                            ? `오늘 · ${new Date().toLocaleDateString('ko-KR', {
+                                month: 'long',
+                                day: 'numeric',
+                              })}`
+                            : new Date(log.created_at!).toLocaleDateString(
+                                'ko-KR',
+                                {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                },
+                              )}
+                        </S.LogTimelineDate>
+                        {canEdit && log.isEditable && (
+                          <TouchableOpacity
+                            onPress={() => removePendingLog(log)}>
+                            <Icon name="x" size={14} color="#bbb" />
+                          </TouchableOpacity>
+                        )}
+                      </S.LogTimelineDateRow>
+                      {log.isEditable ? (
+                        <S.LogInputWrapper isFocused={focusedLogId === log.id}>
+                          <S.LogInput
+                            placeholder="오늘 뜬 내용을 기록해보세요..."
+                            value={log.content}
+                            onChangeText={text =>
+                              updatePendingLog(log.id, text)
+                            }
+                            onFocus={() => setFocusedLogId(log.id)}
+                            onBlur={() => setFocusedLogId(null)}
+                            placeholderTextColor="#ccc"
+                          />
+                        </S.LogInputWrapper>
+                      ) : (
+                        <S.LogContent>{log.content}</S.LogContent>
+                      )}
+                    </S.LogTimelineContent>
+                  </S.LogTimelineRow>
+                );
+              })}
+              {pendingLogs.length > MAX_LENGTH_LOG && (
+                <S.ViewAllButton
+                  onPress={() =>
+                    navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
+                      projectId: projectId!,
+                      projectTitle: project?.title,
+                    })
+                  }>
+                  <S.ViewAllButtonText>
+                    전체 보기 ({pendingLogs.length}개)
+                  </S.ViewAllButtonText>
+                </S.ViewAllButton>
+              )}
+            </>
           )}
         </S.Section>
 
@@ -902,47 +969,79 @@ export default function ProjectDetailScreen() {
               )}
             </S.EmptyPosts>
           ) : (
-            posts.map(post => (
-              <S.PostCard key={post.id}>
-                {post.post_images.length > 0 && (
-                  <ScrollView
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    snapToInterval={SCREEN_WIDTH - 36}
-                    decelerationRate="fast"
-                    style={{height: 220}}>
-                    {post.post_images
-                      .slice()
-                      .sort((a, b) => a.display_order - b.display_order)
-                      .map((img, index) => (
-                        <S.PostImageWrapper
-                          key={img.id}
-                          width={SCREEN_WIDTH - 36}>
-                          <S.PostImage source={{uri: img.image_url}} />
-                          {post.post_images.length > 1 && (
-                            <S.PostImageCounter>
-                              {index + 1} / {post.post_images.length}
-                            </S.PostImageCounter>
-                          )}
-                        </S.PostImageWrapper>
-                      ))}
-                  </ScrollView>
-                )}
-                <TouchableOpacity
+            <>
+              {posts.slice(0, MAX_LENGTH_POST).map(post => (
+                <S.PostCard key={post.id}>
+                  {post.post_images.length > 0 && (
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      snapToInterval={SCREEN_WIDTH - 36}
+                      decelerationRate="fast"
+                      style={{height: 220}}>
+                      {post.post_images
+                        .slice()
+                        .sort((a, b) => a.display_order - b.display_order)
+                        .map((img, index) => (
+                          <S.PostImageWrapper
+                            key={img.id}
+                            width={SCREEN_WIDTH - 36}>
+                            <S.PostImage source={{uri: img.image_url}} />
+                            {post.post_images.length > 1 && (
+                              <S.PostImageCounter>
+                                {index + 1} / {post.post_images.length}
+                              </S.PostImageCounter>
+                            )}
+                          </S.PostImageWrapper>
+                        ))}
+                    </ScrollView>
+                  )}
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate(POST_ROUTES.POST_DETAIL, {
+                        postId: post.id,
+                      })
+                    }
+                    activeOpacity={0.5}>
+                    <S.PostDateRow>
+                      <Icon name="calendar" size={12} color="#191919" />
+                      <S.PostDateText>
+                        {new Date(post.created_at).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </S.PostDateText>
+                    </S.PostDateRow>
+                    {(() => {
+                      const lines = (post.content ?? '').split('\n');
+                      const preview = lines.slice(0, 2).join('\n');
+                      const hasMore = lines.length > 2;
+                      return (
+                        <>
+                          <S.PostContent>{preview}</S.PostContent>
+                          {hasMore && <S.PostMore>...</S.PostMore>}
+                        </>
+                      );
+                    })()}
+                  </TouchableOpacity>
+                </S.PostCard>
+              ))}
+              {posts.length > MAX_LENGTH_POST && (
+                <S.ViewAllButton
                   onPress={() =>
-                    navigation.navigate(POST_ROUTES.POST_DETAIL, {
-                      postId: post.id,
+                    navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {
+                      projectId: projectId!,
+                      projectTitle: project?.title,
                     })
-                  }
-                  activeOpacity={0.5}>
-                  <S.PostContent>{post.content}</S.PostContent>
-                  <S.PostDate>
-                    {new Date(post.created_at).toLocaleDateString('ko-KR')}
-                  </S.PostDate>
-                </TouchableOpacity>
-              </S.PostCard>
-            ))
+                  }>
+                  <S.ViewAllButtonText>
+                    전체 보기 ({posts.length}개)
+                  </S.ViewAllButtonText>
+                </S.ViewAllButton>
+              )}
+            </>
           )}
         </S.Section>
 

@@ -280,7 +280,7 @@
 				CODE_SIGN_ENTITLEMENTS = dduziApp/dduziApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = 4YQ8TJR699;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = dduziApp/Info.plist;
@@ -314,7 +314,7 @@
 				CODE_SIGN_ENTITLEMENTS = dduziApp/dduziApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = 4YQ8TJR699;
 				INFOPLIST_FILE = dduziApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "뜨지";

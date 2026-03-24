@@ -126,6 +126,10 @@ export default function PostCreateForProjectScreen() {
       Alert.alert('알림', '프로젝트를 선택해주세요.');
       return;
     }
+    if (totalImageCount === 0) {
+      Alert.alert('알림', '사진을 1장 이상 추가해주세요.');
+      return;
+    }
     if (!content.trim()) {
       Alert.alert('알림', '내용을 입력해주세요.');
       return;
@@ -303,7 +307,7 @@ export default function PostCreateForProjectScreen() {
         )}
 
         <S.Section>
-          <S.Label>사진</S.Label>
+          <S.Label>사진 *</S.Label>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

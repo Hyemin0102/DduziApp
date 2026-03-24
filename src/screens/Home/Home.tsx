@@ -1,5 +1,5 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {FlatList} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {DeviceEventEmitter, FlatList} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import * as S from './Home.style';
 import {supabase} from '@/lib/supabase';
@@ -11,6 +11,7 @@ const Home = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
 
   const fetchPosts = async () => {
     try {
@@ -65,6 +66,14 @@ const Home = () => {
     fetchPosts();
   }, []);
 
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('homeTabRepress', () => {
+      flatListRef.current?.scrollToOffset({offset: -100, animated: true});
+      onRefresh();
+    });
+    return () => sub.remove();
+  }, []);
+
   const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
 
   
@@ -83,6 +92,7 @@ const Home = () => {
         </S.Fill>
       ) : (
         <FlatList
+          ref={flatListRef}
           data={posts}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
