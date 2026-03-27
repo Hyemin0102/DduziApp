@@ -166,9 +166,7 @@ const ProfileScreen = () => {
   return (
     <S.Container>
       <KeyboardAvoid>
-        <S.ScrollView
-          contentContainerStyle={{paddingBottom: 40}}
-          keyboardShouldPersistTaps="handled">
+ 
           {/* 프로필 이미지 */}
           <S.ImageSection>
             <S.ImageWrapper>
@@ -257,7 +255,7 @@ const ProfileScreen = () => {
               )}
             </S.SaveButton>
           </S.Footer>
-        </S.ScrollView>
+
       </KeyboardAvoid>
     </S.Container>
   );

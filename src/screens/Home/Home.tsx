@@ -1,5 +1,6 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {DeviceEventEmitter, FlatList} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import * as S from './Home.style';
 import {supabase} from '@/lib/supabase';
@@ -62,9 +63,11 @@ const Home = () => {
     setRefreshing(false);
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, []),
+  );
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('homeTabRepress', () => {

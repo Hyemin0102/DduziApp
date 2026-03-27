@@ -1,10 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Text} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {UserProfile} from '../../@types/auth';
 import * as S from './UserProfileCard.style';
-import {MY_PAGE_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {supabase} from '@/lib/supabase';
+import {useAuth} from '@/contexts/AuthContext';
 
 interface UserProfileCardProps {
   userId: string | null;
@@ -18,33 +20,46 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   onAddPost,
 }) => {
   const {navigation} = useCommonNavigation();
+  const {user: authUser} = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 내 페이지면 AuthContext 사용 (프로필 수정 즉시 반영)
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const {data, error} = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        if (error) throw error;
-        setUser(data);
-      } catch (error) {
-        console.error('❌ 프로필 로드 실패:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUserProfile();
-  }, [userId]);
+    if (isMyPage && authUser) {
+      setUser(authUser);
+      setLoading(false);
+    }
+  }, [isMyPage, authUser]);
+
+  // 다른 유저 프로필은 화면 포커스 시 재조회
+  useFocusEffect(
+    useCallback(() => {
+      if (isMyPage) return;
+      const fetchUserProfile = async () => {
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+        try {
+          setLoading(true);
+          const {data, error} = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          if (error) throw error;
+          setUser(data);
+        } catch (error) {
+          console.error('❌ 프로필 로드 실패:', error);
+          setUser(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUserProfile();
+    }, [userId, isMyPage]),
+  );
 
   if (loading) return <ActivityIndicator size="small" color="#191919" />;
   if (!userId || !user) return <Text>프로필을 불러올 수 없습니다</Text>;

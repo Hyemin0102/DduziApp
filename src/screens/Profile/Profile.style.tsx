@@ -3,7 +3,7 @@ import FastImage from 'react-native-fast-image';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
-  background-color: #f8f8f8;
+  background-color: #fff;
 `;
 
 export const ScrollView = styled.ScrollView`
