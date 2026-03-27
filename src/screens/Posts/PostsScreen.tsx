@@ -284,8 +284,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
                   : ''}
               </S.EmptySubText>
               {isMyPage && activeTab === 'inProgress' && (
-                <S.EmptyAddButton
-                  onPress={() => navigation.navigate(POST_ROUTES.CREATE_POST)}>
+                <S.EmptyAddButton onPress={handleAddPost}>
                   <S.EmptyAddButtonText>뜨개 추가하기</S.EmptyAddButtonText>
                 </S.EmptyAddButton>
               )}
