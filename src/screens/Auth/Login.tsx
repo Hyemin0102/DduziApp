@@ -62,21 +62,6 @@ const Login = () => {
     });
   }, []);
 
-  const handleProviderConflict = async (loginType: string, conflictProvider: string) => {
-    try {
-      await supabase.functions.invoke('apple-auth', {
-        body: {action: 'delete-identity', provider: loginType},
-      });
-    } catch (e) {
-      console.warn('identity 삭제 실패:', e);
-    }
-    await supabase.auth.signOut();
-    Alert.alert(
-      '이미 가입된 계정',
-      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
-    );
-  };
-
   const socialLoginHandle = async (loginType: string): Promise<void> => {
     setIsLoading(true);
     setError(null);
@@ -134,7 +119,11 @@ const Login = () => {
                 } catch (userError: any) {
                   if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
                     const conflictProvider = userError.message.split(':')[1];
-                    await handleProviderConflict('kakao', conflictProvider);
+                    await supabase.auth.signOut();
+                    Alert.alert(
+                      '이미 가입된 계정',
+                      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+                    );
                   } else {
                     console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
                   }
@@ -191,7 +180,11 @@ const Login = () => {
                 } catch (userError: any) {
                   if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
                     const conflictProvider = userError.message.split(':')[1];
-                    await handleProviderConflict('google', conflictProvider);
+                    await supabase.auth.signOut();
+                    Alert.alert(
+                      '이미 가입된 계정',
+                      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+                    );
                   } else {
                     console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
                   }
@@ -288,7 +281,11 @@ const Login = () => {
               } catch (userError: any) {
                 if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
                   const conflictProvider = userError.message.split(':')[1];
-                  await handleProviderConflict('apple', conflictProvider);
+                  await supabase.auth.signOut();
+                  Alert.alert(
+                    '이미 가입된 계정',
+                    `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+                  );
                 } else {
                   console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
                 }
