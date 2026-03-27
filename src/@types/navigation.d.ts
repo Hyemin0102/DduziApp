@@ -132,6 +132,7 @@ export type MyPageStackParamList = {
     | {projectId?: string; projectTitle?: string}
     | undefined;
   [MY_PAGE_ROUTES.SETTINGS]: undefined;
+  [MY_PAGE_ROUTES.INQUIRY]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 

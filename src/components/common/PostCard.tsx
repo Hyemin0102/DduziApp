@@ -35,8 +35,6 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
   const profileInitial = post.users.nickname?.charAt(0)?.toUpperCase() ?? '?';
 
-
-
   return (
     <S.CardContainer>
       {/* 프로필 */}

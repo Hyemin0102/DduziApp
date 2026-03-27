@@ -1,4 +1,5 @@
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 
 export const Container = styled.View`
   flex: 1;
@@ -228,7 +229,7 @@ export const PostImageWrapper = styled.View<{width: number}>`
   position: relative;
 `;
 
-export const PostImage = styled.Image`
+export const PostImage = styled(FastImage)`
   width: 100%;
   height: 100%;
 `;

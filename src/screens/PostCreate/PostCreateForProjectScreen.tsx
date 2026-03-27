@@ -106,6 +106,8 @@ export default function PostCreateForProjectScreen() {
       mediaType: 'photo',
       selectionLimit: remaining,
       quality: 0.8,
+      maxWidth: 1280,
+      maxHeight: 1280,
     });
     if (result.assets) {
       setNewImages(prev => [...prev, ...(result.assets as NewImage[])]);
@@ -290,6 +292,7 @@ export default function PostCreateForProjectScreen() {
                     ))}
                     {projects.length > 0 && <S.ProjectListDivider />}
                     <S.AddProjectItem onPress={handleAddProject}>
+                      <S.PlusText>프로젝트 추가</S.PlusText>
                       <Icon name="plus" size={16} color="#fff" />
                     </S.AddProjectItem>
                   </>

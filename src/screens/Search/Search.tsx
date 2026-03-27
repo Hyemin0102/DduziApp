@@ -151,6 +151,7 @@ const Search = () => {
             returnKeyType="search"
             placeholderTextColor="#999"
             autoFocus
+
           />
           {searchQuery.length > 0 && (
             <S.ClearButton onPress={handleClear}>

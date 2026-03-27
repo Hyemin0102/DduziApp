@@ -27,14 +27,17 @@ export const SearchInputContainer = styled.View`
   align-items: center;
   background-color: #f5f5f5;
   border-radius: 12px;
-  padding: 0 12px;
+ padding: 0 12px;
+
 `;
 
 export const SearchInput = styled.TextInput`
   flex: 1;
-  height: 44px;
   font-size: 16px;
   color: #333;
+  padding-top: 0;
+  padding-bottom: 0;
+    height: 44px;
 `;
 
 export const ClearButton = styled.TouchableOpacity`
@@ -72,6 +75,7 @@ export const CenterContainer = styled.View`
   justify-content: center;
   align-items: center;
   padding: 40px;
+
 `;
 
 export const EmptyText = styled.Text`

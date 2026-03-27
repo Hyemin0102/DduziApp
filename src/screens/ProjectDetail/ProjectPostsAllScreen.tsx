@@ -4,10 +4,10 @@ import {
   ActivityIndicator,
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {supabase} from '@/lib/supabase';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -142,7 +142,7 @@ export default function ProjectPostsAllScreen() {
               navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: item.id})
             }>
             {firstImage && (
-              <Image
+              <FastImage
                 source={{uri: firstImage.image_url}}
                 style={styles.thumbnail}
                 resizeMode="cover"

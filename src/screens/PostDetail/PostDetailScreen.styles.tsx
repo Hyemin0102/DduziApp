@@ -1,5 +1,6 @@
 import styled from '@emotion/native';
 import {Dimensions} from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -48,7 +49,7 @@ export const MoreButton = styled.Text`
   padding: 8px;
 `;
 
-export const ProfileImage = styled.Image`
+export const ProfileImage = styled(FastImage)`
   width: 48px;
   height: 48px;
   border-radius: 24px;
@@ -98,7 +99,7 @@ export const ImageWrapper = styled.View`
   position: relative;
 `;
 
-export const PostImage = styled.Image`
+export const PostImage = styled(FastImage)`
   width: 100%;
   height: 100%;
 `;
@@ -247,7 +248,7 @@ export const InfoText = styled.Text`
 // 도안 섹션
 export const PatternSection = styled.View``;
 
-export const PatternImage = styled.Image`
+export const PatternImage = styled(FastImage)`
   width: 100%;
   height: ${SCREEN_WIDTH * 1.2}px;
   background-color: #f5f5f5;

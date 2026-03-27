@@ -103,7 +103,6 @@ export const createOrUpdateUser = async (
         .from('users')
         .update({
           profile_image: profileImageToUse,
-          provider: user.app_metadata?.provider || existingUser.provider,
           ...(!existingUser.email && user.email ? {email: user.email} : {}),
         })
         .eq('id', user.id)

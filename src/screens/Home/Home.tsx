@@ -68,7 +68,7 @@ const Home = () => {
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('homeTabRepress', () => {
-      flatListRef.current?.scrollToOffset({offset: -100, animated: true});
+      flatListRef.current?.scrollToOffset({offset: 0, animated: true});
       onRefresh();
     });
     return () => sub.remove();

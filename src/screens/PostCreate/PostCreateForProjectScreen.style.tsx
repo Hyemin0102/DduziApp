@@ -1,4 +1,5 @@
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
@@ -110,6 +111,10 @@ export const AddProjectItem = styled.TouchableOpacity`
   margin: 12px;
 `;
 
+export const PlusText = styled.Text`
+color: #fff;
+`;
+
 export const ImageUploadButton = styled.TouchableOpacity`
   width: 88px;
   height: 88px;
@@ -134,7 +139,7 @@ export const ImagePreview = styled.View`
   overflow: hidden;
 `;
 
-export const PreviewImage = styled.Image`
+export const PreviewImage = styled(FastImage)`
   width: 100%;
   height: 100%;
 `;

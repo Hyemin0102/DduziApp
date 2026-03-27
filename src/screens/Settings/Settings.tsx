@@ -2,12 +2,15 @@ import React, {useState} from 'react';
 import {Alert, ActivityIndicator} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Settings.style';
 
 const APP_VERSION = '0.0.1';
 
 const Settings = () => {
   const {provider} = useAuth();
+  const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = () => {
@@ -23,6 +26,10 @@ const Settings = () => {
         },
       ],
     );
+  };
+
+  const handleContact = () => {
+    navigation.navigate(MY_PAGE_ROUTES.INQUIRY);
   };
 
   const confirmDeleteAccount = async () => {
@@ -76,8 +83,8 @@ const Settings = () => {
             <S.MenuText>서비스 이용약관</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
-          <S.MenuItem>
-            <S.MenuText>문의하기</S.MenuText>
+          <S.MenuItem onPress={handleContact}>
+            <S.MenuText>피드백 보내기</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
         </S.MenuSection>

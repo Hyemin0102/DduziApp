@@ -1,5 +1,6 @@
 import styled from '@emotion/native';
 import {Dimensions} from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -16,7 +17,7 @@ export const ProfileSection = styled.TouchableOpacity`
   padding: 10px 12px;
 `;
 
-export const ProfileImage = styled.Image`
+export const ProfileImage = styled(FastImage)`
   width: 36px;
   height: 36px;
   border-radius: 18px;
@@ -52,7 +53,7 @@ export const ImageContainer = styled.View`
   position: relative;
 `;
 
-export const PostImage = styled.Image`
+export const PostImage = styled(FastImage)`
   width: 100%;
   height: 100%;
 `;

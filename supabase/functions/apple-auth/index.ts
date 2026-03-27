@@ -84,11 +84,12 @@ Deno.serve(async req => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const {action, authorization_code} = await req.json();
-    const clientSecret = await generateClientSecret();
-    const serviceId = Deno.env.get('APPLE_SERVICE_ID')!;
+    const body = await req.json();
+    const {action, authorization_code, provider: targetProvider} = body;
 
     if (action === 'exchange') {
+      const clientSecret = await generateClientSecret();
+      const serviceId = Deno.env.get('APPLE_SERVICE_ID')!;
       const tokenRes = await fetch('https://appleid.apple.com/auth/token', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -119,6 +120,8 @@ Deno.serve(async req => {
     }
 
     if (action === 'revoke') {
+      const clientSecret = await generateClientSecret();
+      const serviceId = Deno.env.get('APPLE_SERVICE_ID')!;
       const {data} = await serviceSupabase
         .from('users')
         .select('apple_refresh_token')
@@ -136,6 +139,34 @@ Deno.serve(async req => {
             token_type_hint: 'refresh_token',
           }),
         });
+      }
+
+      return new Response(JSON.stringify({success: true}), {
+        headers: {...corsHeaders, 'Content-Type': 'application/json'},
+      });
+    }
+
+    if (action === 'delete-identity') {
+      // 현재 로그인된 유저의 특정 provider identity 삭제
+      if (!targetProvider) throw new Error('provider is required');
+      const {data: {user: adminUser}} = await serviceSupabase.auth.admin.getUserById(user.id);
+      const targetIdentity = adminUser?.identities?.find(i => i.provider === targetProvider);
+
+      if (targetIdentity) {
+        const deleteRes = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/auth/v1/admin/users/${user.id}/identities/${targetIdentity.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+            },
+          },
+        );
+        if (!deleteRes.ok) {
+          const body = await deleteRes.text();
+          throw new Error(`identity 삭제 실패: ${body}`);
+        }
       }
 
       return new Response(JSON.stringify({success: true}), {

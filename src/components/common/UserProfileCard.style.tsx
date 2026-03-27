@@ -1,4 +1,5 @@
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 
 /** 전체 카드 - 세로 배치 */
 export const Container = styled.View`
@@ -11,7 +12,7 @@ export const Wrapper = styled.View`
   align-items: center;
 `;
 
-export const ProfileImage = styled.Image`
+export const ProfileImage = styled(FastImage)`
   width: 72px;
   height: 72px;
   border-radius: 36px;

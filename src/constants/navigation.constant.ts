@@ -55,4 +55,5 @@ export const MY_PAGE_ROUTES = {
   PROJECT_DETAIL: 'ProjectDetail',
   CREATE_POST_FOR_PROJECT: 'CreatePostForProject',
   SETTINGS: 'Settings',
+  INQUIRY: 'Inquiry',
 } as const;

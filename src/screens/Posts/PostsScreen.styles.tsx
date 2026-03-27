@@ -1,6 +1,7 @@
 // screens/Posts/PostsScreen.styles.ts
 
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 import {Dimensions} from 'react-native';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
@@ -125,7 +126,7 @@ export const PostDate = styled.Text`
   color: #999;
 `;
 
-export const PostImage = styled.Image`
+export const PostImage = styled(FastImage)`
   width: 100%;
   height: 100%;
 `;
@@ -215,7 +216,7 @@ export const GridItem = styled.TouchableOpacity`
   overflow: hidden;
 `;
 
-export const GridImage = styled.Image`
+export const GridImage = styled(FastImage)`
   width: 100%;
   height: 100%;
 `;

@@ -1,4 +1,5 @@
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
@@ -24,7 +25,7 @@ export const ImageWrapper = styled.View`
   margin-bottom: 20px;
 `;
 
-export const ProfileImage = styled.Image`
+export const ProfileImage = styled(FastImage)`
   width: 140px;
   height: 140px;
   border-radius: 70px;

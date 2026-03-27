@@ -11,6 +11,7 @@ import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
+import InquiryScreen from '@/screens/Inquiry/InquiryScreen';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
 const MyPageStack = () => {
@@ -58,6 +59,11 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.SETTINGS}
         component={SettingsScreen}
         options={{title: '설정'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.INQUIRY}
+        component={InquiryScreen}
+        options={{title: '문의하기'}}
       />
       <Stack.Screen
         name={POST_ROUTES.POST_DETAIL}
