@@ -583,7 +583,7 @@ export default function ProjectDetailScreen() {
   if (loading) {
     return (
       <S.Container>
-        <ActivityIndicator size="large" color="#191919" />
+        <ActivityIndicator size="large" color="#191919" style={{marginTop: 20}} />
       </S.Container>
     );
   }
@@ -834,7 +834,7 @@ export default function ProjectDetailScreen() {
             <S.Label>
               뜨개 로그({isCreateMode ? 0 : pendingLogs.length})
             </S.Label>
-            {canEdit && !isCreateMode && (
+            {canEdit && !isCreateMode && pendingLogs.length > 0 && (
               <S.AddButton
                 onPress={addPendingLog}
                 disabled={hasTodayLog}
@@ -852,6 +852,11 @@ export default function ProjectDetailScreen() {
           ) : pendingLogs.length === 0 ? (
             <S.EmptyPosts>
               <S.EmptyText>아직 기록이 없어요</S.EmptyText>
+              {canEdit && (
+                <S.EmptyAddButton onPress={addPendingLog}>
+                  <S.EmptyAddButtonText>첫 로그 추가하기</S.EmptyAddButtonText>
+                </S.EmptyAddButton>
+              )}
             </S.EmptyPosts>
           ) : (
             <>

@@ -16,7 +16,7 @@ export default function ProjectsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchProjects();
+      fetchProjects(); 
     }, []),
   );
 
