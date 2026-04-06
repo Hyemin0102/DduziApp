@@ -12,6 +12,7 @@ import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
 import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
 import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
+import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import * as S from './HomeStack.style';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -97,6 +98,11 @@ const HomeStack = () => {
         name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
         component={ProjectPostsAllScreen}
         options={{title: '게시물 전체'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PDF_VIEWER}
+        component={PdfViewerScreen}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );

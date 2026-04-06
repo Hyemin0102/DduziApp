@@ -11,6 +11,7 @@ import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
+import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import InquiryScreen from '@/screens/Inquiry/InquiryScreen';
 import TermsOfServiceScreen from '@/screens/TermsOfService/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
@@ -41,23 +42,6 @@ const MyPageStack = () => {
         options={{title: '프로필 편집'}}
       />
       <Stack.Screen
-        name={MY_PAGE_ROUTES.PROJECTS_MAIN}
-        component={ProjectsScreen}
-        options={{title: '프로젝트 관리'}}
-      />
-      <Stack.Screen
-        name={MY_PAGE_ROUTES.PROJECT_DETAIL}
-        component={ProjectDetailScreen}
-        options={({route}) => ({
-          title: '',
-        })}
-      />
-      <Stack.Screen
-        name={MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT}
-        component={PostCreateForProjectScreen}
-        options={{headerShown: false}}
-      />
-      <Stack.Screen
         name={MY_PAGE_ROUTES.SETTINGS}
         component={SettingsScreen}
         options={{title: '설정'}}
@@ -76,22 +60,7 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.PRIVACY_POLICY}
         component={PrivacyPolicyScreen}
         options={{title: '개인정보 처리방침'}}
-      />
-      <Stack.Screen
-        name={POST_ROUTES.POST_DETAIL}
-        component={PostDetailScreen}
-        options={{title: '게시물 상세'}}
-      />
-      <Stack.Screen
-        name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
-        component={ProjectLogsAllScreen}
-        options={{title: '뜨개 로그 전체'}}
-      />
-      <Stack.Screen
-        name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
-        component={ProjectPostsAllScreen}
-        options={{title: '게시물 전체'}}
-      />
+      />    
     </Stack.Navigator>
   );
 };

@@ -86,6 +86,7 @@ export type HomeStackParamList = {
       display_order: number;
     }[];
   };
+  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
 };
 
 // Posts Stack
@@ -115,28 +116,17 @@ export type PostsStackParamList = {
     }[];
   };
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
+  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
 };
 
 // MyPage Stack
 export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.MY_PAGE_MAIN]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
-  [MY_PAGE_ROUTES.PROJECTS_MAIN]: undefined;
-  [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
-  [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
-  [MY_PAGE_ROUTES.PROJECT_DETAIL]: {
-    projectId?: string;
-    projectTitle?: string;
-    mode?: 'view' | 'edit' | 'create';
-  };
-  [MY_PAGE_ROUTES.CREATE_POST_FOR_PROJECT]:
-    | {projectId?: string; projectTitle?: string}
-    | undefined;
   [MY_PAGE_ROUTES.SETTINGS]: undefined;
   [MY_PAGE_ROUTES.INQUIRY]: undefined;
   [MY_PAGE_ROUTES.TERMS_OF_SERVICE]: undefined;
   [MY_PAGE_ROUTES.PRIVACY_POLICY]: undefined;
-  [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 
 // ============= Navigation Props =============
