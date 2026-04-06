@@ -27,6 +27,7 @@ export const PROJECTS_ROUTES = {
   CREATE_POST_FOR_PROJECT: 'CreatePostForProject',
   PROJECT_LOGS_ALL: 'ProjectLogsAll',
   PROJECT_POSTS_ALL: 'ProjectPostsAll',
+  PDF_VIEWER: 'PdfViewer',
 } as const;
 
 // ============= Home Stack Routes =============

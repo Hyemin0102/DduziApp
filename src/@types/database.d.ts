@@ -37,6 +37,7 @@ export interface ProjectBase {
   yarn_info?: string | null;
   pattern_info?: string | null;
   pattern_url?: string | null;
+  pattern_pdf_name?: string | null;
   needle_info?: string | null;
   is_completed: boolean;
   visibility: 'public' | 'private';

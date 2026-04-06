@@ -32,6 +32,8 @@ import Icon from 'react-native-vector-icons/Feather';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import * as S from './ProjectDetailScreen.styles';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
+import DocumentPicker from 'react-native-document-picker';
+import {uploadPdf, getPdfNameFromUrl} from '@/lib/uploadPdf';
 
 type RouteProps = RouteProp<
   {
@@ -94,6 +96,24 @@ interface CurrentForm {
   pendingLogs: PendingLog[];
 }
 
+function renderTextWithLinks(text: string) {
+  
+  const parts = text.split(URL_REGEX);
+  return (
+    <S.InfoValue>
+      {parts.map((part, i) =>
+        URL_REGEX.test(part) ? (
+          <S.Link key={i} onPress={() => Linking.openURL(part)}>
+            {part}
+          </S.Link>
+        ) : (
+          part
+        ),
+      )}
+    </S.InfoValue>
+  );
+}
+
 export default function ProjectDetailScreen() {
   const route = useRoute<RouteProps>();
   const {navigation} = useCommonNavigation<any>();
@@ -106,9 +126,14 @@ export default function ProjectDetailScreen() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [completeModalVisible, setCompleteModalVisible] = useState(false);
+  const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEditingPatternUrl, setIsEditingPatternUrl] = useState(false);
+  const [pendingPdf, setPendingPdf] = useState<{uri: string; name: string} | null>(null);
+  const [patternPdfName, setPatternPdfName] = useState('');
+  const [isEditingPatternInfo, setIsEditingPatternInfo] = useState(false);
+  const [isEditingYarnInfo, setIsEditingYarnInfo] = useState(false);
+  const [isEditingNeedleInfo, setIsEditingNeedleInfo] = useState(false);
   const hasFetchedRef = useRef(false);
   const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
 
@@ -196,8 +221,6 @@ export default function ProjectDetailScreen() {
       prev.map(l => (l.id === id ? {...l, content: text} : l)),
     );
   }, []);
-
-  console.log(pendingLogs);
   
 
   const addPendingLog = useCallback(() => {
@@ -302,6 +325,8 @@ export default function ProjectDetailScreen() {
     setPatternUrl(values.patternUrl);
     setFormIsCompleted(values.formIsCompleted);
     setFormVisibility(values.formVisibility);
+    setPatternPdfName(p.pattern_pdf_name || '');
+    setPendingPdf(null);
     setIsDirty(false);
 
     const today = new Date();
@@ -327,7 +352,6 @@ export default function ProjectDetailScreen() {
       });
 
     setPendingLogs(unified);
-    setIsEditingPatternUrl(false);
   }, []);
 
   // 오늘 로그가 이미 있는지 (pendingLogs 중 isExisting인 것)
@@ -372,7 +396,7 @@ export default function ProjectDetailScreen() {
         .from('projects')
         .select(
           `id, user_id, title, content, yarn_info, needle_info,
-           pattern_info, pattern_url, is_completed, visibility,
+           pattern_info, pattern_url, pattern_pdf_name, is_completed, visibility,
            created_at, updated_at,
            knitting_logs ( id, project_id, content, created_at )`,
         )
@@ -382,6 +406,8 @@ export default function ProjectDetailScreen() {
       const p = projectData as ProjectDetail;
       setProject(p);
       populateForm(p);
+
+      
 
       const {data: postsData, error: postsError} = await supabase
         .from('posts')
@@ -414,6 +440,7 @@ export default function ProjectDetailScreen() {
     hasFetchedRef.current = false;
   }, [projectId]);
 
+  
   // ── 저장
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
@@ -422,6 +449,22 @@ export default function ProjectDetailScreen() {
     }
     setIsSubmitting(true);
     try {
+      // pendingPdf가 있으면 저장 시점에 업로드
+      let finalPatternUrl = patternUrl;
+      let finalPatternPdfName = patternPdfName;
+      if (pendingPdf) {
+        const url = await uploadPdf(pendingPdf.uri, currentUserId || 'unknown', pendingPdf.name);
+        if (!url) throw new Error('PDF 업로드에 실패했습니다.');
+        finalPatternUrl = url;
+        finalPatternPdfName = pendingPdf.name;
+        setPendingPdf(null);
+        setPatternPdfName(pendingPdf.name);
+        setField('patternUrl', url);
+      } else if (!patternUrl) {
+        // X로 삭제한 경우 이름도 함께 제거
+        finalPatternPdfName = '';
+      }
+
       const {
         data: {user},
       } = await supabase.auth.getUser();
@@ -430,7 +473,7 @@ export default function ProjectDetailScreen() {
         return;
       }
 
-      let currentProjectId: string;
+      let currentProjectId: string;      
 
       if (isCreateMode) {
         const {data: newProject, error} = await supabase
@@ -442,7 +485,8 @@ export default function ProjectDetailScreen() {
             yarn_info: yarnInfo.trim() || null,
             needle_info: needleInfo.trim() || null,
             pattern_info: patternInfo.trim() || null,
-            pattern_url: patternUrl.trim() || null,
+            pattern_url: finalPatternUrl.trim() || null,
+            pattern_pdf_name: finalPatternPdfName.trim() || null,
             visibility: formVisibility,
           })
           .select()
@@ -458,7 +502,8 @@ export default function ProjectDetailScreen() {
             yarn_info: yarnInfo.trim() || null,
             needle_info: needleInfo.trim() || null,
             pattern_info: patternInfo.trim() || null,
-            pattern_url: patternUrl.trim() || null,
+            pattern_url: finalPatternUrl.trim() || null,
+            pattern_pdf_name: finalPatternPdfName.trim() || null,
             is_completed: formIsCompleted,
             visibility: formVisibility,
             updated_at: new Date().toISOString(),
@@ -496,6 +541,9 @@ export default function ProjectDetailScreen() {
     needleInfo,
     patternInfo,
     patternUrl,
+    patternPdfName,
+    pendingPdf,
+    currentUserId,
     formIsCompleted,
     formVisibility,
     isCreateMode,
@@ -578,7 +626,30 @@ export default function ProjectDetailScreen() {
   };
 
   const isMyProject = project?.user_id === currentUserId;
+
+  //내 프로젝트거나 생성 모드일때 
   const canEdit = isCreateMode || isMyProject;
+
+  const handlePickPdf = async () => {
+    try {
+      const result = await DocumentPicker.pickSingle({
+        type: DocumentPicker.types.pdf,
+      });
+      
+      if (!result.uri) return;
+      setPendingPdf({uri: result.uri, name: result.name ?? 'document.pdf'});
+      setIsDirty(true);
+    } catch (e: any) {
+      if (!DocumentPicker.isCancel(e)) {
+        Alert.alert('오류', 'PDF 파일을 선택하는 중 오류가 발생했어요.');
+      }
+    }
+  };
+
+  const handleRemovePdf = () => {
+    setPendingPdf(null);
+    setField('patternUrl', '');
+  };
 
   if (loading) {
     return (
@@ -595,6 +666,8 @@ export default function ProjectDetailScreen() {
       </S.Center>
     );
   }
+
+  
 
   return (
     <S.Container>
@@ -725,16 +798,29 @@ export default function ProjectDetailScreen() {
             </S.InfoIconBox>
             <S.InfoContent>
               <S.InfoLabel>실</S.InfoLabel>
-              {canEdit ? (
+              {isEditingYarnInfo ? (
                 <S.InfoInput
+                  autoFocus
                   placeholder="브랜드, 색상, 두께 등"
                   value={yarnInfo}
                   onChangeText={v => setField('yarnInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
+                  onBlur={() => setIsEditingYarnInfo(false)}
                 />
-              ) : project?.yarn_info ? (
-                <S.InfoValue>{project.yarn_info}</S.InfoValue>
+              ) : yarnInfo ? (
+                <S.LinkRow>
+                  <S.InfoValue style={{flex: 1}}>{yarnInfo}</S.InfoValue>
+                  {canEdit && (
+                    <TouchableOpacity onPress={() => setIsEditingYarnInfo(true)}>
+                      <Icon name="edit-2" size={14} color="#bbb" />
+                    </TouchableOpacity>
+                  )}
+                </S.LinkRow>
+              ) : canEdit ? (
+                <TouchableOpacity onPress={() => setIsEditingYarnInfo(true)}>
+                  <S.InfoPlaceholder>브랜드, 색상, 두께 등</S.InfoPlaceholder>
+                </TouchableOpacity>
               ) : (
                 <S.InfoPlaceholder>브랜드, 색상, 두께 등</S.InfoPlaceholder>
               )}
@@ -747,16 +833,29 @@ export default function ProjectDetailScreen() {
             </S.InfoIconBox>
             <S.InfoContent>
               <S.InfoLabel>바늘</S.InfoLabel>
-              {canEdit ? (
+              {isEditingNeedleInfo ? (
                 <S.InfoInput
+                  autoFocus
                   placeholder="브랜드, 두께 등"
                   value={needleInfo}
                   onChangeText={v => setField('needleInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
+                  onBlur={() => setIsEditingNeedleInfo(false)}
                 />
-              ) : project?.needle_info ? (
-                <S.InfoValue>{project.needle_info}</S.InfoValue>
+              ) : needleInfo ? (
+                <S.LinkRow>
+                  <S.InfoValue style={{flex: 1}}>{needleInfo}</S.InfoValue>
+                  {canEdit && (
+                    <TouchableOpacity onPress={() => setIsEditingNeedleInfo(true)}>
+                      <Icon name="edit-2" size={14} color="#bbb" />
+                    </TouchableOpacity>
+                  )}
+                </S.LinkRow>
+              ) : canEdit ? (
+                <TouchableOpacity onPress={() => setIsEditingNeedleInfo(true)}>
+                  <S.InfoPlaceholder>브랜드, 두께 등</S.InfoPlaceholder>
+                </TouchableOpacity>
               ) : (
                 <S.InfoPlaceholder>브랜드, 두께 등</S.InfoPlaceholder>
               )}
@@ -768,64 +867,84 @@ export default function ProjectDetailScreen() {
               <S.InfoIcon>📄</S.InfoIcon>
             </S.InfoIconBox>
             <S.InfoContent>
-              <S.InfoLabel>도안 설명</S.InfoLabel>
-              {canEdit ? (
+              <S.InfoLabel>도안</S.InfoLabel>
+              {isEditingPatternInfo ? (
                 <S.InfoInput
+                  autoFocus
                   placeholder="사용한 도안에 대한 설명"
                   value={patternInfo}
                   onChangeText={v => setField('patternInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
+                  onBlur={() => setIsEditingPatternInfo(false)}
                 />
-              ) : project?.pattern_info ? (
-                <S.InfoValue>{project.pattern_info}</S.InfoValue>
+              ) : patternInfo ? (
+                <S.LinkRow>
+                  <View style={{flex: 1}}>
+                    {renderTextWithLinks(patternInfo)}
+                  </View>
+                  {canEdit && (
+                    <TouchableOpacity onPress={() => setIsEditingPatternInfo(true)}>
+                      <Icon name="edit-2" size={14} color="#bbb" />
+                    </TouchableOpacity>
+                  )}
+                </S.LinkRow>
+              ) : canEdit ? (
+                <TouchableOpacity onPress={() => setIsEditingPatternInfo(true)}>
+                  <S.InfoPlaceholder>사용한 도안에 대한 설명</S.InfoPlaceholder>
+                </TouchableOpacity>
               ) : (
                 <S.InfoPlaceholder>사용한 도안에 대한 설명</S.InfoPlaceholder>
               )}
             </S.InfoContent>
           </S.InfoRow>
 
-          <S.InfoRow style={{borderBottomWidth: 0}}>
-            <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
-              <S.InfoIcon>🔗</S.InfoIcon>
-            </S.InfoIconBox>
-            <S.InfoContent>
-              <S.InfoLabel>도안 링크</S.InfoLabel>
-              {isEditingPatternUrl ? (
-                <S.InfoInput
-                  autoFocus
-                  placeholder="https://..."
-                  value={patternUrl}
-                  onChangeText={v => setField('patternUrl', v)}
-                  placeholderTextColor="#ccc"
-                  autoCapitalize="none"
-                  keyboardType="url"
-                  onBlur={() => setIsEditingPatternUrl(false)}
-                  multiline
-                />
-              ) : patternUrl ? (
-                <S.LinkRow>
-                  <S.Link
-                    onPress={() => Linking.openURL(patternUrl)}
-                    style={{flex: 1}}>
-                    {patternUrl}
-                  </S.Link>
-                  {canEdit && (
-                    <TouchableOpacity
-                      onPress={() => setIsEditingPatternUrl(true)}>
-                      <Icon name="edit-2" size={14} color="#bbb" />
+          {(isMyProject || isCreateMode) && (
+            <S.InfoRow style={{borderBottomWidth: 0}}>
+              <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
+                <S.InfoIcon>📎</S.InfoIcon>
+              </S.InfoIconBox>
+              <S.InfoContent>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                  <S.InfoLabel>도안 PDF</S.InfoLabel>
+                  <TouchableOpacity onPress={() => setPdfInfoVisible(true)}>
+                    <Icon name="info" size={14} color="#555" style={{marginBottom: 3}}/>
+                  </TouchableOpacity>
+                </View>
+                {pendingPdf ? (
+                  <S.LinkRow>
+                    <S.Link style={{flex: 1}}
+                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
+                        pdfUrl: pendingPdf.uri,
+                        title: pendingPdf.name,
+                      })}>
+                      {pendingPdf.name}
+                    </S.Link>
+                    <TouchableOpacity onPress={handleRemovePdf}>
+                      <Icon name="x" size={16} color="#bbb" />
                     </TouchableOpacity>
-                  )}
-                </S.LinkRow>
-              ) : canEdit ? (
-                <TouchableOpacity onPress={() => setIsEditingPatternUrl(true)}>
-                  <S.InfoPlaceholder>https://...</S.InfoPlaceholder>
-                </TouchableOpacity>
-              ) : (
-                <S.InfoPlaceholder>https://...</S.InfoPlaceholder>
-              )}
-            </S.InfoContent>
-          </S.InfoRow>
+                  </S.LinkRow>
+                ) : patternUrl ? (
+                  <S.LinkRow>
+                    <S.Link style={{flex: 1}}
+                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
+                        pdfUrl: patternUrl,
+                        title: patternPdfName || getPdfNameFromUrl(patternUrl),
+                      })}>
+                      {patternPdfName || getPdfNameFromUrl(patternUrl)}
+                    </S.Link>
+                    <TouchableOpacity onPress={handleRemovePdf}>
+                      <Icon name="x" size={16} color="#bbb" />
+                    </TouchableOpacity>
+                  </S.LinkRow>
+                ) : (
+                  <TouchableOpacity onPress={handlePickPdf}>
+                    <S.InfoPlaceholder>PDF 파일 선택</S.InfoPlaceholder>
+                  </TouchableOpacity>
+                )}
+              </S.InfoContent>
+            </S.InfoRow>
+          )}
         </S.InfoSection>
 
         {/* ══ 뜨개 로그 ════════════════════════════════════ */}
@@ -1084,6 +1203,27 @@ export default function ProjectDetailScreen() {
           </S.Overlay>
         </Modal>
       )}
+
+      <Modal
+        visible={pdfInfoVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPdfInfoVisible(false)}>
+        <S.Overlay activeOpacity={1} onPress={() => setPdfInfoVisible(false)}>
+          <S.ActionSheet>
+            <S.ActionSheetHandle />
+            <View style={{padding: 20, gap: 8}}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                <Icon name="lock" size={16} color="#555" />
+                <S.InfoLabel style={{fontSize: 15}}>도안 PDF는 나만 볼 수 있어요</S.InfoLabel>
+              </View>
+              <S.InfoValue style={{color: '#999', lineHeight: 20}}>
+                {'업로드한 도안 PDF는 나에게만 표시돼요.\n다른 사람의 프로젝트에서는 이 항목이 보이지 않아요.'}
+              </S.InfoValue>
+            </View>
+          </S.ActionSheet>
+        </S.Overlay>
+      </Modal>
 
       {!isCreateMode && (
         <CompletePostModal

@@ -494,9 +494,8 @@ export const InfoInput = styled.TextInput`
 
 export const LinkRow = styled.View`
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  flex-wrap: wrap;
 `;
 
 // ─── 뜨개 로그 타임라인 ───────────────────────────────────

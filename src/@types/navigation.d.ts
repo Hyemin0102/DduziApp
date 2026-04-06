@@ -54,6 +54,7 @@ export type ProjectsStackParamList = {
     | undefined;
   [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
+  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
   [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 

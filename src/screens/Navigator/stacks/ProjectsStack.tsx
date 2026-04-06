@@ -6,6 +6,7 @@ import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
 import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
+import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import {ProjectsStackParamList} from '@/@types/navigation';
 import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 
@@ -52,6 +53,11 @@ const ProjectsStack = () => {
         name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
         component={ProjectPostsAllScreen}
         options={{title: '게시물 전체'}}
+      />
+      <Stack.Screen
+        name={PROJECTS_ROUTES.PDF_VIEWER}
+        component={PdfViewerScreen}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );
