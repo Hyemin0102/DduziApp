@@ -49,7 +49,7 @@ export const ButtonContainer = styled.View`
 `;
 
 interface SocialButtonProps {
-  provider: 'kakao' | 'google' | 'naver' | 'apple';
+  provider: 'kakao' | 'google' | 'apple';
 }
 
 export const SocialButton = styled.TouchableOpacity<SocialButtonProps>`

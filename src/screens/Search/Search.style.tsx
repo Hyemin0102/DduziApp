@@ -37,6 +37,7 @@ export const SearchInput = styled.TextInput`
   color: #333;
   padding-top: 0;
   padding-bottom: 0;
+  
     height: 44px;
 `;
 

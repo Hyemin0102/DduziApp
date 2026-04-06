@@ -12,6 +12,8 @@ import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjec
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
 import InquiryScreen from '@/screens/Inquiry/InquiryScreen';
+import TermsOfServiceScreen from '@/screens/TermsOfService/TermsOfServiceScreen';
+import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
 const MyPageStack = () => {
@@ -64,6 +66,16 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.INQUIRY}
         component={InquiryScreen}
         options={{title: '문의하기'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.TERMS_OF_SERVICE}
+        component={TermsOfServiceScreen}
+        options={{title: '서비스 이용약관'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.PRIVACY_POLICY}
+        component={PrivacyPolicyScreen}
+        options={{title: '개인정보 처리방침'}}
       />
       <Stack.Screen
         name={POST_ROUTES.POST_DETAIL}

@@ -12,7 +12,6 @@ const Settings = () => {
   const {provider} = useAuth();
   const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
-
   const handleDeleteAccount = () => {
     Alert.alert(
       '회원탈퇴',
@@ -32,13 +31,25 @@ const Settings = () => {
     navigation.navigate(MY_PAGE_ROUTES.INQUIRY);
   };
 
+  const handleTermsOfService = () => {
+    navigation.navigate(MY_PAGE_ROUTES.TERMS_OF_SERVICE);
+  };
+
+  const handlePrivacyPolicy = () => {
+    navigation.navigate(MY_PAGE_ROUTES.PRIVACY_POLICY);
+  };
+
   const confirmDeleteAccount = async () => {
     setIsDeleting(true);
     try {
       await deleteAccount(provider);
     } catch (error) {
       console.error('회원탈퇴 에러:', error);
-      Alert.alert('오류', '회원탈퇴 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+      const message =
+        provider === 'apple'
+          ? 'Apple 계정 연결 해제에 실패했습니다.\n잠시 후 다시 시도해주세요.'
+          : '회원탈퇴 중 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.';
+      Alert.alert('오류', message);
     } finally {
       setIsDeleting(false);
     }
@@ -63,10 +74,10 @@ const Settings = () => {
             <S.MenuText>연결된 소셜 계정</S.MenuText>
             <S.MenuValue>{provider}</S.MenuValue>
           </S.MenuItem>
-          <S.MenuItem>
+          {/* <S.MenuItem>
             <S.MenuText>알림 설정</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
+          </S.MenuItem> */}
         </S.MenuSection>
 
         <S.SectionLabel>정보</S.SectionLabel>
@@ -75,11 +86,11 @@ const Settings = () => {
             <S.MenuText>앱 버전</S.MenuText>
             <S.MenuValue>{APP_VERSION}</S.MenuValue>
           </S.MenuItem>
-          <S.MenuItem>
+          <S.MenuItem onPress={handlePrivacyPolicy}>
             <S.MenuText>개인정보 처리방침</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
-          <S.MenuItem>
+          <S.MenuItem onPress={handleTermsOfService}>
             <S.MenuText>서비스 이용약관</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>

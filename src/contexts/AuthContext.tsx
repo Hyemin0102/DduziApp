@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {AuthContextType, AuthProviderProps, UserProfile} from '../@types/auth';
 import {supabase} from '../lib/supabase';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
-import NaverLogin from '@react-native-seoul/naver-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -40,12 +39,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       case 'kakao':
         rawProfile = {
           id: Number(metadata?.provider_id) || 0,
-        };
-        break;
-
-      case 'naver':
-        rawProfile = {
-          id: metadata?.provider_id || session.user.id,
         };
         break;
 
@@ -188,11 +181,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         case 'kakao':
           await KakaoLogout();
           break;
-        case 'naver':
-          await NaverLogin.logout();
-          break;
         case 'google':
           await GoogleSignin.signOut();
+          break;
+        case 'apple':
+          // Apple Sign In은 별도 SDK 로그아웃 없이 Supabase signOut으로 처리
           break;
         default:
           break;
@@ -218,10 +211,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       }
 
       try {
-        await AsyncStorage.removeItem('authToken');
-        await AsyncStorage.removeItem('user');
-        await AsyncStorage.removeItem('provider');
-        await AsyncStorage.removeItem('needsProfileSetup');
+        await AsyncStorage.multiRemove(['authToken', 'user', 'provider', 'needsProfileSetup']);
       } catch (storageError) {
         console.error('❌ AsyncStorage 정리 실패:', storageError);
       }

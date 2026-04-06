@@ -6,20 +6,6 @@ export type KakaoUserProfile = KakaoProfile;
 
 export type GoogleUserProfile = GoogleUser['user'];
 
-export interface NaverUserProfile {
-  id: string;
-  nickname?: string | null;
-  name?: string;
-  email?: string;
-  gender?: string | null;
-  age?: string | null;
-  birthday?: string | null;
-  profile_image?: string | null;
-  birthyear?: number | null;
-  mobile?: string | null;
-  mobile_e164?: string | null;
-}
-
 export interface AppleUserProfile {
   id: string;
   email?: string | null;
@@ -36,7 +22,7 @@ export interface UserProfile {
   bio?: string;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
-  rawProfile: KakaoUserProfile | NaverUserProfile | GoogleUserProfile | AppleUserProfile;
+  rawProfile: KakaoUserProfile | GoogleUserProfile | AppleUserProfile;
 }
 
 // Auth Context 타입

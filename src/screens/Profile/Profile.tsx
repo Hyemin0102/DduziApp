@@ -23,8 +23,14 @@ const ProfileScreen = () => {
   const {user, updateUserProfile, setNeedsProfileSetup} = useAuth();
   const {navigation} = useCommonNavigation();
   const route = useRoute();
-
   const isInitialSetup = route.name === 'Profile';
+  const [nickname, setNickname] = useState(user?.nickname ?? '');
+  const [bio, setBio] = useState(user?.bio ?? '');
+  const [loading, setLoading] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
+  const [nicknameChecking, setNicknameChecking] = useState(false);
+  const nicknameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (!user) {
     return (
@@ -39,14 +45,6 @@ const ProfileScreen = () => {
       </S.Container>
     );
   }
-
-  const [nickname, setNickname] = useState(user.nickname || '');
-  const [bio, setBio] = useState(user.bio || '');
-  const [loading, setLoading] = useState(false);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [nicknameError, setNicknameError] = useState<string | null>(null);
-  const [nicknameChecking, setNicknameChecking] = useState(false);
-  const nicknameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const trimmed = nickname.trim();

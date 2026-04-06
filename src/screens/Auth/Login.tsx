@@ -1,4 +1,3 @@
-import NaverLogin from '@react-native-seoul/naver-login';
 import React, {useEffect, useState} from 'react';
 import * as S from './Login.style';
 import {Alert} from 'react-native';
@@ -28,12 +27,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KAKAO_SDK = Config.KAKAO_SDK || '';
-const NAVER_SCHEME = Config.NAVER_SCHEME || '';
-const NAVER_CLIENT_ID = Config.NAVER_CLIENT_ID || '';
-const NAVER_CLIENT_SECRET = Config.NAVER_CLIENT_SECRET || '';
 const GOOGLE_WEB_CLIENT_ID = Config.GOOGLE_WEB_CLIENT_ID || '';
 const GOOGLE_IOS_CLIENT_ID = Config.GOOGLE_IOS_CLIENT_ID || '';
-const APP_NAME = Config.APP_NAME || '';
 
 const Login = () => {
   const {login, setNeedsProfileSetup} = useAuth();
@@ -41,15 +36,6 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    //네이버 로그인
-    NaverLogin.initialize({
-      appName: APP_NAME,
-      consumerKey: NAVER_CLIENT_ID,
-      consumerSecret: NAVER_CLIENT_SECRET,
-      serviceUrlSchemeIOS: NAVER_SCHEME,
-      disableNaverAppAuthIOS: true,
-    });
-
     //카카오 로그인
     initializeKakaoSDK(KAKAO_SDK);
 
@@ -84,6 +70,8 @@ const Login = () => {
                 provider: 'kakao',
                 token: kakaoToken,
               });
+
+              if (error) throw error;
 
               if (data.user && data.session) {
                 try {
@@ -148,6 +136,8 @@ const Login = () => {
                 provider: 'google',
                 token: userInfo.data?.idToken,
               });
+
+              if (error) throw error;
 
               if (data.user && data.session) {
                 try {
@@ -228,8 +218,7 @@ const Login = () => {
               nonce: rawNonce,
             });
 
-            console.log('supabase apple data:', data);
-            console.log('supabase apple error:', error);
+            if (error) throw error;
 
             if (data.user && data.session) {
               try {
@@ -264,11 +253,12 @@ const Login = () => {
                 // authorization_code → refresh_token 교환 후 저장 (탈퇴 시 revoke에 사용)
                 // authorization_code는 5분 내에만 유효하므로 로그인 직후 처리
                 if (authorizationCode) {
-                  supabase.functions
-                    .invoke('apple-auth', {
-                      body: {action: 'exchange', authorization_code: authorizationCode},
-                    })
-                    .catch(e => console.warn('Apple token exchange 실패:', e));
+                  const {error: exchangeError} = await supabase.functions.invoke('apple-auth', {
+                    body: {action: 'exchange', authorization_code: authorizationCode},
+                  });
+                  if (exchangeError) {
+                    console.warn('Apple token exchange 실패 - 탈퇴 시 revoke가 동작하지 않을 수 있습니다:', exchangeError);
+                  }
                 }
 
                 if (result.isNewUser) {

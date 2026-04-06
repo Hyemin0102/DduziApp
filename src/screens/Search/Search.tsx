@@ -68,12 +68,16 @@ const Search = () => {
       if (error) throw error;
 
       const results: Post[] = data
-        ? (data as any[]).map((post: any) => ({
-            ...post,
-            post_images: (post.post_images || []).sort(
-              (a: any, b: any) => a.display_order - b.display_order,
-            ),
-          }))
+        ? (data as any[])
+            .filter(
+              (post: any) => post.projects?.visibility !== 'private',
+            )
+            .map((post: any) => ({
+              ...post,
+              post_images: (post.post_images || []).sort(
+                (a: any, b: any) => a.display_order - b.display_order,
+              ),
+            }))
         : [];
 
       setSearchResults(results);

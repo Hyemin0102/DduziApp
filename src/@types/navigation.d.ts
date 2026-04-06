@@ -133,6 +133,8 @@ export type MyPageStackParamList = {
     | undefined;
   [MY_PAGE_ROUTES.SETTINGS]: undefined;
   [MY_PAGE_ROUTES.INQUIRY]: undefined;
+  [MY_PAGE_ROUTES.TERMS_OF_SERVICE]: undefined;
+  [MY_PAGE_ROUTES.PRIVACY_POLICY]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 

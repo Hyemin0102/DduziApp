@@ -5,7 +5,6 @@ import {
   UserProfile,
   KakaoUserProfile,
   GoogleUserProfile,
-  NaverUserProfile,
   AppleUserProfile,
 } from '../../@types/auth';
 
@@ -15,11 +14,10 @@ const DEFAULT_IMAGE_COUNT = 5;
 interface CreateUserProfileParams {
   supabaseUser: any; // Supabase Auth User 객체
   dbUser: any; // users 테이블 데이터
-  provider: 'kakao' | 'google' | 'naver' | 'apple';
+  provider: 'kakao' | 'google' | 'apple';
   rawProfile:
     | KakaoUserProfile
     | GoogleUserProfile
-    | NaverUserProfile
     | AppleUserProfile;
 }
 
@@ -168,15 +166,10 @@ export const createUserProfile = ({
       rawProfile: {id: appleProfile.id} as AppleUserProfile,
     };
   } else {
-    // Naver
-    const naverProfile = rawProfile as NaverUserProfile;
     return {
       ...baseProfile,
-      profile_image:
-        dbUser.profile_image ||
-        naverProfile.profile_image ||
-        supabaseUser.user_metadata?.picture,
-      rawProfile: {id: naverProfile.id} as NaverUserProfile,
+      profile_image: dbUser.profile_image || undefined,
+      rawProfile: rawProfile,
     };
   }
 };
