@@ -1,7 +1,4 @@
 import styled from '@emotion/native';
-import {Dimensions} from 'react-native';
-
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 export const Container = styled.SafeAreaView`
   flex: 1;
@@ -14,17 +11,46 @@ export const ScrollViewContainer = styled.ScrollView`
 
 export const InnerContainer = styled.View`
   flex: 1;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  padding: 0 24px;
+  padding: 60px 24px 40px;
 `;
 
-export const Title = styled.Text`
-  font-size: 26px;
-  font-weight: 800;
-  color: #1a1a1a;
-  margin-bottom: 40px;
-  letter-spacing: -0.5px;
+export const TopContent = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const LogoImage = styled.Image`
+  width: 160px;
+  height: 160px;
+  resize-mode: contain;
+
+`;
+
+export const TextImage = styled.Image`
+  width: 80px;
+  height: 30px;
+  resize-mode: contain;
+
+`;
+
+export const SubTitle = styled.Text`
+  font-size: 14px;
+  color: #aaaaaa;
+  margin-top: 20px;
+  text-align: center;
+  line-height: 20px;
+`;
+
+export const SubTitleAccent = styled.Text`
+  font-size: 16px;
+  font-weight: 700;
+  //color: #555555;
+   color: #aaaaaa;
+  margin-top: 6px;
+  text-align: center;
 `;
 
 export const ErrorBox = styled.View`
@@ -46,6 +72,7 @@ export const ErrorText = styled.Text`
 export const ButtonContainer = styled.View`
   width: 100%;
   gap: 12px;
+  margin-bottom: 20px;
 `;
 
 interface SocialButtonProps {
@@ -55,7 +82,7 @@ interface SocialButtonProps {
 export const SocialButton = styled.TouchableOpacity<SocialButtonProps>`
   width: 100%;
   height: 56px;
-  border-radius: 12px;
+  border-radius: 28px;
   flex-direction: row;
   align-items: center;
   justify-content: center;
@@ -64,9 +91,7 @@ export const SocialButton = styled.TouchableOpacity<SocialButtonProps>`
       ? '#FEE500'
       : props.provider === 'google'
       ? '#ffffff'
-      : props.provider === 'apple'
-      ? '#000000'
-      : '#03C75A'};
+      : '#000000'};
   border: ${props =>
     props.provider === 'google' ? '1px solid #e0e0e0' : 'none'};
   elevation: 1;
@@ -74,6 +99,34 @@ export const SocialButton = styled.TouchableOpacity<SocialButtonProps>`
   shadow-offset: 0px 1px;
   shadow-opacity: 0.1;
   shadow-radius: 2px;
+`;
+
+export const ButtonInner = styled.View`
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+`;
+
+export const ButtonIcon = styled.Image`
+  width: 20px;
+  height: 20px;
+  resize-mode: contain;
+  position: absolute;
+  left: 20px;
+`;
+
+export const LoadingOverlay = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 `;
 
 export const ButtonText = styled.Text<{provider: string}>`

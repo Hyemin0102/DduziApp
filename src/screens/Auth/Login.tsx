@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import * as S from './Login.style';
-import {Alert} from 'react-native';
+import {Alert, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import {
@@ -308,22 +308,35 @@ const Login = () => {
       <S.ScrollViewContainer
         contentContainerStyle={{flexGrow: 1}}
         keyboardShouldPersistTaps="handled">
+        {isLoading && (
+          <S.LoadingOverlay>
+            <ActivityIndicator size="large" color="#888888" />
+          </S.LoadingOverlay>
+        )}
         <S.InnerContainer>
-          <S.Title>Dduzi</S.Title>
-
-          {error && (
-            <S.ErrorBox>
-              <S.ErrorText>{error}</S.ErrorText>
-            </S.ErrorBox>
-          )}
+          <S.TopContent>
+            <S.LogoImage source={require('../../assets/images/dduzi_logo.png')} />
+            <S.TextImage source={require('../../assets/images/Dduzi_text.png')} />
+            {/* <S.SubTitle>오늘 뭐 뜨지?</S.SubTitle> */}
+            {/* <S.SubTitleAccent>오늘 뭐 뜨지?</S.SubTitleAccent> */}
+          </S.TopContent>
 
           <S.ButtonContainer>
+            {error && (
+              <S.ErrorBox>
+                <S.ErrorText>{error}</S.ErrorText>
+              </S.ErrorBox>
+            )}
+
             <S.SocialButton
               provider="kakao"
               onPress={() => socialLoginHandle('kakao')}
               disabled={isLoading}
               activeOpacity={0.8}>
-              <S.ButtonText provider="kakao">카카오로 시작하기</S.ButtonText>
+              <S.ButtonInner>
+                <S.ButtonIcon source={require('../../assets/images/kakao_icon.png')} />
+                <S.ButtonText provider="kakao">카카오로 시작하기</S.ButtonText>
+              </S.ButtonInner>
             </S.SocialButton>
 
             <S.SocialButton
@@ -331,9 +344,10 @@ const Login = () => {
               onPress={() => socialLoginHandle('google')}
               disabled={isLoading}
               activeOpacity={0.8}>
-              <S.ButtonText provider="google">
-                Google 계정으로 로그인
-              </S.ButtonText>
+              <S.ButtonInner>
+                <S.ButtonIcon source={require('../../assets/images/google_icon.png')} />
+                <S.ButtonText provider="google">구글로 시작하기</S.ButtonText>
+              </S.ButtonInner>
             </S.SocialButton>
 
             <S.SocialButton
@@ -341,7 +355,10 @@ const Login = () => {
               onPress={() => socialLoginHandle('apple')}
               disabled={isLoading}
               activeOpacity={0.8}>
-              <S.ButtonText provider="apple">Apple로 로그인</S.ButtonText>
+              <S.ButtonInner>
+                <S.ButtonIcon source={require('../../assets/images/apple_icon.png')} />
+                <S.ButtonText provider="apple">애플로 시작하기</S.ButtonText>
+              </S.ButtonInner>
             </S.SocialButton>
           </S.ButtonContainer>
         </S.InnerContainer>
