@@ -33,7 +33,6 @@ export type AuthStackParamList = {
 // Tab Navigator
 export type TabParamList = {
   [TAB_ROUTES.HOME_TAB]: NavigatorScreenParams<HomeStackParamList>;
-  [TAB_ROUTES.SEARCH_TAB]: undefined;
   [TAB_ROUTES.POST_TAB]: NavigatorScreenParams<PostsStackParamList>;
   [TAB_ROUTES.PROJECTS_TAB]: NavigatorScreenParams<ProjectsStackParamList>;
   [TAB_ROUTES.MY_PAGE_TAB]: NavigatorScreenParams<MyPageStackParamList>;
@@ -49,9 +48,18 @@ export type ProjectsStackParamList = {
     projectTitle?: string;
     mode?: 'view' | 'edit' | 'create';
   };
-  [PROJECTS_ROUTES.CREATE_POST_FOR_PROJECT]:
-    | {projectId?: string; projectTitle?: string}
-    | undefined;
+  [POST_ROUTES.CREATE_POST_FOR_PROJECT]: {
+    mode?: 'create' | 'edit';
+    projectId?: string;
+    projectTitle?: string;
+    postId?: string;
+    content?: string;
+    existingImages?: {
+      id: string;
+      image_url: string;
+      display_order: number;
+    }[];
+  } | undefined;
   [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
@@ -61,23 +69,20 @@ export type ProjectsStackParamList = {
 // Home Stack
 export type HomeStackParamList = {
   [HOME_ROUTES.HOME_MAIN]: undefined;
-  [HOME_ROUTES.POST_DETAIL]: {postId: string};
-  [HOME_ROUTES.SEARCH]: undefined;
-  [POST_ROUTES.CREATE_POST]: undefined;
+  [POST_ROUTES.POST_DETAIL]: {postId: string};
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
-  [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
-  [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
-  [POST_ROUTES.PROJECT_DETAIL]: {
+  [HOME_ROUTES.SEARCH]: undefined;
+  [PROJECTS_ROUTES.PROJECT_DETAIL]: {
     projectId?: string;
     projectTitle?: string;
     mode?: 'view' | 'edit' | 'create';
   };
+  [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
+  [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
   [POST_ROUTES.CREATE_POST_FOR_PROJECT]: {
     mode?: 'create' | 'edit';
-    // 생성/수정 공통
     projectId?: string;
     projectTitle?: string;
-    // 수정 모드 전용
     postId?: string;
     content?: string;
     existingImages?: {
@@ -85,28 +90,23 @@ export type HomeStackParamList = {
       image_url: string;
       display_order: number;
     }[];
-  };
+  } | undefined;
   [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
 };
 
 // Posts Stack
 export type PostsStackParamList = {
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
-  [POST_ROUTES.CREATE_POST]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
-  [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
-  [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
-  [POST_ROUTES.PROJECT_DETAIL]: {
+  [PROJECTS_ROUTES.PROJECT_DETAIL]: {
     projectId?: string;
     projectTitle?: string;
     mode?: 'view' | 'edit' | 'create';
   };
   [POST_ROUTES.CREATE_POST_FOR_PROJECT]: {
     mode?: 'create' | 'edit';
-    // 생성/수정 공통
     projectId?: string;
     projectTitle?: string;
-    // 수정 모드 전용
     postId?: string;
     content?: string;
     existingImages?: {
@@ -116,6 +116,8 @@ export type PostsStackParamList = {
     }[];
   };
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
+  [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
+  [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
 };
 

@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {ScrollView, Dimensions} from 'react-native';
-import {POST_ROUTES} from '@/constants/navigation.constant';
+import {POST_ROUTES, ROOT_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import * as S from './PostCard.style';
@@ -40,7 +40,7 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
       {/* 프로필 */}
       <S.ProfileSection
         onPress={() =>
-          navigation.navigate(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
+          navigation.navigate('PostsMain', {userId: post.user_id})
         }>
         {post.users.profile_image ? (
           <S.ProfileImage
@@ -101,7 +101,9 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
       {/* 콘텐츠 */}
       <S.ContentSection
-        onPress={() => navigation.navigate('PostDetail', {postId: post.id})}>
+        onPress={() => 
+          navigation.navigate('PostDetail', { postId: post.id })
+        }>
         {post.projects && (
           <S.BadgeRow>
             <S.ProjectBadge>

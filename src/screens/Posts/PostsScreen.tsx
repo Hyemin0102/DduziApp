@@ -12,7 +12,7 @@ import * as S from './PostsScreen.styles';
 import {supabase} from '@/lib/supabase';
 import UserProfileCard from '@/components/common/UserProfileCard';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {POST_ROUTES} from '@/constants/navigation.constant';
+import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
 import {PostsStackParamList} from '@/@types/navigation';
 
@@ -214,7 +214,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const completedCount = visiblePosts.filter(p => getIsCompleted(p)).length;
 
   const handleAddPost = () => {
-    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT);
+    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {});
   };
 
   return (
@@ -252,9 +252,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
           <GridCell
             item={item as PostListItem}
             onPress={() =>
-              navigation.navigate(POST_ROUTES.POST_DETAIL, {
-                postId: (item as PostListItem).id,
-              })
+              navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: (item as PostListItem).id})
             }
           />
         )}

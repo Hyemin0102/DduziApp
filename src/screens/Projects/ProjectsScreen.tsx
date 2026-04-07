@@ -85,9 +85,7 @@ export default function ProjectsScreen() {
       <FlatList
         data={projects}
         keyExtractor={item => item.id}
-        contentContainerStyle={
-          projects.length === 0 ? {flex: 1} : {padding: 16, gap: 10}
-        }
+        contentContainerStyle={projects.length === 0 ? {flex: 1} : {}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
@@ -105,10 +103,7 @@ export default function ProjectsScreen() {
           <S.Card
             activeOpacity={0.75}
             onPress={() =>
-              navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
-                projectId: item.id,
-                projectTitle: item.title,
-              })
+              navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {projectId: item.id, projectTitle: item.title})
             }>
             <S.CardLeft>
               <S.StatusDot completed={item.is_completed} />
@@ -134,15 +129,10 @@ export default function ProjectsScreen() {
         )}
       />
 
-      {/* {projects.length > 0 && (
-        <S.AddButton onPress={handleCreateProject}>
-          <Icon name="plus" size={16} color="#fff" />
-          <S.AddButtonText>새 프로젝트 추가</S.AddButtonText>
-        </S.AddButton>
-      )} */}
-      <S.FAB onPress={handleCreateProject}>
-        <Icon name="plus" size={22} color="#fff" />
-      </S.FAB>
+      <S.AddButton onPress={handleCreateProject}>
+        <S.AddButtonText>새 프로젝트</S.AddButtonText>
+        <Icon name="plus" size={15} color="#fff" />
+      </S.AddButton>
     </S.Container>
   );
 }

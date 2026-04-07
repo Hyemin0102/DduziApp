@@ -361,9 +361,6 @@ export default function ProjectDetailScreen() {
   const handleSaveRef = useRef<() => void>(() => {});
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      title: isCreateMode ? '프로젝트 생성' : project?.title ?? '',
-    });
 
     if (isDirty) {
       navigation.setOptions({
@@ -671,6 +668,11 @@ export default function ProjectDetailScreen() {
 
   return (
     <S.Container>
+      {isSubmitting && (
+        <S.LoadingOverlay>
+          <ActivityIndicator size="large" color="#ffffff" />
+        </S.LoadingOverlay>
+      )}
       <KeyboardAvoid>
         {/* ══ SNS 스타일: 제목 + 설명 ══════════════════════ */}
         <S.PostArea>
@@ -914,10 +916,7 @@ export default function ProjectDetailScreen() {
                 {pendingPdf ? (
                   <S.LinkRow>
                     <S.Link style={{flex: 1}}
-                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
-                        pdfUrl: pendingPdf.uri,
-                        title: pendingPdf.name,
-                      })}>
+                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {pdfUrl: pendingPdf.uri, title: pendingPdf.name})}>
                       {pendingPdf.name}
                     </S.Link>
                     <TouchableOpacity onPress={handleRemovePdf}>
@@ -927,10 +926,7 @@ export default function ProjectDetailScreen() {
                 ) : patternUrl ? (
                   <S.LinkRow>
                     <S.Link style={{flex: 1}}
-                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
-                        pdfUrl: patternUrl,
-                        title: patternPdfName || getPdfNameFromUrl(patternUrl),
-                      })}>
+                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {pdfUrl: patternUrl, title: patternPdfName || getPdfNameFromUrl(patternUrl)})}>
                       {patternPdfName || getPdfNameFromUrl(patternUrl)}
                     </S.Link>
                     <TouchableOpacity onPress={handleRemovePdf}>
@@ -1036,10 +1032,7 @@ export default function ProjectDetailScreen() {
               {pendingLogs.length > MAX_LENGTH_LOG && (
                 <S.ViewAllButton
                   onPress={() =>
-                    navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
-                      projectId: projectId!,
-                      projectTitle: project?.title,
-                    })
+                    navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {projectId: projectId!, projectTitle: project?.title})
                   }>
                   <S.ViewAllButtonText>
                     전체 보기 ({pendingLogs.length}개)
@@ -1057,10 +1050,7 @@ export default function ProjectDetailScreen() {
             {isMyProject && posts.length > 0 && (
               <S.AddButton
                 onPress={() =>
-                  navigation.navigate(PROJECTS_ROUTES.CREATE_POST_FOR_PROJECT, {
-                    projectId,
-                    projectTitle: project?.title,
-                  })
+                  navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {projectId, projectTitle: project?.title})
                 }>
                 <Icon name="plus" size={16} color="#fff" />
                 <S.AddButtonText>게시물 추가</S.AddButtonText>
@@ -1078,13 +1068,7 @@ export default function ProjectDetailScreen() {
               {isMyProject && (
                 <S.EmptyAddButton
                   onPress={() =>
-                    navigation.navigate(
-                      PROJECTS_ROUTES.CREATE_POST_FOR_PROJECT,
-                      {
-                        projectId,
-                        projectTitle: project?.title,
-                      },
-                    )
+                    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {projectId, projectTitle: project?.title})
                   }>
                   <S.EmptyAddButtonText>
                     첫 게시물 추가하기
@@ -1123,9 +1107,7 @@ export default function ProjectDetailScreen() {
                   )}
                   <TouchableOpacity
                     onPress={() =>
-                      navigation.navigate(POST_ROUTES.POST_DETAIL, {
-                        postId: post.id,
-                      })
+                      navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: post.id})
                     }
                     activeOpacity={0.5}>
                     <S.PostDateRow>
@@ -1155,10 +1137,7 @@ export default function ProjectDetailScreen() {
               {posts.length > MAX_LENGTH_POST && (
                 <S.ViewAllButton
                   onPress={() =>
-                    navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {
-                      projectId: projectId!,
-                      projectTitle: project?.title,
-                    })
+                    navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {projectId: projectId!, projectTitle: project?.title})
                   }>
                   <S.ViewAllButtonText>
                     전체 보기 ({posts.length}개)

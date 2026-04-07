@@ -15,21 +15,20 @@ import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import InquiryScreen from '@/screens/Inquiry/InquiryScreen';
 import TermsOfServiceScreen from '@/screens/TermsOfService/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
+import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
 const MyPageStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerBackTitle: '',
-        headerBackButtonDisplayMode: 'minimal',
-        headerStyle: {
-          backgroundColor: '#fff',
-        },
-        headerTintColor: '#000',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        header: ({ options, navigation }) => (
+          <AppHeader
+            title={options.title as string}
+            titleDirection="left"
+            showBack={navigation.canGoBack()}
+          />
+        ),
       }}>
       <Stack.Screen
         name={MY_PAGE_ROUTES.MY_PAGE_MAIN}

@@ -9,6 +9,7 @@ import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import {ProjectsStackParamList} from '@/@types/navigation';
 import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<ProjectsStackParamList>();
 
@@ -16,11 +17,13 @@ const ProjectsStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {backgroundColor: '#fff'},
-        headerTintColor: '#000',
-        headerTitleStyle: {fontWeight: 'bold'},
-        headerBackTitle: '',
-        headerBackButtonDisplayMode: 'minimal',
+        header: ({options, navigation}) => (
+          <AppHeader
+            title={options.title as string}
+            titleDirection="left"
+            showBack={navigation.canGoBack()}
+          />
+        ),
       }}>
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECTS_MAIN}
@@ -30,14 +33,12 @@ const ProjectsStack = () => {
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
-        options={() => ({
-          title: '',
-        })}
+        options={{title: '프로젝트 상세'}}
       />
       <Stack.Screen
-        name={PROJECTS_ROUTES.CREATE_POST_FOR_PROJECT}
+        name={POST_ROUTES.CREATE_POST_FOR_PROJECT}
         component={PostCreateForProjectScreen}
-        options={{headerShown: false}}
+        options={{title: '게시물 작성/수정'}}
       />
       <Stack.Screen
         name={POST_ROUTES.POST_DETAIL}
@@ -47,12 +48,12 @@ const ProjectsStack = () => {
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
         component={ProjectLogsAllScreen}
-        options={{title: '뜨개 로그 전체'}}
+        options={{title: '뜨개 로그'}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
         component={ProjectPostsAllScreen}
-        options={{title: '게시물 전체'}}
+        options={{title: '게시물'}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PDF_VIEWER}

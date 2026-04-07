@@ -29,6 +29,21 @@ export const SubmitText = styled.Text<{disabled?: boolean}>`
   color: ${({disabled}) => (disabled ? '#bbb' : '#191919')};
 `;
 
+export const PostButton = styled.TouchableOpacity<{disabled?: boolean}>`
+  margin: 16px 16px;
+  padding-vertical: 16px;
+  border-radius: 14px;
+  background-color: ${({disabled}) => (disabled ? '#999' : '#000')};
+  align-items: center;
+  justify-content: center;
+`;
+
+export const PostButtonText = styled.Text`
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+`;
+
 export const Section = styled.View`
   padding: 16px 20px;
   border-bottom-width: 1px;
@@ -104,15 +119,14 @@ export const AddProjectItem = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   align-self: flex-start;
-  background-color: #191919;
-  padding: 6px 12px;
   border-radius: 16px;
   gap: 4px;
   margin: 12px;
 `;
 
 export const PlusText = styled.Text`
-color: #fff;
+  color: #999;
+  font-size: 14px;
 `;
 
 export const ImageUploadButton = styled.TouchableOpacity`

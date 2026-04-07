@@ -1,7 +1,9 @@
 import React from 'react';
 import {Alert} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 import {useAuth} from '../../contexts/AuthContext';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {MY_PAGE_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Mypage.style';
 
 const Mypage = () => {
@@ -9,15 +11,15 @@ const Mypage = () => {
   const {navigation} = useCommonNavigation();
 
   const handleProfile = () => {
-    navigation.navigate('ProfileEdit');
+    navigation.navigate(MY_PAGE_ROUTES.PROFILE_EDIT);
   };
 
   const handleProject = () => {
-    navigation.navigate('ProjectsMain');
+    navigation.navigate(TAB_ROUTES.PROJECTS_TAB);
   };
 
   const handleSettings = () => {
-    navigation.navigate('Settings');
+    navigation.navigate(MY_PAGE_ROUTES.SETTINGS);
   };
 
   const handleLogout = async () => {
@@ -51,17 +53,25 @@ const Mypage = () => {
   return (
     <S.Container>
       <S.ScrollView>
+        <S.ProfileCard onPress={handleProfile}>
+          {user.profile_image ? (
+            <S.ProfileAvatar
+              source={{uri: user.profile_image}}
+              resizeMode="cover"
+            />
+          ) : (
+            <S.ProfileAvatarPlaceholder>
+              <Icon name="user" size={28} color="#bbb" />
+            </S.ProfileAvatarPlaceholder>
+          )}
+          <S.ProfileInfo>
+            <S.ProfileName>{user.nickname ?? '이름 없음'}</S.ProfileName>
+            <S.ProfileSubText>프로필 편집</S.ProfileSubText>
+          </S.ProfileInfo>
+          <S.ProfileArrow>›</S.ProfileArrow>
+        </S.ProfileCard>
+
         <S.MenuSection>
-          <S.MenuItem onPress={handleProfile}>
-            <S.MenuText>프로필 편집</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
-
-          {/* <S.MenuItem onPress={handleProject}>
-            <S.MenuText>프로젝트 관리</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem> */}
-
           <S.MenuItem onPress={handleSettings}>
             <S.MenuText>설정</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>

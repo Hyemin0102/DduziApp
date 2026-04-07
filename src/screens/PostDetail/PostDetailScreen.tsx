@@ -14,7 +14,7 @@ import {PostDetail} from '@/@types/database';
 import {completePost} from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {POST_ROUTES} from '@/constants/navigation.constant';
+import {PROJECTS_ROUTES, POST_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
 
 type RouteParams = {
@@ -125,7 +125,7 @@ export default function PostDetailScreen() {
 
   const handleGoToProject = () => {
     if (!post?.project_id) return;
-    navigation.navigate(POST_ROUTES.PROJECT_DETAIL, {
+    navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
       projectId: post.project_id,
       projectTitle: post.title,
     });
@@ -134,13 +134,16 @@ export default function PostDetailScreen() {
   const handleEdit = () => {
     setShowActionSheet(false);
     if (!post) return;
-    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
-      mode: 'edit',
-      postId: post.id,
-      projectId: post.project_id,
-      projectTitle: post.title,
-      content: post.content,
-      existingImages: post.images,
+    navigation.navigate(TAB_ROUTES.PROJECTS_TAB, {
+      screen: POST_ROUTES.CREATE_POST_FOR_PROJECT,
+      params: {
+        mode: 'edit' as const,
+        postId: post.id,
+        projectId: post.project_id ?? undefined,
+        projectTitle: post.title,
+        content: post.content ?? undefined,
+        existingImages: post.images,
+      },
     });
   };
 
@@ -218,7 +221,10 @@ export default function PostDetailScreen() {
         {/* 작성자 정보 */}
         <S.AuthorSection
           onPress={() =>
-            navigation.navigate(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
+            navigation.navigate(TAB_ROUTES.POST_TAB, {
+              screen: POST_ROUTES.POSTS_MAIN,
+              params: {userId: post.user_id},
+            })
           }>
           <S.AuthorInfo>
             {post.profile_image ? (

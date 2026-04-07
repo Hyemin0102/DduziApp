@@ -1,4 +1,5 @@
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
@@ -61,4 +62,51 @@ export const CenterContainer = styled.View`
 export const ErrorText = styled.Text`
   font-size: 16px;
   color: #666;
+`;
+
+export const ProfileCard = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 16px;
+  margin: 20px 16px 0;
+  padding: 18px 16px;
+`;
+
+export const ProfileAvatar = styled(FastImage)`
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  background-color: #e0e0e0;
+`;
+
+export const ProfileAvatarPlaceholder = styled.View`
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  background-color: #e0e0e0;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const ProfileInfo = styled.View`
+  flex: 1;
+  margin-left: 14px;
+`;
+
+export const ProfileName = styled.Text`
+  font-size: 17px;
+  font-weight: 600;
+  color: #191919;
+`;
+
+export const ProfileSubText = styled.Text`
+  font-size: 13px;
+  color: #999;
+  margin-top: 3px;
+`;
+
+export const ProfileArrow = styled.Text`
+  font-size: 22px;
+  color: #ccc;
 `;

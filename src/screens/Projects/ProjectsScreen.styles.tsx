@@ -2,7 +2,7 @@ import styled from '@emotion/native';
 
 export const Container = styled.View`
   flex: 1;
-  background-color: #f8f8f8;
+  background-color: #fff;
 `;
 
 export const Center = styled.View`
@@ -13,18 +13,9 @@ export const Center = styled.View`
 
 export const Summary = styled.View`
   flex-direction: row;
-  background-color: #fff;
-  margin-horizontal: 16px;
-  margin-top: 16px;
-  border-radius: 12px;
-  padding-vertical: 16px;
-  align-items: center;
-  justify-content: center;
-  shadow-color: #000;
-  shadow-offset: 0px 1px;
-  shadow-opacity: 0.05;
-  shadow-radius: 4px;
-  elevation: 2;
+  padding-vertical: 28px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
 `;
 
 export const SummaryItem = styled.View`
@@ -39,7 +30,7 @@ export const SummaryDivider = styled.View`
 `;
 
 export const SummaryCount = styled.Text`
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #191919;
 `;
@@ -47,18 +38,14 @@ export const SummaryCount = styled.Text`
 export const SummaryLabel = styled.Text`
   font-size: 12px;
   color: #999;
-  margin-top: 2px;
-`;
-
-export const ListContent = styled.View`
-  padding: 16px;
-  gap: 10px;
+  margin-top: 3px;
 `;
 
 export const Empty = styled.View`
+  flex: 1;
   align-items: center;
   justify-content: center;
-  padding-top: 80px;
+  padding: 60px 20px;
   gap: 12px;
 `;
 
@@ -93,18 +80,14 @@ export const EmptyButtonText = styled.Text`
 `;
 
 export const Card = styled.TouchableOpacity`
-  background-color: #fff;
-  border-radius: 12px;
-  padding-horizontal: 16px;
-  padding-vertical: 14px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  shadow-color: #000;
-  shadow-offset: 0px 1px;
-  shadow-opacity: 0.05;
-  shadow-radius: 4px;
-  elevation: 2;
+  padding-horizontal: 16px;
+  padding-vertical: 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+  background-color: #fff;
 `;
 
 export const CardLeft = styled.View`
@@ -115,9 +98,9 @@ export const CardLeft = styled.View`
 `;
 
 export const StatusDot = styled.View<{completed: boolean}>`
-  width: 10px;
-  height: 10px;
-  border-radius: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
   background-color: ${({completed}) => (completed ? '#4CAF50' : '#191919')};
 `;
 
@@ -129,18 +112,18 @@ export const CardTitle = styled.Text`
   font-size: 15px;
   font-weight: 600;
   color: #111;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 `;
 
 export const CardDate = styled.Text`
   font-size: 12px;
-  color: #999;
+  color: #bbb;
 `;
 
 export const CardRight = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-left: 8px;
 `;
 
@@ -178,19 +161,19 @@ export const StatusBadge = styled.Text<{
   }};
 `;
 
-export const FAB = styled.TouchableOpacity`
-  position: absolute;
-  bottom: 28px;
-  right: 20px;
-  width: 52px;
-  height: 52px;
-  border-radius: 26px;
-  background-color: #191919;
+export const AddButton = styled.TouchableOpacity`
+  margin: 24px 16px;
+  padding-vertical: 16px;
+  border-radius: 14px;
+  background-color: #000;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  elevation: 6;
-  shadow-color: #000;
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.2;
-  shadow-radius: 8px;
+  gap: 6px;
+`;
+
+export const AddButtonText = styled.Text`
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
 `;

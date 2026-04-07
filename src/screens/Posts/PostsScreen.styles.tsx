@@ -9,7 +9,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 양쪽 여백 16 + 중간 간격 
 
 export const Container = styled.View`
   flex: 1;
-  background-color: #f8f9fa;
+  background-color: #fff;
 `;
 
 export const ProfileSection = styled.View`

@@ -11,7 +11,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import {uploadMultipleImages} from '@/lib/uploadImage';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {POST_ROUTES} from '@/constants/navigation.constant';
+import {POST_ROUTES, PROJECTS_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import {PostsStackParamList} from '@/@types/navigation';
 import {ProjectItem} from '@/@types/database';
 import * as S from './PostCreateForProjectScreen.style';
@@ -95,7 +95,10 @@ export default function PostCreateForProjectScreen() {
 
   const handleAddProject = () => {
     setShowProjectPicker(false);
-    navigation.navigate('ProjectDetail', {mode: 'create'});
+    navigation.navigate(TAB_ROUTES.PROJECTS_TAB, {
+      screen: PROJECTS_ROUTES.PROJECT_DETAIL,
+      params: {mode: 'create'},
+    });
   };
 
   const handleSelectImages = async () => {
@@ -235,20 +238,15 @@ export default function PostCreateForProjectScreen() {
   return (
     <S.Container>
       <S.Header>
+        <S.HeaderTitle>
+          {isEditMode ? '게시물 수정' : '게시물 작성'}
+        </S.HeaderTitle>
         <Icon
           name="x"
           size={24}
           color="#333"
           onPress={() => navigation.goBack()}
         />
-        <S.HeaderTitle>
-          {isEditMode ? '게시물 수정' : '게시물 작성'}
-        </S.HeaderTitle>
-        <S.SubmitButton onPress={handleSubmit} disabled={isSubmitting}>
-          <S.SubmitText disabled={isSubmitting}>
-            {isSubmitting ? '저장 중...' : '완료'}
-          </S.SubmitText>
-        </S.SubmitButton>
       </S.Header>
 
       <KeyboardAvoid>
@@ -292,8 +290,8 @@ export default function PostCreateForProjectScreen() {
                     ))}
                     {projects.length > 0 && <S.ProjectListDivider />}
                     <S.AddProjectItem onPress={handleAddProject}>
-                      <S.PlusText>프로젝트 추가</S.PlusText>
-                      <Icon name="plus" size={16} color="#fff" />
+                      <S.PlusText>새 프로젝트</S.PlusText>
+                      <Icon name="plus" size={16} color="#999" />
                     </S.AddProjectItem>
                   </>
                 )}
@@ -355,6 +353,11 @@ export default function PostCreateForProjectScreen() {
           />
         </S.Section>
       </KeyboardAvoid>
+      <S.PostButton onPress={handleSubmit} disabled={isSubmitting}>
+        <S.PostButtonText>
+          {isSubmitting ? '저장 중...' : '게시하기'}
+        </S.PostButtonText>
+      </S.PostButton>
     </S.Container>
   );
 }

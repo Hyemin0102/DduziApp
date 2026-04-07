@@ -13,6 +13,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  console.log('새로고침',refreshing);
+  
 
   const fetchPosts = async () => {
     try {
@@ -65,6 +67,7 @@ const Home = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setRefreshing(false);
       fetchPosts();
     }, []),
   );

@@ -4,8 +4,8 @@ import {ScrollView, StyleSheet, Text, View} from 'react-native';
 export default function PrivacyPolicyScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>개인정보처리방침</Text>
-      <Text style={styles.date}>시행일: 2025년 4월 6일</Text>
+      {/* <Text style={styles.title}>개인정보처리방침</Text>
+      <Text style={styles.date}>시행일: 2025년 4월 6일</Text> */}
 
       <Text style={styles.body}>
         Hyemin Jo(이하 "개발자")는 개인정보 보호법 등 관련 법령에 따라 이용자의 개인정보를 보호하고, 이와 관련한 고충을 신속하게 처리하기 위하여 다음과 같이 개인정보처리방침을 수립·공개합니다.

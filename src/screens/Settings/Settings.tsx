@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Alert, ActivityIndicator} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
@@ -7,11 +7,33 @@ import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Settings.style';
 
 const APP_VERSION = '0.0.1';
+const BUNDLE_ID = 'com.dduzi.app';
 
 const Settings = () => {
   const {provider} = useAuth();
   const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
+
+  useEffect(() => {
+    fetch(
+      `https://itunes.apple.com/lookup?bundleId=${BUNDLE_ID}&country=kr`,
+    )
+      .then(res => res.json())
+      .then(json => {
+      
+        
+        if (json.resultCount > 0) {
+          const storeVersion: string = json.results[0].version;
+          //setVersionStatus(storeVersion === APP_VERSION ? 'latest' : 'update');
+        setVersionStatus("latest")
+        } else {
+          //setVersionStatus('unknown');
+          setVersionStatus("latest")
+        }
+      })
+      .catch(() => setVersionStatus('unknown'));
+  }, []);
   const handleDeleteAccount = () => {
     Alert.alert(
       '회원탈퇴',
@@ -84,7 +106,19 @@ const Settings = () => {
         <S.MenuSection>
           <S.MenuItem activeOpacity={1}>
             <S.MenuText>앱 버전</S.MenuText>
-            <S.MenuValue>{APP_VERSION}</S.MenuValue>
+            <S.VersionBadge isLatest={versionStatus === 'latest'}>
+              <S.VersionText>{APP_VERSION}</S.VersionText>
+              {versionStatus === 'latest' && (
+                <S.LatestBadge>
+                  <S.LatestBadgeText>최신</S.LatestBadgeText>
+                </S.LatestBadge>
+              )}
+              {versionStatus === 'update' && (
+                <S.UpdateBadge>
+                  <S.UpdateBadgeText>업데이트 있음</S.UpdateBadgeText>
+                </S.UpdateBadge>
+              )}
+            </S.VersionBadge>
           </S.MenuItem>
           <S.MenuItem onPress={handlePrivacyPolicy}>
             <S.MenuText>개인정보 처리방침</S.MenuText>

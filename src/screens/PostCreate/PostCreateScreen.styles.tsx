@@ -12,6 +12,7 @@ export const Header = styled.View`
   padding: 16px;
   border-bottom-width: 1px;
   border-bottom-color: #e5e5e5;
+  background: red;
 `;
 
 export const HeaderTitle = styled.Text`

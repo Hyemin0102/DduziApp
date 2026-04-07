@@ -114,8 +114,19 @@ const TabNavigator = () => {
           ),
         }}
         listeners={({navigation}) => ({
+          // tabPress: () => {
+          //   if (navigation.isFocused()) {
+          //     DeviceEventEmitter.emit('homeTabRepress');
+          //   }
+          // },
           tabPress: () => {
-            if (navigation.isFocused()) {
+            const state = navigation.getState();
+            const homeRoute = state.routes.find(r => r.name === 'HomeTab');
+            const isOnHomeRoot =
+              homeRoute?.state?.index === 0 || homeRoute?.state === undefined;
+        
+            if (navigation.isFocused() && isOnHomeRoot) {
+              // 홈탭의 루트(HomeScreen)에 있을 때만 emit
               DeviceEventEmitter.emit('homeTabRepress');
             }
           },

@@ -48,7 +48,9 @@ export const MenuValue = styled.Text`
 export const DeleteButton = styled.TouchableOpacity`
   align-items: center;
   padding: 20px;
-  margin-top: 8px;
+  margin-top: 32px;
+  border-top-width: 1px;
+  border-top-color: #e8e8e8;
 `;
 
 export const DeleteButtonText = styled.Text`
@@ -61,4 +63,39 @@ export const CenterContainer = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
+`;
+
+export const VersionBadge = styled.View<{isLatest: boolean}>`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+`;
+
+export const VersionText = styled.Text`
+  font-size: 14px;
+  color: #999;
+`;
+
+export const LatestBadge = styled.View`
+  background-color: #e8f5e9;
+  border-radius: 10px;
+  padding: 2px 8px;
+`;
+
+export const LatestBadgeText = styled.Text`
+  font-size: 11px;
+  color: #4caf50;
+  font-weight: 600;
+`;
+
+export const UpdateBadge = styled.View`
+  background-color: #fff3e0;
+  border-radius: 10px;
+  padding: 2px 8px;
+`;
+
+export const UpdateBadgeText = styled.Text`
+  font-size: 11px;
+  color: #ff9800;
+  font-weight: 600;
 `;

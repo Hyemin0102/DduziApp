@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {ActivityIndicator, FlatList, Keyboard} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
+import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
@@ -15,6 +16,25 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const isFocused = useRef(true);
+
+  // unmount 시 (뒤로가기) 상태 정리
+  useEffect(() => {
+    return () => {
+      setRefreshing(false);
+      setLoading(false);
+    };
+  }, []);
+
+  // 탭 전환 시 상태 정리 (혹시 탭 네비게이터 안으로 이동할 경우 대비)
+  useFocusEffect(
+    useCallback(() => {
+      isFocused.current = true;
+      return () => {
+        isFocused.current = false;
+      };
+    }, []),
+  );
 
   const handleSearch = async (query: string) => {
     Keyboard.dismiss();
@@ -29,6 +49,9 @@ const Search = () => {
     setHasSearched(true);
 
     try {
+      const {data: userData} = await supabase.auth.getUser();
+      const currentUserId = userData?.user?.id ?? null;
+
       const {data: postIds, error: rpcError} = await supabase.rpc(
         'search_posts',
         {search_query: query},
@@ -37,7 +60,9 @@ const Search = () => {
       if (rpcError) throw rpcError;
 
       if (!postIds || postIds.length === 0) {
-        setSearchResults([]);
+        if (isFocused.current) {
+          setSearchResults([]);
+        }
         return;
       }
 
@@ -58,7 +83,8 @@ const Search = () => {
             id,
             title,
             visibility,
-            is_completed
+            is_completed,
+            user_id
           )
         `,
         )
@@ -69,9 +95,12 @@ const Search = () => {
 
       const results: Post[] = data
         ? (data as any[])
-            .filter(
-              (post: any) => post.projects?.visibility !== 'private',
-            )
+            .filter((post: any) => {
+              const proj = post.projects;
+              if (post.project_id && !proj) return false;
+              if (!proj || proj.visibility !== 'private') return true;
+              return proj.user_id === currentUserId;
+            })
             .map((post: any) => ({
               ...post,
               post_images: (post.post_images || []).sort(
@@ -80,12 +109,19 @@ const Search = () => {
             }))
         : [];
 
-      setSearchResults(results);
+      if (isFocused.current) {
+        setSearchResults(results);
+      }
     } catch (error) {
       console.error('검색 에러:', error);
-      setSearchResults([]);
+      if (isFocused.current) {
+        setSearchResults([]);
+      }
     } finally {
-      setLoading(false);
+      if (isFocused.current) {
+        setLoading(false);
+        setRefreshing(false); // finally에서 통합 처리
+      }
     }
   };
 
@@ -99,7 +135,6 @@ const Search = () => {
     if (!searchQuery.trim()) return;
     setRefreshing(true);
     await handleSearch(searchQuery);
-    setRefreshing(false);
   };
 
   const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
@@ -141,7 +176,7 @@ const Search = () => {
       <S.SearchHeader>
         <S.BackButton
           onPress={() => {
-            Keyboard.dismiss(); // 🔥 뒤로가기 버튼 클릭 시 키보드 닫기
+            Keyboard.dismiss();
             navigation.goBack();
           }}>
           <Icon name="chevron-left" size={28} color="#333" />
@@ -155,7 +190,6 @@ const Search = () => {
             returnKeyType="search"
             placeholderTextColor="#999"
             autoFocus
-
           />
           {searchQuery.length > 0 && (
             <S.ClearButton onPress={handleClear}>
@@ -173,9 +207,7 @@ const Search = () => {
         keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         ListEmptyComponent={renderEmptyComponent}
-        contentContainerStyle={{
-          flexGrow: 1,
-        }}
+        contentContainerStyle={{flexGrow: 1}}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

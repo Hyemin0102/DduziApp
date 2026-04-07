@@ -4,8 +4,8 @@ import {ScrollView, StyleSheet, Text, View} from 'react-native';
 export default function TermsOfServiceScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>서비스 이용약관</Text>
-      <Text style={styles.date}>시행일: 2025년 4월 6일</Text>
+      {/* <Text style={styles.title}>서비스 이용약관</Text> */}
+      {/* <Text style={styles.date}>시행일: 2025년 4월 6일</Text> */}
 
       <Text style={styles.sectionTitle}>제1조 (목적)</Text>
       <Text style={styles.body}>
