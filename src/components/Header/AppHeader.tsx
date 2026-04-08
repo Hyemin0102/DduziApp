@@ -36,9 +36,10 @@ const AppHeader = ({
 
   const leftButton = showBack ? (
     <TouchableOpacity onPress={handleBack} style={{ padding: 8 }}>
-      <Icon name="chevron-left" size={28} color="#333" />
+      <Icon name="chevron-left" size={24} color="#333" />
     </TouchableOpacity>
   ) : undefined;
+
 
   return (
     <View style={{ backgroundColor: '#fff' }}>

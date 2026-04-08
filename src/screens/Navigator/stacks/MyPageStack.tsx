@@ -33,12 +33,19 @@ const MyPageStack = () => {
       <Stack.Screen
         name={MY_PAGE_ROUTES.MY_PAGE_MAIN}
         component={MyPageScreen}
-        options={{title: '마이페이지'}}
+        options={{
+          header: () => (
+            <AppHeader  
+              title="마이페이지"
+              titleDirection="left"
+            />
+          ),
+        }}
       />
       <Stack.Screen
         name={MY_PAGE_ROUTES.PROFILE_EDIT}
         component={ProfileScreen}
-        options={{title: '프로필 편집'}}
+        options={{title: '프로필 수정'}}
       />
       <Stack.Screen
         name={MY_PAGE_ROUTES.SETTINGS}

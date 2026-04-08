@@ -7,6 +7,7 @@ import {
   Animated,
   View,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
 import {supabase} from '@/lib/supabase';
@@ -218,6 +219,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   };
 
   return (
+    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
     <S.Container>
       <S.ProfileSection>
         <UserProfileCard
@@ -291,5 +293,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
         }
       />
     </S.Container>
+    </SafeAreaView>
   );
 }

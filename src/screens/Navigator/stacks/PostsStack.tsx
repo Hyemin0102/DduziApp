@@ -27,21 +27,24 @@ const PostsStack = () => {
             showBack={navigation.canGoBack()}
           />
         ),
+        headerShown: true,
       }}>
       <Stack.Screen
         name={POST_ROUTES.POSTS_MAIN}
         component={PostsScreen}
-        options={{title: '포스트 메인'}}
+        options={{
+          headerShown: false
+        }}
       />
       <Stack.Screen
         name={POST_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
-        options={{title: '게시물 상세'}}
+        options={{title: '게시물'}}
       />
    <Stack.Screen
         name={MY_PAGE_ROUTES.PROFILE_EDIT}
         component={ProfileScreen}
-        options={{title: '프로필 편집'}}
+        options={{title: '프로필 수정'}}
       />
       <Stack.Screen
         name={POST_ROUTES.CREATE_POST_FOR_PROJECT}
@@ -51,17 +54,17 @@ const PostsStack = () => {
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_DETAIL}
         component={ProjectDetailScreen}
-        options={{}}
+        options={{title: "프로젝트"}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
         component={ProjectLogsAllScreen}
-        options={{title: '뜨개 로그'}}
+        options={{title: '뜨개 로그 전체'}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
         component={ProjectPostsAllScreen}
-        options={{title: '게시물'}}
+        options={{title: '게시물 전체'}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PDF_VIEWER}

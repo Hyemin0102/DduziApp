@@ -1,16 +1,14 @@
 import styled from '@emotion/native';
 
-export const HeaderContainer = styled.View<{paddingTop?: number}>`
+export const HeaderContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: ${({paddingTop}) => 56 + (paddingTop ?? 0)}px;
-  padding-top: ${({paddingTop}) => paddingTop ?? 0}px;
+  height: 56px;
   padding-bottom: 8px;
   padding-horizontal: 16px;
   background-color: #fff;
-  
 `;
 
 export const Logo = styled.Image`

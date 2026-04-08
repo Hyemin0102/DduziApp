@@ -134,16 +134,13 @@ export default function PostDetailScreen() {
   const handleEdit = () => {
     setShowActionSheet(false);
     if (!post) return;
-    navigation.navigate(TAB_ROUTES.PROJECTS_TAB, {
-      screen: POST_ROUTES.CREATE_POST_FOR_PROJECT,
-      params: {
-        mode: 'edit' as const,
-        postId: post.id,
-        projectId: post.project_id ?? undefined,
-        projectTitle: post.title,
-        content: post.content ?? undefined,
-        existingImages: post.images,
-      },
+    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
+      mode: 'edit' as const,
+      postId: post.id,
+      projectId: post.project_id ?? undefined,
+      projectTitle: post.title,
+      content: post.content ?? undefined,
+      existingImages: post.images,
     });
   };
 

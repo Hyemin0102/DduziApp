@@ -7,8 +7,14 @@ import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
 import PostCardSkeleton from '@/components/skeleton/PostCardSkeleton';
 import {Post} from '@/@types/database';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Feather';
+import {HOME_ROUTES} from '@/constants/navigation.constant';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
+import * as HS from '../Navigator/stacks/HomeStack.style';
 
 const Home = () => {
+  const {navigation} = useCommonNavigation();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,6 +91,16 @@ const Home = () => {
   
 
   return (
+    <SafeAreaView style={{flex: 1, backgroundColor: "#fff"}}>
+      <HS.HeaderContainer>
+        <HS.LogoRow>
+          <HS.Logo source={require('@/assets/images/dduzi_logo.png')} resizeMode="contain" />
+          <HS.LogoText source={require('@/assets/images/Dduzi_text.png')} resizeMode="contain" />
+        </HS.LogoRow>
+        <HS.SearchButton onPress={() => navigation.navigate(HOME_ROUTES.SEARCH)}>
+          <Icon name="search" size={24} color="#333" />
+        </HS.SearchButton>
+      </HS.HeaderContainer>
     <S.Container>
       {loading ? (
         <S.Fill>
@@ -118,6 +134,7 @@ const Home = () => {
         />
       )}
     </S.Container>
+    </SafeAreaView>
   );
 };
 

@@ -15,6 +15,7 @@ import {POST_ROUTES, PROJECTS_ROUTES, TAB_ROUTES} from '@/constants/navigation.c
 import {PostsStackParamList} from '@/@types/navigation';
 import {ProjectItem} from '@/@types/database';
 import * as S from './PostCreateForProjectScreen.style';
+import { View } from 'react-native';
 
 type RouteProps = RouteProp<
   PostsStackParamList,
@@ -238,9 +239,18 @@ export default function PostCreateForProjectScreen() {
   return (
     <S.Container>
       <S.Header>
-        <S.HeaderTitle>
+        <View style={{flexDirection:'row', justifyContent: 'center', alignItems: 'center', gap: 4}}>
+        <Icon
+          name="chevron-left"
+          size={24}
+          color="#333"
+          onPress={() => navigation.goBack()}
+        />
+ <S.HeaderTitle>
           {isEditMode ? '게시물 수정' : '게시물 작성'}
         </S.HeaderTitle>
+        </View>
+       
         <Icon
           name="x"
           size={24}

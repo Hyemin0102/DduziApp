@@ -6,11 +6,10 @@ export const Wrapper = styled.View`
   align-items: center;
   height: 56px;
   background-color: #fff;
-  border: 1px solid red;
 `;
 
 export const Left = styled.View`
-  min-width: 40px;
+
 `;
 
 export const Right = styled.View`
@@ -18,7 +17,7 @@ export const Right = styled.View`
   flex-direction: row;
   justify-content: flex-end;
   gap: 8px;
-  min-width: 40px;
+
 `;
 
 export const Title = styled.View``;

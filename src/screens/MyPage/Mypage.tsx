@@ -14,10 +14,6 @@ const Mypage = () => {
     navigation.navigate(MY_PAGE_ROUTES.PROFILE_EDIT);
   };
 
-  const handleProject = () => {
-    navigation.navigate(TAB_ROUTES.PROJECTS_TAB);
-  };
-
   const handleSettings = () => {
     navigation.navigate(MY_PAGE_ROUTES.SETTINGS);
   };
@@ -66,7 +62,7 @@ const Mypage = () => {
           )}
           <S.ProfileInfo>
             <S.ProfileName>{user.nickname ?? '이름 없음'}</S.ProfileName>
-            <S.ProfileSubText>프로필 편집</S.ProfileSubText>
+            <S.ProfileSubText>프로필 수정</S.ProfileSubText>
           </S.ProfileInfo>
           <S.ProfileArrow>›</S.ProfileArrow>
         </S.ProfileCard>

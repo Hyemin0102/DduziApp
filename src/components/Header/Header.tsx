@@ -16,31 +16,20 @@ const Header = (props: React.PropsWithChildren<HeaderProps>) => {
 
   return (
     <S.Wrapper style={style}>
-      {!titleDirection && (
-        <S.Left style={{ marginRight: title ? 0 : 'auto' }}>
-          {left}
-        </S.Left>
-      )}
-
+      <S.Left style={{ marginRight: title ? 0 : 'auto' }}>
+        {left}
+      </S.Left>
       {title && (
         <S.Title
           style={{
             flex: 1,
-            marginLeft: 16,
-            ...(titleDirection
-              ? {
-                  marginLeft: titleDirection === 'right' ? 'auto' : 16,
-                  marginRight: titleDirection === 'left' ? 'auto' : 16,
-                }
-              : {}),
+            marginLeft: left ? 0 : 16
           }}>
           <S.TitleText>{title}</S.TitleText>
         </S.Title>
       )}
 
-      {!titleDirection && (
-        <S.Right>{right}</S.Right>
-      )}
+    <S.Right>{right}</S.Right>
     </S.Wrapper>
   );
 };

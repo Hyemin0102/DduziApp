@@ -7,6 +7,8 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {ProjectItem} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AppHeader from '@/components/Header/AppHeader';
 
 export default function ProjectsScreen() {
   const {navigation} = useCommonNavigation<any>();

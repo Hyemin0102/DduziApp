@@ -202,7 +202,7 @@ const TabNavigator = () => {
                 resizeMode="contain"
               />
               <Text style={{color: focused ? '#000' : '#82879B', fontWeight: focused ? 'bold' : 'normal', fontSize: 10, marginTop: 4, textAlign: 'center'}}>
-                프로젝트 관리
+                프로젝트
               </Text>
             </View>
           ),
