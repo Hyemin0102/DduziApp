@@ -15,6 +15,8 @@ export const Center = styled.View`
 export const Section = styled.View`
   padding-horizontal: 20px;
   padding-vertical: 16px;
+  border-bottom-width: 6px;
+  border-bottom-color: #f5f5f5;
 `;
 
 export const TitleRow = styled.View`
@@ -133,11 +135,11 @@ export const LogContent = styled.Text`
 
 export const LogInputWrapper = styled.View<{isFocused: boolean}>`
   margin-top: 6px;
-  background-color: ${({isFocused}) => (isFocused ? '#fff' : 'transparent')};
-  border-radius: ${({isFocused}) => (isFocused ? '8px' : '0px')};
-  border-width: ${({isFocused}) => (isFocused ? '1px' : '0px')};
-  border-color: #e9e9e7;
-  padding: ${({isFocused}) => (isFocused ? '8px' : '0px')};
+  background-color: #fff;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: ${({isFocused}) => (isFocused ? '#aaa' : '#e9e9e7')};
+  padding: 8px;
 `;
 
 export const LogEditItem = styled.View`
@@ -159,6 +161,7 @@ export const LogEditHeader = styled.View`
 export const LogInput = styled.TextInput`
   font-size: 14px;
   color: #000;
+  //padding: 0;
 `;
 
 export const PostHeaderRow = styled.View`
@@ -217,7 +220,6 @@ export const EmptyAddButtonText = styled.Text`
 `;
 
 export const PostCard = styled.View`
-  margin-bottom: 16px;
   background-color: #fafafa;
   border-radius: 12px;
   overflow: hidden;
@@ -249,7 +251,7 @@ export const PostContent = styled.Text`
   font-size: 14px;
   color: #333;
   padding: 12px;
-  padding-bottom: 2px;
+  padding-bottom: 10px;
   line-height: 20px;
 `;
 
@@ -560,17 +562,17 @@ export const PostDateText = styled.Text`
 `;
 
 export const ViewAllButton = styled.TouchableOpacity`
-  margin-top: 8px;
-  padding-vertical: 10px;
+  margin-top: 16px;
+  padding-vertical: 11px;
   align-items: center;
-  border-top-width: 1px;
-  border-top-color: #f0f0f0;
+  border-radius: 10px;
+  background-color: #f5f5f5;
 `;
 
 export const ViewAllButtonText = styled.Text`
   font-size: 13px;
   color: #555;
-  font-weight: 500;
+  font-weight: 600;
 `;
 
 export const LoadingOverlay = styled.View`
@@ -583,5 +585,40 @@ export const LoadingOverlay = styled.View`
   justify-content: center;
   align-items: center;
   z-index: 999;
+`;
+
+
+
+export const LogActionRow = styled.View`
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+`;
+
+export const LogSaveButton = styled.TouchableOpacity`
+  padding: 4px 12px;
+  background-color: #191919;
+  border-radius: 6px;
+`;
+
+export const LogSaveText = styled.Text`
+  font-size: 13px;
+  color: #fff;
+`;
+
+export const LogCancelButton = styled.TouchableOpacity`
+  padding: 4px 12px;
+`;
+
+export const LogCancelText = styled.Text`
+  font-size: 13px;
+  color: #999;
+`;
+
+export const LogIconRow = styled.View`
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
 `;
 

@@ -25,6 +25,7 @@ const PostsStack = () => {
             title={options.title as string}
             titleDirection="left"
             showBack={navigation.canGoBack()}
+            right={options.headerRight?.({canGoBack: false})}
           />
         ),
         headerShown: true,

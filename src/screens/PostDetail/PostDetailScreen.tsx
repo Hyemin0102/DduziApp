@@ -4,7 +4,6 @@ import {useState, useCallback, useRef, useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
@@ -13,6 +12,7 @@ import * as S from './PostDetailScreen.styles';
 import {PostDetail} from '@/@types/database';
 import {completePost} from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
+import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES, POST_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
@@ -321,32 +321,14 @@ export default function PostDetailScreen() {
       </ScrollView>
 
       {/* 액션시트 */}
-      <Modal
+      <ActionSheetModal
         visible={showActionSheet}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowActionSheet(false)}>
-        <S.ActionSheetOverlay onPress={() => setShowActionSheet(false)}>
-          <S.ActionSheetContainer>
-            <S.ActionSheetHandle />
-            <S.ActionSheetButton onPress={handleEdit}>
-              <S.ActionSheetIcon>✏️</S.ActionSheetIcon>
-              <S.ActionSheetButtonText>수정하기</S.ActionSheetButtonText>
-            </S.ActionSheetButton>
-            <S.ActionSheetDivider />
-            <S.ActionSheetButton onPress={handleDelete}>
-              <S.ActionSheetIcon>🗑️</S.ActionSheetIcon>
-              <S.ActionSheetButtonText isDestructive>
-                {isDeleting ? '삭제 중...' : '삭제하기'}
-              </S.ActionSheetButtonText>
-            </S.ActionSheetButton>
-            <S.ActionSheetCancelButton
-              onPress={() => setShowActionSheet(false)}>
-              <S.ActionSheetCancelText>취소</S.ActionSheetCancelText>
-            </S.ActionSheetCancelButton>
-          </S.ActionSheetContainer>
-        </S.ActionSheetOverlay>
-      </Modal>
+        onClose={() => setShowActionSheet(false)}
+        actions={[
+          {label: '수정하기', icon: '✏️', onPress: handleEdit},
+          {label: isDeleting ? '삭제 중...' : '삭제하기', icon: '🗑️', onPress: handleDelete, isDestructive: true},
+        ]}
+      />
 
       <CompletePostModal
         visible={modalVisible}

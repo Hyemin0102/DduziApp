@@ -26,9 +26,9 @@ export const ImageWrapper = styled.View`
 `;
 
 export const ProfileImage = styled(FastImage)`
-  width: 140px;
-  height: 140px;
-  border-radius: 70px;
+  width: 160px;
+  height: 160px;
+  border-radius: 80px;
 `;
 
 export const ProfileImagePlaceholder = styled.View`

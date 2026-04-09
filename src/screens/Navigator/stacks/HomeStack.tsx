@@ -24,6 +24,7 @@ const HomeStack = () => {
             title={options.title as string}
             titleDirection="left"
             showBack={navigation.canGoBack()}
+            right={options.headerRight?.({canGoBack: false})}
           />
         ),
       }}>
@@ -67,7 +68,7 @@ const HomeStack = () => {
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_POSTS_ALL}
         component={ProjectPostsAllScreen}
-        options={{title: '게시물'}}
+        options={{title: '게시물 전체'}}
       />
       <Stack.Screen
         name={POST_ROUTES.CREATE_POST_FOR_PROJECT}

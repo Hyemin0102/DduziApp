@@ -29,7 +29,7 @@ const Header = (props: React.PropsWithChildren<HeaderProps>) => {
         </S.Title>
       )}
 
-    <S.Right>{right}</S.Right>
+    <S.Right style={{marginRight: 16}}>{right}</S.Right>
     </S.Wrapper>
   );
 };

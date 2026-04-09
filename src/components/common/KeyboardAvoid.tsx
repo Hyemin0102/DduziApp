@@ -8,7 +8,10 @@ type KeyboardAvoidProps = {
 
 export default function KeyboardAvoid({children, bottomOffset = 40}: KeyboardAvoidProps) {
   return (
-    <KeyboardAwareScrollView style={{flex: 1}} bottomOffset={bottomOffset}>
+    <KeyboardAwareScrollView
+      style={{flex: 1}}
+      contentContainerStyle={{flexGrow: 1}}
+      bottomOffset={bottomOffset}>
       {children}
     </KeyboardAwareScrollView>
   );

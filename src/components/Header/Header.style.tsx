@@ -17,7 +17,6 @@ export const Right = styled.View`
   flex-direction: row;
   justify-content: flex-end;
   gap: 8px;
-
 `;
 
 export const Title = styled.View``;

@@ -13,7 +13,7 @@ export const Container = styled.View`
 `;
 
 export const ProfileSection = styled.View`
-  padding: 16px;
+  padding: 0 16px;
 `;
 
 export const LoadingContainer = styled.View`

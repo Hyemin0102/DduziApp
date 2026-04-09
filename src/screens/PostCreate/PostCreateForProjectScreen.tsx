@@ -4,9 +4,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
-import {launchImageLibrary} from 'react-native-image-picker';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import {uploadMultipleImages} from '@/lib/uploadImage';
@@ -14,6 +15,7 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES, PROJECTS_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import {PostsStackParamList} from '@/@types/navigation';
 import {ProjectItem} from '@/@types/database';
+import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import * as S from './PostCreateForProjectScreen.style';
 import { View } from 'react-native';
 
@@ -116,6 +118,28 @@ export default function PostCreateForProjectScreen() {
     if (result.assets) {
       setNewImages(prev => [...prev, ...(result.assets as NewImage[])]);
     }
+  };
+
+  const handleTakePhoto = async () => {
+    if (totalImageCount >= 10) return;
+
+    const result = await launchCamera({
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 1280,
+      maxHeight: 1280,
+      saveToPhotos: true,
+    });
+    if (result.assets) {
+      setNewImages(prev => [...prev, ...(result.assets as NewImage[])]);
+    }
+  };
+
+  const [imageSheetVisible, setImageSheetVisible] = useState(false);
+
+  const handleImagePress = () => {
+    if (totalImageCount >= 10) return;
+    setImageSheetVisible(true);
   };
 
   const handleRemoveExistingImage = (id: string) => {
@@ -323,7 +347,7 @@ export default function PostCreateForProjectScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{flexDirection: 'row', gap: 10}}>
-            <S.ImageUploadButton onPress={handleSelectImages}>
+            <S.ImageUploadButton onPress={handleImagePress}>
               <Icon name="camera" size={28} color="#999" />
               <S.ImageCount>{totalImageCount}/10</S.ImageCount>
             </S.ImageUploadButton>
@@ -368,6 +392,14 @@ export default function PostCreateForProjectScreen() {
           {isSubmitting ? '저장 중...' : '게시하기'}
         </S.PostButtonText>
       </S.PostButton>
+      <ActionSheetModal
+        visible={imageSheetVisible}
+        onClose={() => setImageSheetVisible(false)}
+        actions={[
+          {label: '라이브러리에서 선택', icon: '🖼️', onPress: handleSelectImages},
+          {label: '카메라로 촬영', icon: '📷', onPress: handleTakePhoto},
+        ]}
+      />
     </S.Container>
   );
 }

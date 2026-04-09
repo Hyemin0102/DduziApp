@@ -8,6 +8,9 @@ export const CardContainer = styled.View`
   background-color: #fff;
   border-bottom-width: 1px;
   border-bottom-color: #efefef;
+  padding-top: 6px;
+  padding-bottom: 10px;
+  
 `;
 
 export const ProfileSection = styled.TouchableOpacity`
@@ -18,9 +21,9 @@ export const ProfileSection = styled.TouchableOpacity`
 `;
 
 export const ProfileImage = styled(FastImage)`
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
   border-width: 1px;
   border-color: #e9e9e7;
 `;

@@ -14,6 +14,7 @@ import {supabase} from '@/lib/supabase';
 import UserProfileCard from '@/components/common/UserProfileCard';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
+import AppHeader from '@/components/Header/AppHeader';
 import Icon from 'react-native-vector-icons/Feather';
 import {PostsStackParamList} from '@/@types/navigation';
 
@@ -131,7 +132,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
-
+  const [nickname, setNickname] = useState<string | null>(null);
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
@@ -145,6 +146,16 @@ export default function PostsScreen({route}: PostsScreenProps) {
     };
     getCurrentUser();
   }, []);
+
+  useEffect(() => {
+    if (!targetUserId) return;
+    supabase
+      .from('users')
+      .select('nickname')
+      .eq('id', targetUserId)
+      .single()
+      .then(({data}) => setNickname(data?.nickname ?? null));
+  }, [targetUserId]);
 
   const fetchPosts = async () => {
     try {
@@ -219,7 +230,14 @@ export default function PostsScreen({route}: PostsScreenProps) {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView
+      style={{flex: 1, backgroundColor: '#fff'}}
+      edges={['bottom']}>
+      <AppHeader
+        showBack={!!targetUserId}
+        title={targetUserId ? (nickname ?? '') : '내 뜨개'}
+        titleDirection="left"
+      />
     <S.Container>
       <S.ProfileSection>
         <UserProfileCard

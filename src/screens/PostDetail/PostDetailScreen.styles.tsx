@@ -178,7 +178,7 @@ export const ProjectBannerChevron = styled.Text`
 
 // 콘텐츠 섹션
 export const ContentSection = styled.View`
-  padding: 20px;
+  padding: 20px 20px 30px 20px;
 `;
 
 export const Title = styled.Text`

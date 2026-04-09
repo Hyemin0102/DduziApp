@@ -16,6 +16,7 @@ import {uploadImage} from '@/lib/uploadImage';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {checkNicknameDuplicate} from '@/lib/auth/userService';
+import ActionSheetModal from '@/components/modal/ActionSheetModal';
 
 const MAX_BIO_LENGTH = 100;
 
@@ -30,6 +31,7 @@ const ProfileScreen = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [nicknameError, setNicknameError] = useState<string | null>(null);
   const [nicknameChecking, setNicknameChecking] = useState(false);
+  const [imageSheetVisible, setImageSheetVisible] = useState(false);
   const nicknameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (!user) {
@@ -65,6 +67,10 @@ const ProfileScreen = () => {
   }, [nickname]);
 
   const displayImage = imageUri || user.profile_image;
+
+  const handleImageEditPress = () => {
+    setImageSheetVisible(true);
+  };
 
   const selectImage = async () => {
     try {
@@ -177,19 +183,19 @@ const ProfileScreen = () => {
                   </S.ProfileImagePlaceholderText>
                 </S.ProfileImagePlaceholder>
               )}
-              <S.ImageEditBadge onPress={selectImage}>
+              <S.ImageEditBadge onPress={handleImageEditPress}>
                 <S.ImageEditBadgeText>✎</S.ImageEditBadgeText>
               </S.ImageEditBadge>
             </S.ImageWrapper>
 
-            <S.ImageButtonRow>
+            {/* <S.ImageButtonRow>
               <S.ImageButton onPress={selectImage}>
                 <S.ImageButtonText>갤러리</S.ImageButtonText>
               </S.ImageButton>
               <S.ImageButton onPress={takePhoto}>
                 <S.ImageButtonText>카메라</S.ImageButtonText>
               </S.ImageButton>
-            </S.ImageButtonRow>
+            </S.ImageButtonRow> */}
           </S.ImageSection>
 
           {/* 입력 폼 */}
@@ -255,6 +261,14 @@ const ProfileScreen = () => {
           </S.Footer>
 
       </KeyboardAvoid>
+      <ActionSheetModal
+        visible={imageSheetVisible}
+        onClose={() => setImageSheetVisible(false)}
+        actions={[
+          {label: '라이브러리에서 선택', onPress: selectImage},
+          {label: '카메라로 촬영', onPress: takePhoto},
+        ]}
+      />
     </S.Container>
   );
 };

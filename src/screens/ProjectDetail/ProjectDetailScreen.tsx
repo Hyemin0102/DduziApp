@@ -13,7 +13,6 @@ import {
   Alert,
   TouchableOpacity,
   View,
-  Modal,
   Dimensions,
   Linking,
   Switch,
@@ -30,6 +29,7 @@ import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
 import CompletePostModal from '@/components/modal/CompletePostModal';
+import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import * as S from './ProjectDetailScreen.styles';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import DocumentPicker from 'react-native-document-picker';
@@ -136,6 +136,7 @@ export default function ProjectDetailScreen() {
   const [isEditingNeedleInfo, setIsEditingNeedleInfo] = useState(false);
   const hasFetchedRef = useRef(false);
   const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
+  const [logInputHeights, setLogInputHeights] = useState<Record<string, number>>({});
 
   // ── 폼 필드
   const [title, setTitle] = useState('');
@@ -1020,6 +1021,14 @@ export default function ProjectDetailScreen() {
                             onFocus={() => setFocusedLogId(log.id)}
                             onBlur={() => setFocusedLogId(null)}
                             placeholderTextColor="#ccc"
+                            multiline={true}
+                            onContentSizeChange={e =>
+                              setLogInputHeights(prev => ({
+                                ...prev,
+                                [log.id]: e.nativeEvent.contentSize.height,
+                              }))
+                            }
+                            style={{height: Math.max(36, logInputHeights[log.id] ?? 36)}}
                           />
                         </S.LogInputWrapper>
                       ) : (
@@ -1044,7 +1053,7 @@ export default function ProjectDetailScreen() {
         </S.Section>
 
         {/* ══ 게시물 ════════════════════════════════════ */}
-        <S.Section>
+        <S.Section style={{borderBottomWidth: 0}}>
           <S.PostHeaderRow>
             <S.Label>게시물 ({posts.length})</S.Label>
             {isMyProject && posts.length > 0 && (
@@ -1078,6 +1087,7 @@ export default function ProjectDetailScreen() {
             </S.EmptyPosts>
           ) : (
             <>
+              <View style={{gap: 16}}>
               {posts.slice(0, MAX_LENGTH_POST).map(post => (
                 <S.PostCard key={post.id}>
                   {post.post_images.length > 0 && (
@@ -1134,6 +1144,7 @@ export default function ProjectDetailScreen() {
                   </TouchableOpacity>
                 </S.PostCard>
               ))}
+                </View>
               {posts.length > MAX_LENGTH_POST && (
                 <S.ViewAllButton
                   onPress={() =>
@@ -1159,50 +1170,29 @@ export default function ProjectDetailScreen() {
       </KeyboardAvoid>
 
       {!isCreateMode && (
-        <Modal
+        <ActionSheetModal
           visible={showActionSheet}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowActionSheet(false)}>
-          <S.Overlay
-            activeOpacity={1}
-            onPress={() => setShowActionSheet(false)}>
-            <S.ActionSheet>
-              <S.ActionSheetHandle />
-              <S.ActionSheetBtn onPress={handleDeleteProject}>
-                <S.ActionSheetIcon>🗑️</S.ActionSheetIcon>
-                <S.DestructiveText>
-                  {isDeleting ? '삭제 중...' : '삭제하기'}
-                </S.DestructiveText>
-              </S.ActionSheetBtn>
-              <S.CancelBtn onPress={() => setShowActionSheet(false)}>
-                <S.CancelText>취소</S.CancelText>
-              </S.CancelBtn>
-            </S.ActionSheet>
-          </S.Overlay>
-        </Modal>
+          onClose={() => setShowActionSheet(false)}
+          actions={[
+            {label: isDeleting ? '삭제 중...' : '삭제하기', icon: '🗑️', onPress: handleDeleteProject, isDestructive: true},
+          ]}
+        />
       )}
 
-      <Modal
+      <ActionSheetModal
         visible={pdfInfoVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPdfInfoVisible(false)}>
-        <S.Overlay activeOpacity={1} onPress={() => setPdfInfoVisible(false)}>
-          <S.ActionSheet>
-            <S.ActionSheetHandle />
-            <View style={{padding: 20, gap: 8}}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                <Icon name="lock" size={16} color="#555" />
-                <S.InfoLabel style={{fontSize: 15}}>도안 PDF는 나만 볼 수 있어요</S.InfoLabel>
-              </View>
-              <S.InfoValue style={{color: '#999', lineHeight: 20}}>
-                {'업로드한 도안 PDF는 나에게만 표시돼요.\n다른 사람의 프로젝트에서는 이 항목이 보이지 않아요.'}
-              </S.InfoValue>
-            </View>
-          </S.ActionSheet>
-        </S.Overlay>
-      </Modal>
+        onClose={() => setPdfInfoVisible(false)}
+        showCancel={false}>
+        <View style={{padding: 20, gap: 8}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            <Icon name="lock" size={16} color="#555" />
+            <S.InfoLabel style={{fontSize: 15}}>도안 PDF는 나만 볼 수 있어요</S.InfoLabel>
+          </View>
+          <S.InfoValue style={{color: '#999', lineHeight: 20}}>
+            {'업로드한 도안 PDF는 나에게만 표시돼요.\n다른 사람의 프로젝트에서는 이 항목이 보이지 않아요.'}
+          </S.InfoValue>
+        </View>
+      </ActionSheetModal>
 
       {!isCreateMode && (
         <CompletePostModal

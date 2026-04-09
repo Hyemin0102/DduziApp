@@ -22,6 +22,7 @@ const ProjectsStack = () => {
             title={options.title as string}
             titleDirection="left"
             showBack={navigation.canGoBack()}
+            right={options.headerRight?.({canGoBack: false})}
           />
         ),
       }}>

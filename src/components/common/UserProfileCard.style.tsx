@@ -3,7 +3,7 @@ import FastImage from 'react-native-fast-image';
 
 /** 전체 카드 - 세로 배치 */
 export const Container = styled.View`
-  padding-vertical: 16px;
+  padding-vertical: 8px;
 `;
 
 /** 프로필 이미지 + 이름/소개 가로 배치 */
