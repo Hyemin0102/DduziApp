@@ -4,6 +4,7 @@ import TabNavigator from './TabNavigator';
 import AuthStack from './stacks/AuthStack';
 import {useAuth} from '../../contexts/AuthContext';
 import ProfileScreen from '../Profile/Profile';
+import OnboardingScreen from '../Onboarding/OnboardingScreen';
 import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
@@ -15,8 +16,11 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 //루트 네비게이터
 const Navigator = () => {
-  const {isLoggedIn, needsProfileSetup} = useAuth();
+  const {isLoggedIn, needsProfileSetup, hasSeenOnboarding} = useAuth();
   const navigationRef = useRef<any>(null);
+
+  console.log('온보딩',hasSeenOnboarding);
+  
 
   return (
     <NavigationContainer
@@ -26,7 +30,10 @@ const Navigator = () => {
         console.log('🧭 현재 라우터:', currentRoute?.name);
       }}>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
-        {!isLoggedIn ? (
+        {!hasSeenOnboarding ? (
+          // 최초 설치 - 온보딩
+          <RootStack.Screen name={ROOT_ROUTES.ONBOARDING} component={OnboardingScreen} />
+        ) : !isLoggedIn ? (
           //비회원
           <RootStack.Screen name={ROOT_ROUTES.AUTH} component={AuthStack} />
         ) : needsProfileSetup ? (

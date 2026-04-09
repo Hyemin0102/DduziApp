@@ -13,6 +13,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [provider, setProvider] = useState<string>('');
   const [needsProfileSetup, setNeedsProfileSetup] = useState<boolean>(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(false);
   console.log('✅ Authuser', user);
 
   //supabase 테이블 + users 테이블
@@ -88,8 +89,16 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     };
   }, []);
 
+  const completeOnboarding = async () => {
+    await AsyncStorage.setItem('onboarding_completed', 'true');
+    setHasSeenOnboarding(true);
+  };
+
   const checkAuthStatus = async () => {
     try {
+      const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+      setHasSeenOnboarding(onboardingCompleted === 'true');
+
       const {
         data: {session},
       } = await supabase.auth.getSession();
@@ -229,6 +238,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         checkAuthStatus,
         provider,
         needsProfileSetup,
+        hasSeenOnboarding,
+        completeOnboarding,
         updateUserProfile,
         setNeedsProfileSetup,
       }}>

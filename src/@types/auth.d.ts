@@ -36,6 +36,8 @@ export interface AuthContextType {
   provider: string;
   //신규 유저 확인
   needsProfileSetup: boolean;
+  //온보딩 완료 여부
+  hasSeenOnboarding: boolean;
   login: (
     token: string,
     userData: UserProfile,
@@ -48,6 +50,8 @@ export interface AuthContextType {
   updateUserProfile: (updates: Partial<UserProfile>) => void;
   //프로필 업데이트 상태 관리
   setNeedsProfileSetup: (needs: boolean) => void;
+  //온보딩 완료 처리
+  completeOnboarding: () => Promise<void>;
 }
 
 // Auth Provider Props

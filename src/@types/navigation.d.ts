@@ -18,6 +18,7 @@ import {
 
 // Root Stack
 export type RootStackParamList = {
+  [ROOT_ROUTES.ONBOARDING]: undefined;
   [ROOT_ROUTES.AUTH]: NavigatorScreenParams<AuthStackParamList>;
   [ROOT_ROUTES.PROFILE]: undefined;
   [ROOT_ROUTES.TAB_NAVIGATOR]: NavigatorScreenParams<TabParamList>;

@@ -1013,7 +1013,7 @@ export default function ProjectDetailScreen() {
                       {log.isEditable ? (
                         <S.LogInputWrapper isFocused={focusedLogId === log.id}>
                           <S.LogInput
-                            placeholder="오늘 뜬 내용을 기록해보세요..."
+                            placeholder="오늘 뜬 내용을 기록해보세요"
                             value={log.content}
                             onChangeText={text =>
                               updatePendingLog(log.id, text)
@@ -1021,14 +1021,7 @@ export default function ProjectDetailScreen() {
                             onFocus={() => setFocusedLogId(log.id)}
                             onBlur={() => setFocusedLogId(null)}
                             placeholderTextColor="#ccc"
-                            multiline={true}
-                            onContentSizeChange={e =>
-                              setLogInputHeights(prev => ({
-                                ...prev,
-                                [log.id]: e.nativeEvent.contentSize.height,
-                              }))
-                            }
-                            style={{height: Math.max(36, logInputHeights[log.id] ?? 36)}}
+                            multiline
                           />
                         </S.LogInputWrapper>
                       ) : (

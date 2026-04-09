@@ -189,6 +189,7 @@ const Search = () => {
             onSubmitEditing={() => handleSearch(searchQuery)}
             returnKeyType="search"
             placeholderTextColor="#999"
+            maxLength={20}
             autoFocus
           />
           {searchQuery.length > 0 && (

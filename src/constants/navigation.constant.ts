@@ -1,5 +1,6 @@
 // ============= Root Routes (최상위 네비게이터) =============
 export const ROOT_ROUTES = {
+  ONBOARDING: 'Onboarding',
   AUTH: 'Auth',
   PROFILE: 'Profile',
   TAB_NAVIGATOR: 'TabNavigator',

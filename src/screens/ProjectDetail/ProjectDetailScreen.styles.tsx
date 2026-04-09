@@ -135,11 +135,11 @@ export const LogContent = styled.Text`
 
 export const LogInputWrapper = styled.View<{isFocused: boolean}>`
   margin-top: 6px;
-  background-color: #fff;
-  border-radius: 8px;
-  border-width: 1px;
-  border-color: ${({isFocused}) => (isFocused ? '#aaa' : '#e9e9e7')};
-  padding: 8px;
+  background-color: ${({isFocused}) => (isFocused ? '#fff' : 'transparent')};
+  border-radius: ${({isFocused}) => (isFocused ? '8px' : '0px')};
+  border-width: ${({isFocused}) => (isFocused ? '1px' : '0px')};
+  border-color: #e9e9e7;
+  padding: ${({isFocused}) => (isFocused ? '8px' : '0px')};
 `;
 
 export const LogEditItem = styled.View`
@@ -159,9 +159,8 @@ export const LogEditHeader = styled.View`
 `;
 
 export const LogInput = styled.TextInput`
-  font-size: 14px;
+  font-size: 14x;
   color: #000;
-  //padding: 0;
 `;
 
 export const PostHeaderRow = styled.View`

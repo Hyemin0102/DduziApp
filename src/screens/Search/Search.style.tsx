@@ -28,17 +28,16 @@ export const SearchInputContainer = styled.View`
   background-color: #f5f5f5;
   border-radius: 12px;
  padding: 0 12px;
-
 `;
 
 export const SearchInput = styled.TextInput`
   flex: 1;
   font-size: 16px;
+  line-height: 20px;
   color: #333;
   padding-top: 0;
   padding-bottom: 0;
-  
-    height: 44px;
+  height: 44px;
 `;
 
 export const ClearButton = styled.TouchableOpacity`
