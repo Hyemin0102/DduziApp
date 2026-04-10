@@ -6,25 +6,36 @@ export const Container = styled.SafeAreaView`
   background-color: #ffffff;
 `;
 
-export const ProgressBarSection = styled.View`
-  flex-direction: row;
-  padding: 16px 20px 0;
-  gap: 6px;
-`;
-
-export const ProgressBarTrack = styled.View`
+export const GestureView = styled.View`
   flex: 1;
-  height: 3px;
-  background-color: #e8e8e8;
-  border-radius: 2px;
-  overflow: hidden;
 `;
 
-export const ProgressBarFill = styled(Animated.View)`
-  height: 100%;
-  background-color: #191919;
-  border-radius: 2px;
+export const TapZoneLeft = styled.Pressable`
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  z-index: 1;
 `;
+
+export const TapZoneRight = styled.Pressable`
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40%;
+  z-index: 1;
+`;
+
+export const BottomAreaWrapper = styled.View`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+`;
+
 
 export const ContentArea = styled(Animated.View)`
   flex: 1;
@@ -56,6 +67,20 @@ export const BottomArea = styled.View`
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
+  z-index: 2;
+`;
+
+export const Pagination = styled.View`
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+`;
+
+export const Dot = styled.View<{active: boolean}>`
+  width: ${({active}) => (active ? '20px' : '8px')};
+  height: 8px;
+  border-radius: 4px;
+  background-color: ${({active}) => (active ? '#191919' : '#d0d0d0')};
 `;
 
 export const ReadyText = styled.Text`
@@ -63,6 +88,7 @@ export const ReadyText = styled.Text`
   font-weight: 700;
   color: #191919;
   text-align: center;
+  margin-top: 32px;
 `;
 
 export const ActionButton = styled.TouchableOpacity`

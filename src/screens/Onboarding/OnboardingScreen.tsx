@@ -1,9 +1,8 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Animated} from 'react-native';
+import React, {useRef, useState} from 'react';
+import {Animated, Button, PanResponder} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import * as S from './OnboardingScreen.style';
-
-const SLIDE_DURATION = 3500;
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const slides = [
   {
@@ -26,89 +25,71 @@ const slides = [
 const OnboardingScreen = () => {
   const {completeOnboarding} = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const progressAnims = useRef(slides.map(() => new Animated.Value(0))).current;
+  const currentIndexRef = useRef(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const progressAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+  const isTransitioning = useRef(false);
+
+  console.log('온보딩인덱스',currentIndex);
+  
 
   const transitionToSlide = (nextIndex: number) => {
+    if (isTransitioning.current) return;
+    if (nextIndex < 0 || nextIndex >= slides.length) return;
+    isTransitioning.current = true;
+    currentIndexRef.current = nextIndex;
+
     Animated.timing(fadeAnim, {
       toValue: 0,
-      duration: 180,
+      duration: 150,
       useNativeDriver: true,
     }).start(() => {
       setCurrentIndex(nextIndex);
+      isTransitioning.current = false;
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 220,
+        duration: 200,
         useNativeDriver: true,
       }).start();
     });
   };
 
-  useEffect(() => {
-    // Reset bars: past = full, future = empty
-    progressAnims.forEach((anim, i) => {
-      if (i < currentIndex) {
-        anim.setValue(1);
-      } else if (i > currentIndex) {
-        anim.setValue(0);
-      }
-    });
-
-    // Animate current bar
-    progressAnims[currentIndex].setValue(0);
-    progressAnimRef.current = Animated.timing(progressAnims[currentIndex], {
-      toValue: 1,
-      duration: SLIDE_DURATION,
-      useNativeDriver: false,
-    });
-
-    progressAnimRef.current.start(({finished}) => {
-      if (finished && currentIndex < slides.length - 1) {
-        transitionToSlide(currentIndex + 1);
-      }
-    });
-
-    return () => {
-      progressAnimRef.current?.stop();
-    };
-  }, [currentIndex]);
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, {dx, dy}) =>
+        Math.abs(dx) > 8 && Math.abs(dy) < 40,
+      onPanResponderRelease: (_, {dx}) => {
+        if (dx < -50) transitionToSlide(currentIndexRef.current + 1);
+        else if (dx > 50) transitionToSlide(currentIndexRef.current - 1);
+      },
+    }),
+  ).current;
 
   const slide = slides[currentIndex];
-  const isLastSlide = currentIndex === slides.length - 1;
 
   return (
     <S.Container>
-      <S.ProgressBarSection>
-        {slides.map((_, i) => (
-          <S.ProgressBarTrack key={i}>
-            <S.ProgressBarFill
-              style={{
-                width: progressAnims[i].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%'],
-                }),
-              }}
-            />
-          </S.ProgressBarTrack>
-        ))}
-      </S.ProgressBarSection>
-
-      <S.ContentArea style={{opacity: fadeAnim}}>
-        <S.Headline>{slide.headline}</S.Headline>
-        <S.Description>{slide.description}</S.Description>
-      </S.ContentArea>
-
-      <S.BottomArea>
-        {isLastSlide && (
-          <>
+      <S.GestureView {...panResponder.panHandlers}>
+        <S.ContentArea style={{opacity: fadeAnim}}>
+          <S.Headline>{slide.headline}</S.Headline>
+          <S.Description>{slide.description}</S.Description>
+          {currentIndex === slides.length - 1 && (
             <S.ReadyText>자, 이제 뜨러 가볼까요?</S.ReadyText>
-            <S.ActionButton onPress={completeOnboarding}>
-              <S.ActionButtonText>뜨지 시작하기</S.ActionButtonText>
-            </S.ActionButton>
-          </>
-        )}
-      </S.BottomArea>
+          )}
+        </S.ContentArea>
+
+        <S.BottomArea>
+          <S.Pagination>
+            {slides.map((_, i) => (
+              <S.Dot key={i} active={i === currentIndex} />
+            ))}
+          </S.Pagination>
+          <S.ActionButton onPress={completeOnboarding}>
+            <S.ActionButtonText>뜨지 시작하기</S.ActionButtonText>
+          </S.ActionButton>
+          <Button title="온보딩 초기화" onPress={() => AsyncStorage.removeItem('onboarding_completed')} />
+
+        </S.BottomArea>
+      </S.GestureView>
     </S.Container>
   );
 };
