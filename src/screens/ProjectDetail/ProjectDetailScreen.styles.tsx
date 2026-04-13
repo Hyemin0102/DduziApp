@@ -55,11 +55,11 @@ export const StatusBadge = styled.View<{
   background-color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#f1f1ef';
+        return '#fff8e1';
       case 'completed':
         return '#e8f5e9';
       case 'public':
-        return '#f1f1ef';
+        return '#e3f2fd';
       case 'private':
         return '#f5f5f5';
     }
@@ -74,11 +74,11 @@ export const StatusText = styled.Text<{
   color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#191919';
+        return '#f59e0b';
       case 'completed':
         return '#4CAF50';
       case 'public':
-        return '#555';
+        return '#1e88e5';
       case 'private':
         return '#999';
     }

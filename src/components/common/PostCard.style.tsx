@@ -10,7 +10,6 @@ export const CardContainer = styled.View`
   border-bottom-color: #efefef;
   padding-top: 6px;
   padding-bottom: 10px;
-  
 `;
 
 export const ProfileSection = styled.TouchableOpacity`
@@ -46,13 +45,13 @@ export const ProfileImagePlaceholderText = styled.Text`
 export const Username = styled.Text`
   font-weight: 600;
   font-size: 14px;
-  color: #191919; 
+  color: #191919;
   flex: 1;
 `;
 
 export const ImageContainer = styled.View`
-  width:${`${SCREEN_WIDTH}px`};
-  height:${`${SCREEN_WIDTH}px`};
+  width: ${`${SCREEN_WIDTH}px`};
+  height: ${`${SCREEN_WIDTH}px`};
   position: relative;
 `;
 

@@ -7,7 +7,7 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {ProjectItem} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import AppHeader from '@/components/Header/AppHeader';
 
 export default function ProjectsScreen() {
@@ -18,7 +18,7 @@ export default function ProjectsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchProjects(); 
+      fetchProjects();
     }, []),
   );
 
@@ -65,9 +65,6 @@ export default function ProjectsScreen() {
     );
   }
 
-  console.log(projects);
-  
-
   return (
     <S.Container>
       {projects.length > 0 && (
@@ -105,12 +102,21 @@ export default function ProjectsScreen() {
           <S.Card
             activeOpacity={0.75}
             onPress={() =>
-              navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {projectId: item.id, projectTitle: item.title})
+              navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+                projectId: item.id,
+                projectTitle: item.title,
+              })
             }>
             <S.CardLeft>
-              <S.StatusDot completed={item.is_completed} />
+              {/* <S.StatusDot completed={item.is_completed} /> */}
+
               <S.CardInfo>
-                <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
+                <S.TitleRow>
+                  <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
+                  {item.visibility !== 'public' && (
+                    <Icon name="lock" size={14} color="#bbb" />
+                  )}
+                </S.TitleRow>
                 <S.CardDate>
                   {new Date(item.created_at).toLocaleDateString('ko-KR')}
                 </S.CardDate>
@@ -121,10 +127,7 @@ export default function ProjectsScreen() {
                 variant={item.is_completed ? 'completed' : 'progress'}>
                 {item.is_completed ? '완료' : '진행 중'}
               </S.StatusBadge>
-              <S.StatusBadge
-                variant={item.visibility === 'public' ? 'public' : 'private'}>
-                {item.visibility === 'public' ? '공개' : '비공개'}
-              </S.StatusBadge>
+
               <Icon name="chevron-right" size={16} color="#ccc" />
             </S.CardRight>
           </S.Card>

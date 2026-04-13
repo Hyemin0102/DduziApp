@@ -3,6 +3,7 @@ import {ScrollView, Dimensions} from 'react-native';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import Icon from 'react-native-vector-icons/Feather';
 import * as S from './PostCard.style';
 
 interface PostCardProps {
@@ -101,19 +102,20 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
       {/* 콘텐츠 */}
       <S.ContentSection
-        onPress={() => 
-          navigation.navigate(POST_ROUTES.POST_DETAIL, { postId: post.id })
+        onPress={() =>
+          navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: post.id})
         }>
         {post.projects && (
           <S.BadgeRow>
             <S.ProjectBadge>
               <S.ProjectBadgeText numberOfLines={1}>
-                🧶 {post.projects.title}
+                <Icon name="folder" size={12} color="#555" />{' '}
+                {post.projects.title}
               </S.ProjectBadgeText>
             </S.ProjectBadge>
             <S.StatusBadge completed={post.projects.is_completed}>
               <S.StatusBadgeText completed={post.projects.is_completed}>
-                {post.projects.is_completed ? '✅ 완료' : '진행 중'}
+                {post.projects.is_completed ? '완료' : '진행 중'}
               </S.StatusBadgeText>
             </S.StatusBadge>
           </S.BadgeRow>
@@ -129,9 +131,7 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
             </>
           );
         })()}
-        <S.Date>
-          {new Date(post.created_at).toLocaleDateString('ko-KR')}
-        </S.Date>
+        <S.Date>{new Date(post.created_at).toLocaleDateString('ko-KR')}</S.Date>
       </S.ContentSection>
     </S.CardContainer>
   );

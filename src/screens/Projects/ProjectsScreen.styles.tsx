@@ -83,7 +83,7 @@ export const Card = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding-horizontal: 16px;
+  padding-horizontal: 20px;
   padding-vertical: 16px;
   border-bottom-width: 1px;
   border-bottom-color: #f0f0f0;
@@ -101,23 +101,29 @@ export const StatusDot = styled.View<{completed: boolean}>`
   width: 8px;
   height: 8px;
   border-radius: 4px;
-  background-color: ${({completed}) => (completed ? '#4CAF50' : '#191919')};
+  background-color: ${({completed}) => (completed ? '#4CAF50' : '#f59e0b')};
 `;
 
 export const CardInfo = styled.View`
   flex: 1;
 `;
 
+export const TitleRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+`;
+
 export const CardTitle = styled.Text`
   font-size: 15px;
   font-weight: 600;
   color: #111;
-  margin-bottom: 4px;
 `;
 
 export const CardDate = styled.Text`
   font-size: 12px;
   color: #bbb;
+  margin-top: 4px;
 `;
 
 export const CardRight = styled.View`
@@ -138,11 +144,11 @@ export const StatusBadge = styled.Text<{
   background-color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#f1f1ef';
+        return '#fff8e1';
       case 'completed':
         return '#e8f5e9';
       case 'public':
-        return '#f1f1ef';
+        return '#e3f2fd';
       case 'private':
         return '#f5f5f5';
     }
@@ -150,11 +156,11 @@ export const StatusBadge = styled.Text<{
   color: ${({variant}) => {
     switch (variant) {
       case 'progress':
-        return '#191919';
+        return '#f59e0b';
       case 'completed':
         return '#4CAF50';
       case 'public':
-        return '#555';
+        return '#1e88e5';
       case 'private':
         return '#999';
     }

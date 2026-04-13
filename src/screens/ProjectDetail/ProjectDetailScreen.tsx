@@ -97,7 +97,6 @@ interface CurrentForm {
 }
 
 function renderTextWithLinks(text: string) {
-  
   const parts = text.split(URL_REGEX);
   return (
     <S.InfoValue>
@@ -129,14 +128,19 @@ export default function ProjectDetailScreen() {
   const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingPdf, setPendingPdf] = useState<{uri: string; name: string} | null>(null);
+  const [pendingPdf, setPendingPdf] = useState<{
+    uri: string;
+    name: string;
+  } | null>(null);
   const [patternPdfName, setPatternPdfName] = useState('');
   const [isEditingPatternInfo, setIsEditingPatternInfo] = useState(false);
   const [isEditingYarnInfo, setIsEditingYarnInfo] = useState(false);
   const [isEditingNeedleInfo, setIsEditingNeedleInfo] = useState(false);
   const hasFetchedRef = useRef(false);
   const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
-  const [logInputHeights, setLogInputHeights] = useState<Record<string, number>>({});
+  const [logInputHeights, setLogInputHeights] = useState<
+    Record<string, number>
+  >({});
 
   // ── 폼 필드
   const [title, setTitle] = useState('');
@@ -222,7 +226,6 @@ export default function ProjectDetailScreen() {
       prev.map(l => (l.id === id ? {...l, content: text} : l)),
     );
   }, []);
-  
 
   const addPendingLog = useCallback(() => {
     const tempId = Date.now().toString();
@@ -362,7 +365,6 @@ export default function ProjectDetailScreen() {
   const handleSaveRef = useRef<() => void>(() => {});
 
   useLayoutEffect(() => {
-
     if (isDirty) {
       navigation.setOptions({
         headerRight: () => (
@@ -405,8 +407,6 @@ export default function ProjectDetailScreen() {
       setProject(p);
       populateForm(p);
 
-      
-
       const {data: postsData, error: postsError} = await supabase
         .from('posts')
         .select(
@@ -438,7 +438,6 @@ export default function ProjectDetailScreen() {
     hasFetchedRef.current = false;
   }, [projectId]);
 
-  
   // ── 저장
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
@@ -451,7 +450,11 @@ export default function ProjectDetailScreen() {
       let finalPatternUrl = patternUrl;
       let finalPatternPdfName = patternPdfName;
       if (pendingPdf) {
-        const url = await uploadPdf(pendingPdf.uri, currentUserId || 'unknown', pendingPdf.name);
+        const url = await uploadPdf(
+          pendingPdf.uri,
+          currentUserId || 'unknown',
+          pendingPdf.name,
+        );
         if (!url) throw new Error('PDF 업로드에 실패했습니다.');
         finalPatternUrl = url;
         finalPatternPdfName = pendingPdf.name;
@@ -471,7 +474,7 @@ export default function ProjectDetailScreen() {
         return;
       }
 
-      let currentProjectId: string;      
+      let currentProjectId: string;
 
       if (isCreateMode) {
         const {data: newProject, error} = await supabase
@@ -625,7 +628,7 @@ export default function ProjectDetailScreen() {
 
   const isMyProject = project?.user_id === currentUserId;
 
-  //내 프로젝트거나 생성 모드일때 
+  //내 프로젝트거나 생성 모드일때
   const canEdit = isCreateMode || isMyProject;
 
   const handlePickPdf = async () => {
@@ -633,7 +636,7 @@ export default function ProjectDetailScreen() {
       const result = await DocumentPicker.pickSingle({
         type: DocumentPicker.types.pdf,
       });
-      
+
       if (!result.uri) return;
       setPendingPdf({uri: result.uri, name: result.name ?? 'document.pdf'});
       setIsDirty(true);
@@ -652,7 +655,11 @@ export default function ProjectDetailScreen() {
   if (loading) {
     return (
       <S.Container>
-        <ActivityIndicator size="large" color="#191919" style={{marginTop: 20}} />
+        <ActivityIndicator
+          size="large"
+          color="#191919"
+          style={{marginTop: 20}}
+        />
       </S.Container>
     );
   }
@@ -664,8 +671,6 @@ export default function ProjectDetailScreen() {
       </S.Center>
     );
   }
-
-  
 
   return (
     <S.Container>
@@ -739,7 +744,7 @@ export default function ProjectDetailScreen() {
                   variant={formIsCompleted ? 'completed' : 'progress'}>
                   <S.StatusText
                     variant={formIsCompleted ? 'completed' : 'progress'}>
-                    {formIsCompleted ? '✅ 완료' : '🧶 진행 중'}
+                    {formIsCompleted ? '완료' : '진행 중'}
                   </S.StatusText>
                 </S.StatusBadge>
               </TouchableOpacity>
@@ -792,8 +797,8 @@ export default function ProjectDetailScreen() {
 
         {/* ══ 정보 섹션: 실 · 바늘 · 도안 ══════════════════ */}
         <S.InfoSection>
-        <S.InfoHeaderRow> 
-          <S.Label>뜨개 정보</S.Label>
+          <S.InfoHeaderRow>
+            <S.Label>뜨개 정보</S.Label>
           </S.InfoHeaderRow>
           <S.InfoRow>
             <S.InfoIconBox style={{backgroundColor: '#f3eeff'}}>
@@ -815,7 +820,8 @@ export default function ProjectDetailScreen() {
                 <S.LinkRow>
                   <S.InfoValue style={{flex: 1}}>{yarnInfo}</S.InfoValue>
                   {canEdit && (
-                    <TouchableOpacity onPress={() => setIsEditingYarnInfo(true)}>
+                    <TouchableOpacity
+                      onPress={() => setIsEditingYarnInfo(true)}>
                       <Icon name="edit-2" size={14} color="#bbb" />
                     </TouchableOpacity>
                   )}
@@ -850,7 +856,8 @@ export default function ProjectDetailScreen() {
                 <S.LinkRow>
                   <S.InfoValue style={{flex: 1}}>{needleInfo}</S.InfoValue>
                   {canEdit && (
-                    <TouchableOpacity onPress={() => setIsEditingNeedleInfo(true)}>
+                    <TouchableOpacity
+                      onPress={() => setIsEditingNeedleInfo(true)}>
                       <Icon name="edit-2" size={14} color="#bbb" />
                     </TouchableOpacity>
                   )}
@@ -887,7 +894,8 @@ export default function ProjectDetailScreen() {
                     {renderTextWithLinks(patternInfo)}
                   </View>
                   {canEdit && (
-                    <TouchableOpacity onPress={() => setIsEditingPatternInfo(true)}>
+                    <TouchableOpacity
+                      onPress={() => setIsEditingPatternInfo(true)}>
                       <Icon name="edit-2" size={14} color="#bbb" />
                     </TouchableOpacity>
                   )}
@@ -904,20 +912,32 @@ export default function ProjectDetailScreen() {
 
           {(isMyProject || isCreateMode) && (
             <S.InfoRow style={{borderBottomWidth: 0}}>
-              <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
+              <S.InfoIconBox style={{backgroundColor: '#f1f1ef'}}>
                 <S.InfoIcon>📎</S.InfoIcon>
               </S.InfoIconBox>
               <S.InfoContent>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
                   <S.InfoLabel>도안 PDF</S.InfoLabel>
                   <TouchableOpacity onPress={() => setPdfInfoVisible(true)}>
-                    <Icon name="info" size={14} color="#555" style={{marginBottom: 3}}/>
+                    <Icon
+                      name="info"
+                      size={14}
+                      color="#555"
+                      style={{marginBottom: 3}}
+                    />
                   </TouchableOpacity>
                 </View>
                 {pendingPdf ? (
                   <S.LinkRow>
-                    <S.Link style={{flex: 1}}
-                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {pdfUrl: pendingPdf.uri, title: pendingPdf.name})}>
+                    <S.Link
+                      style={{flex: 1}}
+                      onPress={() =>
+                        navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
+                          pdfUrl: pendingPdf.uri,
+                          title: pendingPdf.name,
+                        })
+                      }>
                       {pendingPdf.name}
                     </S.Link>
                     <TouchableOpacity onPress={handleRemovePdf}>
@@ -926,8 +946,15 @@ export default function ProjectDetailScreen() {
                   </S.LinkRow>
                 ) : patternUrl ? (
                   <S.LinkRow>
-                    <S.Link style={{flex: 1}}
-                      onPress={() => navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {pdfUrl: patternUrl, title: patternPdfName || getPdfNameFromUrl(patternUrl)})}>
+                    <S.Link
+                      style={{flex: 1}}
+                      onPress={() =>
+                        navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
+                          pdfUrl: patternUrl,
+                          title:
+                            patternPdfName || getPdfNameFromUrl(patternUrl),
+                        })
+                      }>
                       {patternPdfName || getPdfNameFromUrl(patternUrl)}
                     </S.Link>
                     <TouchableOpacity onPress={handleRemovePdf}>
@@ -1034,7 +1061,10 @@ export default function ProjectDetailScreen() {
               {pendingLogs.length > MAX_LENGTH_LOG && (
                 <S.ViewAllButton
                   onPress={() =>
-                    navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {projectId: projectId!, projectTitle: project?.title})
+                    navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
+                      projectId: projectId!,
+                      projectTitle: project?.title,
+                    })
                   }>
                   <S.ViewAllButtonText>
                     전체 보기 ({pendingLogs.length}개)
@@ -1052,7 +1082,10 @@ export default function ProjectDetailScreen() {
             {isMyProject && posts.length > 0 && (
               <S.AddButton
                 onPress={() =>
-                  navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {projectId, projectTitle: project?.title})
+                  navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
+                    projectId,
+                    projectTitle: project?.title,
+                  })
                 }>
                 <Icon name="plus" size={16} color="#fff" />
                 <S.AddButtonText>게시물 추가</S.AddButtonText>
@@ -1070,7 +1103,10 @@ export default function ProjectDetailScreen() {
               {isMyProject && (
                 <S.EmptyAddButton
                   onPress={() =>
-                    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {projectId, projectTitle: project?.title})
+                    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
+                      projectId,
+                      projectTitle: project?.title,
+                    })
                   }>
                   <S.EmptyAddButtonText>
                     첫 게시물 추가하기
@@ -1081,67 +1117,75 @@ export default function ProjectDetailScreen() {
           ) : (
             <>
               <View style={{gap: 16}}>
-              {posts.slice(0, MAX_LENGTH_POST).map(post => (
-                <S.PostCard key={post.id}>
-                  {post.post_images.length > 0 && (
-                    <ScrollView
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      snapToInterval={SCREEN_WIDTH - 36}
-                      decelerationRate="fast"
-                      style={{height: 220}}>
-                      {post.post_images
-                        .slice()
-                        .sort((a, b) => a.display_order - b.display_order)
-                        .map((img, index) => (
-                          <S.PostImageWrapper
-                            key={img.id}
-                            width={SCREEN_WIDTH - 36}>
-                            <S.PostImage source={{uri: img.image_url}} />
-                            {post.post_images.length > 1 && (
-                              <S.PostImageCounter>
-                                {index + 1} / {post.post_images.length}
-                              </S.PostImageCounter>
-                            )}
-                          </S.PostImageWrapper>
-                        ))}
-                    </ScrollView>
-                  )}
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: post.id})
-                    }
-                    activeOpacity={0.5}>
-                    <S.PostDateRow>
-                      <Icon name="calendar" size={12} color="#191919" />
-                      <S.PostDateText>
-                        {new Date(post.created_at).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </S.PostDateText>
-                    </S.PostDateRow>
-                    {(() => {
-                      const lines = (post.content ?? '').split('\n');
-                      const preview = lines.slice(0, 2).join('\n');
-                      const hasMore = lines.length > 2;
-                      return (
-                        <>
-                          <S.PostContent>{preview}</S.PostContent>
-                          {hasMore && <S.PostMore>...</S.PostMore>}
-                        </>
-                      );
-                    })()}
-                  </TouchableOpacity>
-                </S.PostCard>
-              ))}
-                </View>
+                {posts.slice(0, MAX_LENGTH_POST).map(post => (
+                  <S.PostCard key={post.id}>
+                    {post.post_images.length > 0 && (
+                      <ScrollView
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        snapToInterval={SCREEN_WIDTH - 36}
+                        decelerationRate="fast"
+                        style={{height: 220}}>
+                        {post.post_images
+                          .slice()
+                          .sort((a, b) => a.display_order - b.display_order)
+                          .map((img, index) => (
+                            <S.PostImageWrapper
+                              key={img.id}
+                              width={SCREEN_WIDTH - 36}>
+                              <S.PostImage source={{uri: img.image_url}} />
+                              {post.post_images.length > 1 && (
+                                <S.PostImageCounter>
+                                  {index + 1} / {post.post_images.length}
+                                </S.PostImageCounter>
+                              )}
+                            </S.PostImageWrapper>
+                          ))}
+                      </ScrollView>
+                    )}
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate(POST_ROUTES.POST_DETAIL, {
+                          postId: post.id,
+                        })
+                      }
+                      activeOpacity={0.5}>
+                      <S.PostDateRow>
+                        <Icon name="calendar" size={12} color="#191919" />
+                        <S.PostDateText>
+                          {new Date(post.created_at).toLocaleDateString(
+                            'ko-KR',
+                            {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            },
+                          )}
+                        </S.PostDateText>
+                      </S.PostDateRow>
+                      {(() => {
+                        const lines = (post.content ?? '').split('\n');
+                        const preview = lines.slice(0, 2).join('\n');
+                        const hasMore = lines.length > 2;
+                        return (
+                          <>
+                            <S.PostContent>{preview}</S.PostContent>
+                            {hasMore && <S.PostMore>...</S.PostMore>}
+                          </>
+                        );
+                      })()}
+                    </TouchableOpacity>
+                  </S.PostCard>
+                ))}
+              </View>
               {posts.length > MAX_LENGTH_POST && (
                 <S.ViewAllButton
                   onPress={() =>
-                    navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {projectId: projectId!, projectTitle: project?.title})
+                    navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {
+                      projectId: projectId!,
+                      projectTitle: project?.title,
+                    })
                   }>
                   <S.ViewAllButtonText>
                     전체 보기 ({posts.length}개)
@@ -1167,7 +1211,12 @@ export default function ProjectDetailScreen() {
           visible={showActionSheet}
           onClose={() => setShowActionSheet(false)}
           actions={[
-            {label: isDeleting ? '삭제 중...' : '삭제하기', icon: '🗑️', onPress: handleDeleteProject, isDestructive: true},
+            {
+              label: isDeleting ? '삭제 중...' : '삭제하기',
+              icon: '🗑️',
+              onPress: handleDeleteProject,
+              isDestructive: true,
+            },
           ]}
         />
       )}
@@ -1179,10 +1228,14 @@ export default function ProjectDetailScreen() {
         <View style={{padding: 20, gap: 8}}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <Icon name="lock" size={16} color="#555" />
-            <S.InfoLabel style={{fontSize: 15}}>도안 PDF는 나만 볼 수 있어요</S.InfoLabel>
+            <S.InfoLabel style={{fontSize: 15}}>
+              도안 PDF는 나만 볼 수 있어요
+            </S.InfoLabel>
           </View>
           <S.InfoValue style={{color: '#999', lineHeight: 20}}>
-            {'업로드한 도안 PDF는 나에게만 표시돼요.\n다른 사람의 프로젝트에서는 이 항목이 보이지 않아요.'}
+            {
+              '업로드한 도안 PDF는 나에게만 표시돼요.\n다른 사람의 프로젝트에서는 이 항목이 보이지 않아요.'
+            }
           </S.InfoValue>
         </View>
       </ActionSheetModal>

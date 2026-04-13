@@ -2,7 +2,6 @@ import React, {useRef, useState} from 'react';
 import {Animated, Button, PanResponder} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import * as S from './OnboardingScreen.style';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const slides = [
   {
@@ -28,9 +27,6 @@ const OnboardingScreen = () => {
   const currentIndexRef = useRef(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const isTransitioning = useRef(false);
-
-  console.log('온보딩인덱스',currentIndex);
-  
 
   const transitionToSlide = (nextIndex: number) => {
     if (isTransitioning.current) return;
@@ -86,8 +82,6 @@ const OnboardingScreen = () => {
           <S.ActionButton onPress={completeOnboarding}>
             <S.ActionButtonText>뜨지 시작하기</S.ActionButtonText>
           </S.ActionButton>
-          <Button title="온보딩 초기화" onPress={() => AsyncStorage.removeItem('onboarding_completed')} />
-
         </S.BottomArea>
       </S.GestureView>
     </S.Container>

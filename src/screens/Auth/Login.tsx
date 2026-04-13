@@ -77,12 +77,16 @@ const Login = () => {
                 try {
                   //DB 저장(auth에서 받은 유저데이터, 카카오에서 받은 프로필 보냄)
                   //삽입한 user테이블 데이터, 신규 유저 여부 리턴
-                  const result = await createOrUpdateUser(data.user, {
-                    nickname: kakaoProfile?.nickname,
-                    profileImageUrl:
-                      kakaoProfile.profileImageUrl ||
-                      kakaoProfile.thumbnailImageUrl,
-                  }, 'kakao');
+                  const result = await createOrUpdateUser(
+                    data.user,
+                    {
+                      nickname: kakaoProfile?.nickname,
+                      profileImageUrl:
+                        kakaoProfile.profileImageUrl ||
+                        kakaoProfile.thumbnailImageUrl,
+                    },
+                    'kakao',
+                  );
                   console.log('카카오 로그인 결과', result);
 
                   // UserProfile 객체 구성
@@ -113,7 +117,10 @@ const Login = () => {
                       `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
                     );
                   } else {
-                    console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
+                    console.error(
+                      '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
+                      userError,
+                    );
                   }
                 }
               }
@@ -141,10 +148,14 @@ const Login = () => {
 
               if (data.user && data.session) {
                 try {
-                  const result = await createOrUpdateUser(data.user, {
-                    nickname: data.user?.user_metadata.full_name,
-                    profileImageUrl: data.user?.user_metadata.picture,
-                  }, 'google');
+                  const result = await createOrUpdateUser(
+                    data.user,
+                    {
+                      nickname: data.user?.user_metadata.full_name,
+                      profileImageUrl: data.user?.user_metadata.picture,
+                    },
+                    'google',
+                  );
                   console.log('구글 로그인 결과', result);
 
                   // UserProfile 객체 구성
@@ -176,7 +187,10 @@ const Login = () => {
                       `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
                     );
                   } else {
-                    console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
+                    console.error(
+                      '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
+                      userError,
+                    );
                   }
                 }
               }
@@ -205,7 +219,8 @@ const Login = () => {
               nonce: rawNonce,
             });
 
-            const {identityToken, authorizationCode, fullName, email} = appleAuthRequestResponse;
+            const {identityToken, authorizationCode, fullName, email} =
+              appleAuthRequestResponse;
             console.log('fullname email:', fullName, email);
 
             if (!identityToken) {
@@ -228,13 +243,17 @@ const Login = () => {
                       .join(' ')
                   : undefined;
 
-                const result = await createOrUpdateUser(data.user, {
-                  nickname:
-                    appleFullName ||
-                    data.user.user_metadata?.full_name ||
-                    email ||
-                    undefined,
-                }, 'apple');
+                const result = await createOrUpdateUser(
+                  data.user,
+                  {
+                    nickname:
+                      appleFullName ||
+                      data.user.user_metadata?.full_name ||
+                      email ||
+                      undefined,
+                  },
+                  'apple',
+                );
                 console.log('애플 로그인 결과', result);
 
                 const userProfile = createUserProfile({
@@ -253,11 +272,18 @@ const Login = () => {
                 // authorization_code → refresh_token 교환 후 저장 (탈퇴 시 revoke에 사용)
                 // authorization_code는 5분 내에만 유효하므로 로그인 직후 처리
                 if (authorizationCode) {
-                  const {error: exchangeError} = await supabase.functions.invoke('apple-auth', {
-                    body: {action: 'exchange', authorization_code: authorizationCode},
-                  });
+                  const {error: exchangeError} =
+                    await supabase.functions.invoke('apple-auth', {
+                      body: {
+                        action: 'exchange',
+                        authorization_code: authorizationCode,
+                      },
+                    });
                   if (exchangeError) {
-                    console.warn('Apple token exchange 실패 - 탈퇴 시 revoke가 동작하지 않을 수 있습니다:', exchangeError);
+                    console.warn(
+                      'Apple token exchange 실패 - 탈퇴 시 revoke가 동작하지 않을 수 있습니다:',
+                      exchangeError,
+                    );
                   }
                 }
 
@@ -277,7 +303,10 @@ const Login = () => {
                     `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
                   );
                 } else {
-                  console.error('⚠️ 사용자 정보 저장 실패 (로그인은 유지):', userError);
+                  console.error(
+                    '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
+                    userError,
+                  );
                 }
               }
             }
@@ -315,8 +344,12 @@ const Login = () => {
         )}
         <S.InnerContainer>
           <S.TopContent>
-            <S.LogoImage source={require('../../assets/images/dduzi_logo.png')} />
-            <S.TextImage source={require('../../assets/images/Dduzi_text.png')} />
+            <S.LogoImage
+              source={require('../../assets/images/dduzi_logo.png')}
+            />
+            <S.TextImage
+              source={require('../../assets/images/Dduzi_text.png')}
+            />
             {/* <S.SubTitle>오늘 뭐 뜨지?</S.SubTitle> */}
             {/* <S.SubTitleAccent>오늘 뭐 뜨지?</S.SubTitleAccent> */}
           </S.TopContent>
@@ -334,7 +367,9 @@ const Login = () => {
               disabled={isLoading}
               activeOpacity={0.8}>
               <S.ButtonInner>
-                <S.ButtonIcon source={require('../../assets/images/kakao_icon.png')} />
+                <S.ButtonIcon
+                  source={require('../../assets/images/kakao_icon.png')}
+                />
                 <S.ButtonText provider="kakao">카카오로 시작하기</S.ButtonText>
               </S.ButtonInner>
             </S.SocialButton>
@@ -345,7 +380,9 @@ const Login = () => {
               disabled={isLoading}
               activeOpacity={0.8}>
               <S.ButtonInner>
-                <S.ButtonIcon source={require('../../assets/images/google_icon.png')} />
+                <S.ButtonIcon
+                  source={require('../../assets/images/google_icon.png')}
+                />
                 <S.ButtonText provider="google">구글로 시작하기</S.ButtonText>
               </S.ButtonInner>
             </S.SocialButton>
@@ -356,10 +393,21 @@ const Login = () => {
               disabled={isLoading}
               activeOpacity={0.8}>
               <S.ButtonInner>
-                <S.ButtonIcon source={require('../../assets/images/apple_icon.png')} />
+                <S.ButtonIcon
+                  source={require('../../assets/images/apple_icon.png')}
+                />
                 <S.ButtonText provider="apple">애플로 시작하기</S.ButtonText>
               </S.ButtonInner>
             </S.SocialButton>
+
+            {/* DEV ONLY */}
+            <S.DevButton
+              onPress={async () => {
+                await AsyncStorage.removeItem('onboarding_completed');
+                Alert.alert('온보딩 초기화', 'onboarding_completed 키를 삭제했어요.');
+              }}>
+              <S.DevButtonText>온보딩 초기화 (개발용)</S.DevButtonText>
+            </S.DevButton>
           </S.ButtonContainer>
         </S.InnerContainer>
       </S.ScrollViewContainer>

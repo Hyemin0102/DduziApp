@@ -36,19 +36,18 @@ export const BottomAreaWrapper = styled.View`
   z-index: 2;
 `;
 
-
 export const ContentArea = styled(Animated.View)`
   flex: 1;
-  justify-content: center;
-  align-items: center;
-  padding: 0 32px;
+  justify-content: start;
+  align-items: start;
+  padding-top: 80px;
+  padding-left: 26px;
 `;
 
 export const Headline = styled.Text`
   font-size: 30px;
   font-weight: 800;
   color: #191919;
-  text-align: center;
   margin-bottom: 20px;
   line-height: 42px;
   letter-spacing: -0.5px;
@@ -57,7 +56,6 @@ export const Headline = styled.Text`
 export const Description = styled.Text`
   font-size: 16px;
   color: #888888;
-  text-align: center;
   line-height: 26px;
 `;
 
@@ -87,7 +85,7 @@ export const ReadyText = styled.Text`
   font-size: 18px;
   font-weight: 700;
   color: #191919;
-  text-align: center;
+  text-align: start;
   margin-top: 32px;
 `;
 
