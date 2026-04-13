@@ -74,8 +74,10 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       setRefreshing(false);
-      fetchPosts();
-    }, []),
+      if (posts.length === 0) {
+        fetchPosts();
+      }
+    }, [posts.length]),
   );
 
   useEffect(() => {
@@ -83,7 +85,13 @@ const Home = () => {
       flatListRef.current?.scrollToOffset({offset: 0, animated: true});
       onRefresh();
     });
-    return () => sub.remove();
+    const deleteSub = DeviceEventEmitter.addListener('postDeleted', ({postId}: {postId: string}) => {
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    });
+    return () => {
+      sub.remove();
+      deleteSub.remove();
+    };
   }, []);
 
   const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;

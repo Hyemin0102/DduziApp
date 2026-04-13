@@ -32,6 +32,7 @@ export const uploadImage = async (
       .from(bucket)
       .upload(filePath, decode(base64Data), {
         contentType: `image/${fileExt}`,
+        cacheControl: '31536000',
         upsert: false,
       });
 

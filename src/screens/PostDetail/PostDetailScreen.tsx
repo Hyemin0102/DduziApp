@@ -4,6 +4,7 @@ import {useState, useCallback, useRef, useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  DeviceEventEmitter,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
@@ -155,6 +156,7 @@ export default function PostDetailScreen() {
             setIsDeleting(true);
             await supabase.from('post_images').delete().eq('post_id', postId);
             await supabase.from('posts').delete().eq('id', postId);
+            DeviceEventEmitter.emit('postDeleted', {postId});
             Alert.alert('삭제 완료', '게시물이 삭제되었습니다.', [
               {text: '확인', onPress: () => navigation.goBack()},
             ]);

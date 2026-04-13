@@ -5,6 +5,7 @@ import {useAuth} from '../../contexts/AuthContext';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {MY_PAGE_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Mypage.style';
+import {profileUrl} from '@/lib/imageTransform';
 
 const Mypage = () => {
   const {user, logout} = useAuth();
@@ -52,7 +53,7 @@ const Mypage = () => {
         <S.ProfileCard onPress={handleProfile}>
           {user.profile_image ? (
             <S.ProfileAvatar
-              source={{uri: user.profile_image}}
+              source={{uri: profileUrl(user.profile_image) ?? user.profile_image}}
               resizeMode="cover"
             />
           ) : (

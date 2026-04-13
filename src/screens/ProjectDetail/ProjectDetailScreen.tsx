@@ -34,6 +34,7 @@ import * as S from './ProjectDetailScreen.styles';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import DocumentPicker from 'react-native-document-picker';
 import {uploadPdf, getPdfNameFromUrl} from '@/lib/uploadPdf';
+import {thumbnailUrl} from '@/lib/imageTransform';
 
 type RouteProps = RouteProp<
   {
@@ -1134,7 +1135,7 @@ export default function ProjectDetailScreen() {
                             <S.PostImageWrapper
                               key={img.id}
                               width={SCREEN_WIDTH - 36}>
-                              <S.PostImage source={{uri: img.image_url}} />
+                              <S.PostImage source={{uri: thumbnailUrl(img.image_url) ?? img.image_url}} />
                               {post.post_images.length > 1 && (
                                 <S.PostImageCounter>
                                   {index + 1} / {post.post_images.length}

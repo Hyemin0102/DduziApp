@@ -5,6 +5,7 @@ import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import Icon from 'react-native-vector-icons/Feather';
 import * as S from './PostCard.style';
+import {thumbnailUrl, profileUrl} from '@/lib/imageTransform';
 
 interface PostCardProps {
   post: Post;
@@ -45,7 +46,7 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
         }>
         {post.users.profile_image ? (
           <S.ProfileImage
-            source={{uri: post.users.profile_image}}
+            source={{uri: profileUrl(post.users.profile_image) ?? post.users.profile_image}}
             resizeMode="cover"
           />
         ) : (
@@ -75,18 +76,23 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
               setActiveIndex(idx);
             }}
             style={{height: SCREEN_WIDTH}}>
-            {post.post_images.map((image, index) => (
-              <S.ImageContainer key={index}>
-                <PostImage uri={image.image_url} />
-                {multipleImages && (
-                  <S.ImageCounter>
-                    <S.ImageCounterText>
-                      {index + 1} / {post.post_images.length}
-                    </S.ImageCounterText>
-                  </S.ImageCounter>
-                )}
-              </S.ImageContainer>
-            ))}
+         {post.post_images.map((image, index) => {
+  const url = thumbnailUrl(image.image_url) ?? image.image_url;
+  console.log('[PostCard] final image url:', url);
+
+  return (
+    <S.ImageContainer key={index}>
+      <PostImage uri={url} />
+      {multipleImages && (
+        <S.ImageCounter>
+          <S.ImageCounterText>
+            {index + 1} / {post.post_images.length}
+          </S.ImageCounterText>
+        </S.ImageCounter>
+      )}
+    </S.ImageContainer>
+  );
+})}
           </ScrollView>
 
           {/* 이미지 dots */}

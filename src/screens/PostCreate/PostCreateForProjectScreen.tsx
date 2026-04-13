@@ -396,8 +396,8 @@ export default function PostCreateForProjectScreen() {
         visible={imageSheetVisible}
         onClose={() => setImageSheetVisible(false)}
         actions={[
-          {label: '라이브러리에서 선택', icon: '🖼️', onPress: handleSelectImages},
-          {label: '카메라로 촬영', icon: '📷', onPress: handleTakePhoto},
+          {label: '라이브러리에서 선택', onPress: handleSelectImages},
+          {label: '카메라로 촬영', onPress: handleTakePhoto},
         ]}
       />
     </S.Container>

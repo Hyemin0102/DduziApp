@@ -40,6 +40,7 @@ export const uploadPdf = async (
       .from('pattern-pdfs')
       .upload(filePath, arrayBuffer, {
         contentType: 'application/pdf',
+        cacheControl: '31536000',
         upsert: false,
       });
 

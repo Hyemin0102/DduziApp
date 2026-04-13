@@ -10,6 +10,7 @@ import {
 import FastImage from 'react-native-fast-image';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {supabase} from '@/lib/supabase';
+import {thumbnailUrl} from '@/lib/imageTransform';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
@@ -143,7 +144,7 @@ export default function ProjectPostsAllScreen() {
             }>
             {firstImage && (
               <FastImage
-                source={{uri: firstImage.image_url}}
+                source={{uri: thumbnailUrl(firstImage.image_url) ?? firstImage.image_url}}
                 style={styles.thumbnail}
                 resizeMode="cover"
               />

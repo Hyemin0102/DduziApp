@@ -11,6 +11,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import * as S from './PostsScreen.styles';
 import {supabase} from '@/lib/supabase';
+import {thumbnailUrl} from '@/lib/imageTransform';
 import UserProfileCard from '@/components/common/UserProfileCard';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
@@ -100,7 +101,7 @@ const GridCell = ({
             />
           )}
           <S.GridImage
-            source={{uri: firstImage}}
+            source={{uri: thumbnailUrl(firstImage) ?? firstImage}}
             resizeMode="cover"
             onLoadEnd={() => setImageLoaded(true)}
             style={{opacity: imageLoaded ? 1 : 0}}
