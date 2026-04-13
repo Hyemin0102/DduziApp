@@ -74,14 +74,14 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           setUser(null);
           setProvider('');
           setNeedsProfileSetup(false);
-          setHasSeenOnboarding(false);
+          //setHasSeenOnboarding(false);
 
           // AsyncStorage 정리
           await AsyncStorage.removeItem('authToken');
           await AsyncStorage.removeItem('user');
           await AsyncStorage.removeItem('provider');
           await AsyncStorage.removeItem('needsProfileSetup');
-          await AsyncStorage.removeItem('onboarding_completed');
+          //await AsyncStorage.removeItem('onboarding_completed');
         }
       },
     );

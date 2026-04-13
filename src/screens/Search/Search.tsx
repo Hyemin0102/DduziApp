@@ -194,13 +194,13 @@ const Search = () => {
           />
           {searchQuery.length > 0 && (
             <S.ClearButton onPress={handleClear}>
-              <S.ClearButtonText>X</S.ClearButtonText>
+              <Icon name="x" size={12} color="#fff" />
             </S.ClearButton>
           )}
+          <S.SearchIconButton onPress={() => handleSearch(searchQuery)}>
+            <Icon name="search" size={20} color="#999" />
+          </S.SearchIconButton>
         </S.SearchInputContainer>
-        <S.SearchButton onPress={() => handleSearch(searchQuery)}>
-          <S.SearchButtonText>검색</S.SearchButtonText>
-        </S.SearchButton>
       </S.SearchHeader>
 
       <FlatList

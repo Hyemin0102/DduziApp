@@ -41,12 +41,13 @@ export const SearchInput = styled.TextInput`
 `;
 
 export const ClearButton = styled.TouchableOpacity`
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
   background-color: #ccc;
   justify-content: center;
   align-items: center;
+  margin-right: 4px;
 `;
 
 export const ClearButtonText = styled.Text`
@@ -55,19 +56,10 @@ export const ClearButtonText = styled.Text`
   font-weight: bold;
 `;
 
-export const SearchButton = styled.TouchableOpacity`
-  height: 44px;
-  padding: 0 16px;
-  background-color: #191919;
-  border-radius: 12px;
+export const SearchIconButton = styled.TouchableOpacity`
+  padding: 4px;
   justify-content: center;
   align-items: center;
-`;
-
-export const SearchButtonText = styled.Text`
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
 `;
 
 export const CenterContainer = styled.View`
