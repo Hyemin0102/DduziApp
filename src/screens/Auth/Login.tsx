@@ -43,9 +43,9 @@ const Login = () => {
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
       iosClientId: GOOGLE_IOS_CLIENT_ID,
-      offlineAccess: true,
-      forceCodeForRefreshToken: true,
     });
+
+    console.log('GOOGLE_WEB_CLIENT_ID:', GOOGLE_WEB_CLIENT_ID);
   }, []);
 
   const socialLoginHandle = async (loginType: string): Promise<void> => {
@@ -137,6 +137,7 @@ const Login = () => {
             await GoogleSignin.hasPlayServices();
 
             const userInfo = await GoogleSignin.signIn();
+            console.log('구글 userInfo 전체:', JSON.stringify(userInfo));
 
             if (userInfo.data?.idToken) {
               const {data, error} = await supabase.auth.signInWithIdToken({
@@ -404,7 +405,10 @@ const Login = () => {
             <S.DevButton
               onPress={async () => {
                 await AsyncStorage.removeItem('onboarding_completed');
-                Alert.alert('온보딩 초기화', 'onboarding_completed 키를 삭제했어요.');
+                Alert.alert(
+                  '온보딩 초기화',
+                  'onboarding_completed 키를 삭제했어요.',
+                );
               }}>
               <S.DevButtonText>온보딩 초기화 (개발용)</S.DevButtonText>
             </S.DevButton>

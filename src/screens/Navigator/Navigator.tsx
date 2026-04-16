@@ -19,9 +19,6 @@ const Navigator = () => {
   const {isLoggedIn, needsProfileSetup, hasSeenOnboarding} = useAuth();
   const navigationRef = useRef<any>(null);
 
-  console.log('온보딩',hasSeenOnboarding);
-  
-
   return (
     <NavigationContainer
       ref={navigationRef}
@@ -32,7 +29,10 @@ const Navigator = () => {
       <RootStack.Navigator screenOptions={{headerShown: false}}>
         {!hasSeenOnboarding ? (
           // 최초 설치 - 온보딩
-          <RootStack.Screen name={ROOT_ROUTES.ONBOARDING} component={OnboardingScreen} />
+          <RootStack.Screen
+            name={ROOT_ROUTES.ONBOARDING}
+            component={OnboardingScreen}
+          />
         ) : !isLoggedIn ? (
           //비회원
           <RootStack.Screen name={ROOT_ROUTES.AUTH} component={AuthStack} />
@@ -48,7 +48,7 @@ const Navigator = () => {
               name={ROOT_ROUTES.TAB_NAVIGATOR}
               component={TabNavigator}
             />
-            <RootStack.Screen
+            {/* <RootStack.Screen
               name="PostCreate"
               component={PostCreateScreen}
               options={{
@@ -68,7 +68,7 @@ const Navigator = () => {
                 headerTitleStyle: {fontWeight: 'bold'},
                 animation: 'slide_from_bottom',
               }}
-            />
+            /> */}
           </>
         )}
       </RootStack.Navigator>

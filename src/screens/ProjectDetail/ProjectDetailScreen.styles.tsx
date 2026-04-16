@@ -159,7 +159,7 @@ export const LogEditHeader = styled.View`
 `;
 
 export const LogInput = styled.TextInput`
-  font-size: 14x;
+  font-size: 14px;
   color: #000;
 `;
 
