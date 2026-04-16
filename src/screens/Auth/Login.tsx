@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import * as S from './Login.style';
-import {Alert, ActivityIndicator} from 'react-native';
+import {Alert, ActivityIndicator, Platform} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import {
@@ -388,18 +388,20 @@ const Login = () => {
               </S.ButtonInner>
             </S.SocialButton>
 
-            <S.SocialButton
-              provider="apple"
-              onPress={() => socialLoginHandle('apple')}
-              disabled={isLoading}
-              activeOpacity={0.8}>
-              <S.ButtonInner>
-                <S.ButtonIcon
-                  source={require('../../assets/images/apple_icon.png')}
-                />
-                <S.ButtonText provider="apple">애플로 시작하기</S.ButtonText>
-              </S.ButtonInner>
-            </S.SocialButton>
+            {Platform.OS === 'ios' && (
+              <S.SocialButton
+                provider="apple"
+                onPress={() => socialLoginHandle('apple')}
+                disabled={isLoading}
+                activeOpacity={0.8}>
+                <S.ButtonInner>
+                  <S.ButtonIcon
+                    source={require('../../assets/images/apple_icon.png')}
+                  />
+                  <S.ButtonText provider="apple">애플로 시작하기</S.ButtonText>
+                </S.ButtonInner>
+              </S.SocialButton>
+            )}
 
             {/* DEV ONLY */}
             <S.DevButton
