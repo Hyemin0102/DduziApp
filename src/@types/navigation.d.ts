@@ -73,6 +73,7 @@ export type HomeStackParamList = {
   [POST_ROUTES.POST_DETAIL]: {postId: string};
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
   [HOME_ROUTES.SEARCH]: undefined;
+  [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
   [PROJECTS_ROUTES.PROJECT_DETAIL]: {
     projectId?: string;
     projectTitle?: string;

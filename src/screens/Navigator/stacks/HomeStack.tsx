@@ -4,8 +4,9 @@ import HomeScreen from '../../Home/Home';
 import PostDetailScreen from '../../PostDetail/PostDetailScreen';
 import SearchScreen from '../../Search/Search';
 import {HomeStackParamList} from '../../../@types/navigation';
-import {HOME_ROUTES, POST_ROUTES, PROJECTS_ROUTES} from '../../../constants/navigation.constant';
+import {HOME_ROUTES, MY_PAGE_ROUTES, POST_ROUTES, PROJECTS_ROUTES} from '../../../constants/navigation.constant';
 import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
+import ProfileScreen from '@/screens/Profile/Profile';
 import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
 import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
@@ -79,6 +80,11 @@ const HomeStack = () => {
         name={PROJECTS_ROUTES.PDF_VIEWER}
         component={PdfViewerScreen}
         options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.PROFILE_EDIT}
+        component={ProfileScreen}
+        options={{title: '프로필 수정'}}
       />
     </Stack.Navigator>
   );
