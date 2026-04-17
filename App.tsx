@@ -8,6 +8,7 @@
 import React, {useEffect} from 'react';
 import type {PropsWithChildren} from 'react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {StatusBar} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
 import Navigator from './src/screens/Navigator/Navigator';
@@ -33,6 +34,7 @@ function App(): React.JSX.Element {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
+      <StatusBar barStyle={'dark-content'} />
       <KeyboardProvider>
       <SafeAreaProvider>
         <AuthProvider>

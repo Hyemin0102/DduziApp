@@ -19,8 +19,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  console.log('새로고침',refreshing);
-  
 
   const fetchPosts = async () => {
     try {
@@ -85,9 +83,12 @@ const Home = () => {
       flatListRef.current?.scrollToOffset({offset: 0, animated: true});
       onRefresh();
     });
-    const deleteSub = DeviceEventEmitter.addListener('postDeleted', ({postId}: {postId: string}) => {
-      setPosts(prev => prev.filter(p => p.id !== postId));
-    });
+    const deleteSub = DeviceEventEmitter.addListener(
+      'postDeleted',
+      ({postId}: {postId: string}) => {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+      },
+    );
     return () => {
       sub.remove();
       deleteSub.remove();
@@ -96,52 +97,53 @@ const Home = () => {
 
   const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
 
-  
-
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: "#fff"}}>
+    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
       <HS.HeaderContainer>
         <HS.LogoRow>
-          <HS.Logo source={require('@/assets/images/dduzi_logo.png')} resizeMode="contain" />
-          <HS.LogoText source={require('@/assets/images/Dduzi_text.png')} resizeMode="contain" />
+          <HS.Logo
+            source={require('@/assets/images/bootsplash_logo.webp')}
+            resizeMode="contain"
+          />
         </HS.LogoRow>
-        <HS.SearchButton onPress={() => navigation.navigate(HOME_ROUTES.SEARCH)}>
+        <HS.SearchButton
+          onPress={() => navigation.navigate(HOME_ROUTES.SEARCH)}>
           <Icon name="search" size={24} color="#333" />
         </HS.SearchButton>
       </HS.HeaderContainer>
-    <S.Container>
-      {loading ? (
-        <S.Fill>
-          <FlatList
-            data={new Array(5).fill('')}
-            keyExtractor={(_, idx) => String(idx)}
-            renderItem={() => <PostCardSkeleton count={1} />}
-            contentContainerStyle={{paddingVertical: 16}}
-            scrollEnabled={false}
-          />
-        </S.Fill>
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={posts}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={{flexGrow: 1}}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#191919"
+      <S.Container>
+        {loading ? (
+          <S.Fill>
+            <FlatList
+              data={new Array(5).fill('')}
+              keyExtractor={(_, idx) => String(idx)}
+              renderItem={() => <PostCardSkeleton count={1} />}
+              contentContainerStyle={{paddingVertical: 16}}
+              scrollEnabled={false}
             />
-          }
-          ListEmptyComponent={
-            <S.EmptyContainer>
-              <S.EmptyText>게시물이 없습니다</S.EmptyText>
-            </S.EmptyContainer>
-          }
-        />
-      )}
-    </S.Container>
+          </S.Fill>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={posts}
+            keyExtractor={item => item.id.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={{flexGrow: 1}}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#191919"
+              />
+            }
+            ListEmptyComponent={
+              <S.EmptyContainer>
+                <S.EmptyText>게시물이 없습니다</S.EmptyText>
+              </S.EmptyContainer>
+            }
+          />
+        )}
+      </S.Container>
     </SafeAreaView>
   );
 };

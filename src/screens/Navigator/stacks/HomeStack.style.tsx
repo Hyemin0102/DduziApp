@@ -12,19 +12,13 @@ export const HeaderContainer = styled.View`
 `;
 
 export const Logo = styled.Image`
-  width: 30px;
-  height: 30px;
-`;
-
-export const LogoText = styled.Image`
-  width: 50px;
-  height: 24px;
-  margin-left: 6px;
+  width: 100%;
+  height: 100%;
 `;
 
 export const LogoRow = styled.View`
-  flex-direction: row;
-  align-items: center;
+  width: 97px;
+  height: auto;
 `;
 
 export const SearchButton = styled.TouchableOpacity``;

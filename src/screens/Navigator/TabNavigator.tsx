@@ -7,7 +7,6 @@ import {
   DeviceEventEmitter,
   Platform,
   SafeAreaView,
-  StatusBar,
   Text,
   TextStyle,
   TouchableOpacity,
@@ -84,7 +83,6 @@ const TabIconWithLabel: React.FC<TabIconWithLabelProps> = ({
 const TabNavigator = () => {
   return (
     <>
-      <StatusBar barStyle={'dark-content'} />
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -154,50 +152,6 @@ const TabNavigator = () => {
             },
           })}
         />
-        {/* <Tab.Screen
-        name="PostCreatePlaceholder"
-        component={PostCreateForProjectScreen}
-        options={({navigation}) => ({
-          headerShown: true,
-          title: '뜨개 추가',
-          headerStyle: {backgroundColor: '#fff'},
-          headerTintColor: '#000',
-          headerTitleStyle: {fontWeight: 'bold'},
-          // 탭 바 숨김
-          tabBarStyle: {display: 'none'},
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => {
-                // navigation history에서 이전 탭으로 이동
-                const state = navigation.getState();
-                const history = (state as any).history as
-                  | {key: string}[]
-                  | undefined;
-                if (history && history.length > 1) {
-                  const prevKey = history[history.length - 2]?.key;
-                  const prevRoute = state.routes.find(
-                    r => r.key === prevKey,
-                  );
-                  if (prevRoute) {
-                    (navigation as any).navigate(prevRoute.name);
-                    return;
-                  }
-                }
-                (navigation as any).navigate('HomeTab');
-              }}
-              style={{paddingHorizontal: 16}}>
-              <Icon name="arrow-left" size={22} color="#000" />
-            </TouchableOpacity>
-          ),
-          tabBarIcon: ({focused}) => (
-            <TabIconWithLabel
-              icon={SvgDiscoverTab}
-              label="뜨개 추가"
-              focused={focused}
-            />
-          ),
-        })}
-      /> */}
         <Tab.Screen
           name="PostTab"
           component={PostsStack}
