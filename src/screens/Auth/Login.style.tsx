@@ -82,7 +82,7 @@ interface SocialButtonProps {
 export const SocialButton = styled.TouchableOpacity<SocialButtonProps>`
   width: 100%;
   height: 56px;
-  border-radius: 28px;
+  border-radius: 12px;
   flex-direction: row;
   align-items: center;
   justify-content: center;

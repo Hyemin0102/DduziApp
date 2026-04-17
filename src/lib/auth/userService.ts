@@ -8,8 +8,6 @@ import {
   AppleUserProfile,
 } from '../../@types/auth';
 
-const DEFAULT_IMAGE_COUNT = 5;
-
 // 🔥 Supabase Auth 데이터 + DB 데이터로 UserProfile 생성
 interface CreateUserProfileParams {
   supabaseUser: any; // Supabase Auth User 객체
@@ -21,13 +19,10 @@ interface CreateUserProfileParams {
     | AppleUserProfile;
 }
 
-//기본 이미지 중 랜덤 지정
-export const getRandomDefaultImageUrl = (): string => {
-  const randomNum = Math.floor(Math.random() * DEFAULT_IMAGE_COUNT) + 1;
-
+const getDefaultImageUrl = (): string => {
   const {data} = supabase.storage
     .from('profile')
-    .getPublicUrl(`default/profile_${randomNum}.png`);
+    .getPublicUrl('default/myPage.png');
 
   return data.publicUrl;
 };
@@ -55,7 +50,7 @@ export const createOrUpdateUser = async (
     }
 
     if (!existingUser) {
-      const defaultImageUrl = getRandomDefaultImageUrl();
+      const defaultImageUrl = getDefaultImageUrl();
 
       //테이블 insert
       const {data: newUser, error: insertError} = await supabase

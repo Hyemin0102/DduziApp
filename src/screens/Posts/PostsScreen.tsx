@@ -295,13 +295,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
                     : '완료된 뜨개가 없어요'
                   : '작성한 게시물이 없어요'}
               </S.EmptyText>
-              <S.EmptySubText>
-                {isMyPage
-                  ? activeTab === 'inProgress'
-                    ? '첫 프로젝트를 시작해보세요! 🧶'
-                    : '뜨개를 완료해보세요!'
-                  : ''}
-              </S.EmptySubText>
               {isMyPage && activeTab === 'inProgress' && (
                 <S.EmptyAddButton onPress={handleAddPost}>
                   <S.EmptyAddButtonText>뜨개 추가하기</S.EmptyAddButtonText>

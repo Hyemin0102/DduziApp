@@ -41,7 +41,7 @@ export const ContentArea = styled(Animated.View)`
   justify-content: start;
   align-items: start;
   padding-top: 80px;
-  padding-left: 26px;
+  padding-horizontal: 26px;
 `;
 
 export const Headline = styled.Text`
@@ -66,6 +66,7 @@ export const BottomArea = styled.View`
   justify-content: flex-end;
   gap: 16px;
   z-index: 2;
+  margin-top: 40px;
 `;
 
 export const Pagination = styled.View`

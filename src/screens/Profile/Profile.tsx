@@ -187,15 +187,6 @@ const ProfileScreen = () => {
                 <S.ImageEditBadgeText>✎</S.ImageEditBadgeText>
               </S.ImageEditBadge>
             </S.ImageWrapper>
-
-            {/* <S.ImageButtonRow>
-              <S.ImageButton onPress={selectImage}>
-                <S.ImageButtonText>갤러리</S.ImageButtonText>
-              </S.ImageButton>
-              <S.ImageButton onPress={takePhoto}>
-                <S.ImageButtonText>카메라</S.ImageButtonText>
-              </S.ImageButton>
-            </S.ImageButtonRow> */}
           </S.ImageSection>
 
           {/* 입력 폼 */}

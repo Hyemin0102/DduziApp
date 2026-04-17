@@ -134,10 +134,12 @@ export default function ProjectsScreen() {
         )}
       />
 
-      <S.AddButton onPress={handleCreateProject}>
-        <S.AddButtonText>새 프로젝트</S.AddButtonText>
-        <Icon name="plus" size={15} color="#fff" />
-      </S.AddButton>
+      {projects.length > 0 && (
+        <S.AddButton onPress={handleCreateProject}>
+          <S.AddButtonText>새 프로젝트</S.AddButtonText>
+          <Icon name="plus" size={15} color="#fff" />
+        </S.AddButton>
+      )}
     </S.Container>
   );
 }

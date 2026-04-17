@@ -1038,7 +1038,7 @@ export default function ProjectDetailScreen() {
                           </TouchableOpacity>
                         )}
                       </S.LogTimelineDateRow>
-                      {log.isEditable ? (
+                      {log.isEditable && isMyProject ? (
                         <S.LogInputWrapper isFocused={focusedLogId === log.id}>
                           <S.LogInput
                             placeholder="오늘 뜬 내용을 기록해보세요"

@@ -2,6 +2,7 @@ import React, {useRef, useState} from 'react';
 import {Animated, Button, PanResponder} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import * as S from './OnboardingScreen.style';
+import MainDduzi from '../../assets/images/main_dduzi.svg';
 
 const slides = [
   {
@@ -71,6 +72,7 @@ const OnboardingScreen = () => {
           {currentIndex === slides.length - 1 && (
             <S.ReadyText>자, 이제 뜨러 가볼까요?</S.ReadyText>
           )}
+          <MainDduzi width={241} height={247} style={{marginTop: 'auto', alignSelf: 'center',}} />
         </S.ContentArea>
 
         <S.BottomArea>
