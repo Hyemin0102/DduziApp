@@ -7,6 +7,7 @@ import {
   GoogleUserProfile,
   AppleUserProfile,
 } from '../../@types/auth';
+import { Alert } from 'react-native';
 
 // 🔥 Supabase Auth 데이터 + DB 데이터로 UserProfile 생성
 interface CreateUserProfileParams {
@@ -228,4 +229,28 @@ export const updateNickname = async (userId: string, newNickname: string) => {
     console.error('updateNickname 에러:', error);
     throw error;
   }
+};
+
+export const handleProviderConflict = async (
+  conflictProvider: string,
+  currentProvider: string,
+) => {
+  try {
+    const {data: identities} = await supabase.auth.getUserIdentities();
+    const conflictIdentity = identities?.identities?.find(
+      i => i.provider === currentProvider, // 방금 로그인 시도한 provider 제거
+    );
+    if (conflictIdentity) {
+      await supabase.auth.unlinkIdentity(conflictIdentity);
+    }
+  } catch (e) {
+    console.warn('identity unlink 실패:', e);
+  }
+
+  await supabase.auth.signOut();
+
+  Alert.alert(
+    '이미 가입된 계정',
+    `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
+  );
 };

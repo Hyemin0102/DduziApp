@@ -66,6 +66,56 @@ Deno.serve(async req => {
   }
 
   try {
+    const {action, authorization_code} = await req.json();
+
+    // conflict_revoke는 인증 없이 authorization_code만으로 즉시 revoke
+    // 중복 계정 감지 시 로그인 전 상태에서 호출되므로 Authorization 헤더 불필요
+    if (action === 'conflict_revoke') {
+      if (!authorization_code) {
+        throw new Error('authorization_code is required');
+      }
+
+      const clientSecret = await generateClientSecret();
+      const serviceId = Deno.env.get('APPLE_SERVICE_ID')!;
+
+      // authorization_code → access_token 교환 후 즉시 revoke
+      const tokenRes = await fetch('https://appleid.apple.com/auth/token', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+          client_id: serviceId,
+          client_secret: clientSecret,
+          code: authorization_code,
+          grant_type: 'authorization_code',
+        }),
+      });
+
+      const tokens = await tokenRes.json();
+
+      if (tokens.error) {
+        throw new Error(`Apple token exchange failed: ${tokens.error}`);
+      }
+
+      // access_token으로 즉시 revoke (기기 Apple 로그인 목록에서 제거)
+      if (tokens.access_token) {
+        await fetch('https://appleid.apple.com/auth/revoke', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: new URLSearchParams({
+            client_id: serviceId,
+            client_secret: clientSecret,
+            token: tokens.access_token,
+            token_type_hint: 'access_token',
+          }),
+        });
+      }
+
+      return new Response(JSON.stringify({success: true}), {
+        headers: {...corsHeaders, 'Content-Type': 'application/json'},
+      });
+    }
+
+    // 아래부터는 기존 로직 (Authorization 헤더 필요)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Unauthorized');
 
@@ -83,8 +133,6 @@ Deno.serve(async req => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
-
-    const {action, authorization_code} = await req.json();
 
     if (action === 'exchange') {
       const clientSecret = await generateClientSecret();

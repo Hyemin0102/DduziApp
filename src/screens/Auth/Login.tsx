@@ -22,6 +22,7 @@ import {supabase, supabaseLocalDB} from '../../lib/supabase';
 import {
   createOrUpdateUser,
   createUserProfile,
+  handleProviderConflict,
 } from '../../lib/auth/userService';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -111,11 +112,7 @@ const Login = () => {
                 } catch (userError: any) {
                   if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
                     const conflictProvider = userError.message.split(':')[1];
-                    await supabase.auth.signOut();
-                    Alert.alert(
-                      '이미 가입된 계정',
-                      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
-                    );
+                    await handleProviderConflict(conflictProvider, 'kakao');
                   } else {
                     console.error(
                       '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
@@ -182,11 +179,7 @@ const Login = () => {
                 } catch (userError: any) {
                   if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
                     const conflictProvider = userError.message.split(':')[1];
-                    await supabase.auth.signOut();
-                    Alert.alert(
-                      '이미 가입된 계정',
-                      `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
-                    );
+                    await handleProviderConflict(conflictProvider, 'google');
                   } else {
                     console.error(
                       '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
@@ -298,11 +291,18 @@ const Login = () => {
               } catch (userError: any) {
                 if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
                   const conflictProvider = userError.message.split(':')[1];
-                  await supabase.auth.signOut();
-                  Alert.alert(
-                    '이미 가입된 계정',
-                    `이 이메일은 이미 ${conflictProvider} 계정으로 가입되어 있습니다.\n${conflictProvider}로 로그인해 주세요.`,
-                  );
+
+                  //Apple 로그인 목록에서도 삭제되도록 중복이면 탈퇴
+                  if (authorizationCode) {
+                    await supabase.functions.invoke('apple-auth', {
+                      body: {
+                        action: 'conflict_revoke',
+                        authorization_code: authorizationCode,
+                      },
+                    });
+                  }
+
+                  await handleProviderConflict(conflictProvider, 'apple');
                 } else {
                   console.error(
                     '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
