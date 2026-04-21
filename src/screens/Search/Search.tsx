@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
-import {ActivityIndicator, FlatList, Keyboard} from 'react-native';
+import {ActivityIndicator, FlatList, Keyboard, InteractionManager} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -17,6 +17,7 @@ const Search = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const isFocused = useRef(true);
+  const inputRef = useRef<any>(null);
 
   // unmount 시 (뒤로가기) 상태 정리
   useEffect(() => {
@@ -25,6 +26,13 @@ const Search = () => {
       setLoading(false);
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('transitionEnd', () => {
+      inputRef.current?.focus();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   // 탭 전환 시 상태 정리 (혹시 탭 네비게이터 안으로 이동할 경우 대비)
   useFocusEffect(
@@ -183,6 +191,7 @@ const Search = () => {
         </S.BackButton>
         <S.SearchInputContainer>
           <S.SearchInput
+            ref={inputRef}
             placeholder="프로젝트 제목 또는 작성자 검색"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -190,7 +199,6 @@ const Search = () => {
             returnKeyType="search"
             placeholderTextColor="#999"
             maxLength={20}
-            autoFocus
           />
           {searchQuery.length > 0 && (
             <S.ClearButton onPress={handleClear}>
@@ -204,7 +212,7 @@ const Search = () => {
       </S.SearchHeader>
 
       <FlatList
-        data={loading ? [] : searchResults}
+        data={ !loading ? searchResults : []}
         keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         ListEmptyComponent={renderEmptyComponent}

@@ -16,6 +16,8 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const PostImage = ({uri}: {uri: string}) => {
   const [loaded, setLoaded] = useState(false);
 
+
+
   return (
     <S.ImagePlaceholder>
       <S.PostImage
@@ -31,9 +33,13 @@ const PostImage = ({uri}: {uri: string}) => {
 const PostCard: React.FC<PostCardProps> = ({post}) => {
   const {navigation} = useCommonNavigation();
   const [activeIndex, setActiveIndex] = useState(0);
-
+  const [isTruncated, setIsTruncated] = useState(false);
+  const content = post.content ?? '';
   const hasImages = post.post_images && post.post_images.length > 0;
   const multipleImages = hasImages && post.post_images.length > 1;
+
+  console.log('isTruncated',isTruncated);
+  
 
   const profileInitial = post.users.nickname?.charAt(0)?.toUpperCase() ?? '?';
 
@@ -78,7 +84,6 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
             style={{height: SCREEN_WIDTH}}>
          {post.post_images.map((image, index) => {
   const url = thumbnailUrl(image.image_url) ?? image.image_url;
-  console.log('[PostCard] final image url:', url);
 
   return (
     <S.ImageContainer key={index}>
@@ -126,17 +131,20 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
             </S.StatusBadge>
           </S.BadgeRow>
         )}
-        {(() => {
-          const lines = (post.content ?? '').split('\n');
-          const preview = lines.slice(0, 2).join('\n');
-          const hasMore = lines.length > 2;
-          return (
-            <>
-              <S.Content>{preview}</S.Content>
-              {hasMore && <S.More>...</S.More>}
-            </>
-          );
-        })()}
+<S.Content
+  numberOfLines={2}
+  ellipsizeMode="clip"
+>
+  {content}
+</S.Content>
+<S.Content
+  style={{position: 'absolute', opacity: 0, pointerEvents: 'none'}}
+  onTextLayout={e => {
+    setIsTruncated(e.nativeEvent.lines.length > 2);
+  }}>
+  {content}
+</S.Content>
+{isTruncated && <S.More>...더보기</S.More>}
         <S.Date>{new Date(post.created_at).toLocaleDateString('ko-KR')}</S.Date>
       </S.ContentSection>
     </S.CardContainer>

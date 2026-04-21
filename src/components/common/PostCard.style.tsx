@@ -138,6 +138,7 @@ export const Content = styled.Text`
   color: #191919;
   line-height: 20px;
   margin-bottom: 6px;
+  word-break: keep-all;
 `;
 
 export const Date = styled.Text`
@@ -148,6 +149,6 @@ export const Date = styled.Text`
 
 export const More = styled.Text`
   font-size: 14px;
-  color: #aaa;
+  color: #999;
   margin-bottom: 4px;
 `;
