@@ -146,7 +146,7 @@ export const ImageCount = styled.Text`
   color: #999;
 `;
 
-export const ImagePreview = styled.View`
+export const ImagePreview = styled.TouchableOpacity`
   width: 88px;
   height: 88px;
   border-radius: 8px;
@@ -168,6 +168,26 @@ export const ImageRemoveButton = styled.TouchableOpacity`
   height: 20px;
   align-items: center;
   justify-content: center;
+`;
+
+
+export const LoadingOverlay = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 999;
+`;
+
+export const LoadingText = styled.Text`
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
 `;
 
 export const TextArea = styled.TextInput`

@@ -142,6 +142,14 @@ export const LogInputWrapper = styled.View<{isFocused: boolean}>`
   padding: ${({isFocused}) => (isFocused ? '8px' : '0px')};
 `;
 
+export const LogInput = styled.TextInput`
+  font-size: 14px;
+  color: #000;
+ //background: red;
+  text-align-vertical: center;
+  padding: 0px;
+`;
+
 export const LogEditItem = styled.View`
   margin-bottom: 12px;
   background-color: #fff;
@@ -158,10 +166,7 @@ export const LogEditHeader = styled.View`
   margin-bottom: 4px;
 `;
 
-export const LogInput = styled.TextInput`
-  font-size: 14px;
-  color: #000;
-`;
+
 
 export const PostHeaderRow = styled.View`
   flex-direction: row;

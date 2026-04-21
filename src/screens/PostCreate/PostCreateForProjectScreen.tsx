@@ -16,8 +16,12 @@ import {POST_ROUTES, PROJECTS_ROUTES, TAB_ROUTES} from '@/constants/navigation.c
 import {PostsStackParamList} from '@/@types/navigation';
 import {ProjectItem} from '@/@types/database';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
+import DraggableFlatList, {
+  RenderItemParams,
+  ScaleDecorator,
+} from 'react-native-draggable-flatlist';
 import * as S from './PostCreateForProjectScreen.style';
-import { View } from 'react-native';
+import {View} from 'react-native';
 
 type RouteProps = RouteProp<
   PostsStackParamList,
@@ -30,7 +34,10 @@ interface ExistingImage {
   display_order: number;
 }
 
-interface NewImage {
+interface UnifiedImage {
+  key: string;
+  kind: 'existing' | 'new';
+  id?: string;
   uri: string;
   type?: string;
   fileName?: string;
@@ -48,11 +55,15 @@ export default function PostCreateForProjectScreen() {
   const editPostId = route.params?.postId;
 
   const [content, setContent] = useState(route.params?.content || '');
-  const [existingImages, setExistingImages] = useState<ExistingImage[]>(
-    route.params?.existingImages || [],
+  const [images, setImages] = useState<UnifiedImage[]>(
+    (route.params?.existingImages || []).map((img: ExistingImage) => ({
+      key: img.id,
+      kind: 'existing' as const,
+      id: img.id,
+      uri: img.image_url,
+    })),
   );
-  const [newImages, setNewImages] = useState<NewImage[]>([]);
-  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);  //이미지 DB삭제
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -65,7 +76,7 @@ export default function PostCreateForProjectScreen() {
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
 
-  const totalImageCount = existingImages.length + newImages.length;
+  const totalImageCount = images.length;
 
   const fetchProjects = async () => {
     setLoadingProjects(true);
@@ -116,7 +127,14 @@ export default function PostCreateForProjectScreen() {
       maxHeight: 1280,
     });
     if (result.assets) {
-      setNewImages(prev => [...prev, ...(result.assets as NewImage[])]);
+      const newImgs: UnifiedImage[] = result.assets.map((asset, i) => ({
+        key: `new-${Date.now()}-${i}`,
+        kind: 'new' as const,
+        uri: asset.uri!,
+        type: asset.type,
+        fileName: asset.fileName,
+      }));
+      setImages(prev => [...prev, ...newImgs]);
     }
   };
 
@@ -131,7 +149,14 @@ export default function PostCreateForProjectScreen() {
       saveToPhotos: true,
     });
     if (result.assets) {
-      setNewImages(prev => [...prev, ...(result.assets as NewImage[])]);
+      const newImgs: UnifiedImage[] = result.assets.map((asset, i) => ({
+        key: `new-${Date.now()}-${i}`,
+        kind: 'new' as const,
+        uri: asset.uri!,
+        type: asset.type,
+        fileName: asset.fileName,
+      }));
+      setImages(prev => [...prev, ...newImgs]);
     }
   };
 
@@ -142,14 +167,26 @@ export default function PostCreateForProjectScreen() {
     setImageSheetVisible(true);
   };
 
-  const handleRemoveExistingImage = (id: string) => {
-    setExistingImages(prev => prev.filter(img => img.id !== id));
-    setDeletedImageIds(prev => [...prev, id]);
+  const handleRemoveImage = (key: string) => {
+    const img = images.find(i => i.key === key);
+    if (img?.kind === 'existing' && img.id) {
+      setDeletedImageIds(prev => [...prev, img.id!]);
+    }
+    setImages(prev => prev.filter(i => i.key !== key));
   };
 
-  const handleRemoveNewImage = (index: number) => {
-    setNewImages(prev => prev.filter((_, i) => i !== index));
-  };
+  const renderImageItem = ({item, drag, isActive}: RenderItemParams<UnifiedImage>) => (
+    <ScaleDecorator>
+      <S.ImagePreview
+        style={{marginRight: 10, opacity: isActive ? 0.8 : 1}}
+        onLongPress={drag}>
+        <S.PreviewImage source={{uri: item.uri}} />
+        <S.ImageRemoveButton onPress={() => handleRemoveImage(item.key)}>
+          <Icon name="x" size={14} color="#fff" />
+        </S.ImageRemoveButton>
+      </S.ImagePreview>
+    </ScaleDecorator>
+  );
 
   const handleSubmit = async () => {
     if (!selectedProjectId) {
@@ -194,18 +231,31 @@ export default function PostCreateForProjectScreen() {
           if (deleteError) throw deleteError;
         }
 
-        if (newImages.length > 0) {
+        // 통합 순서 기준으로 display_order 업데이트
+        const existingInFinal = images.filter(img => img.kind === 'existing');
+        if (existingInFinal.length > 0) {
+          await Promise.all(
+            existingInFinal.map(img =>
+              supabase
+                .from('post_images')
+                .update({display_order: images.findIndex(i => i.key === img.key)})
+                .eq('id', img.id!),
+            ),
+          );
+        }
+
+        const newInFinal = images.filter(img => img.kind === 'new');
+        if (newInFinal.length > 0) {
           const imageUrls = await uploadMultipleImages(
-            newImages,
+            newInFinal,
             'post-images',
             editPostId,
           );
           if (imageUrls.length > 0) {
-            const startOrder = existingImages.length;
-            const imageData = imageUrls.map((url, index) => ({
+            const imageData = imageUrls.map((url, i) => ({
               post_id: editPostId,
               image_url: url,
-              display_order: startOrder + index,
+              display_order: images.findIndex(img => img === newInFinal[i]),
             }));
             const {error: imageError} = await supabase
               .from('post_images')
@@ -229,9 +279,9 @@ export default function PostCreateForProjectScreen() {
           .single();
         if (postError) throw postError;
 
-        if (newImages.length > 0) {
+        if (images.length > 0) {
           const imageUrls = await uploadMultipleImages(
-            newImages,
+            images,
             'post-images',
             post.id,
           );
@@ -263,18 +313,24 @@ export default function PostCreateForProjectScreen() {
   return (
     <S.Container>
       <S.Header>
-        <View style={{flexDirection:'row', justifyContent: 'center', alignItems: 'center', gap: 4}}>
-        <Icon
-          name="chevron-left"
-          size={24}
-          color="#333"
-          onPress={() => navigation.goBack()}
-        />
- <S.HeaderTitle>
-          {isEditMode ? '게시물 수정' : '게시물 작성'}
-        </S.HeaderTitle>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 4,
+          }}>
+          <Icon
+            name="chevron-left"
+            size={24}
+            color="#333"
+            onPress={() => navigation.goBack()}
+          />
+          <S.HeaderTitle>
+            {isEditMode ? '게시물 수정' : '게시물 작성'}
+          </S.HeaderTitle>
         </View>
-       
+
         <Icon
           name="x"
           size={24}
@@ -343,35 +399,22 @@ export default function PostCreateForProjectScreen() {
 
         <S.Section>
           <S.Label>사진 *</S.Label>
-          <ScrollView
+          <DraggableFlatList
             horizontal
+            data={images}
+            keyExtractor={item => item.key}
+            renderItem={renderImageItem}
+            onDragEnd={({data}) => setImages(data)}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{flexDirection: 'row', gap: 10}}>
-            <S.ImageUploadButton onPress={handleImagePress}>
-              <Icon name="camera" size={28} color="#999" />
-              <S.ImageCount>{totalImageCount}/10</S.ImageCount>
-            </S.ImageUploadButton>
-
-            {existingImages.map(image => (
-              <S.ImagePreview key={image.id}>
-                <S.PreviewImage source={{uri: image.image_url}} />
-                <S.ImageRemoveButton
-                  onPress={() => handleRemoveExistingImage(image.id)}>
-                  <Icon name="x" size={14} color="#fff" />
-                </S.ImageRemoveButton>
-              </S.ImagePreview>
-            ))}
-
-            {newImages.map((image, index) => (
-              <S.ImagePreview key={`new-${index}`}>
-                <S.PreviewImage source={{uri: image.uri}} />
-                <S.ImageRemoveButton
-                  onPress={() => handleRemoveNewImage(index)}>
-                  <Icon name="x" size={14} color="#fff" />
-                </S.ImageRemoveButton>
-              </S.ImagePreview>
-            ))}
-          </ScrollView>
+            ListHeaderComponent={
+              <S.ImageUploadButton
+                onPress={handleImagePress}
+                style={{marginRight: 10}}>
+                <Icon name="camera" size={28} color="#999" />
+                <S.ImageCount>{totalImageCount}/10</S.ImageCount>
+              </S.ImageUploadButton>
+            }
+          />
         </S.Section>
 
         <S.Section>
@@ -389,7 +432,7 @@ export default function PostCreateForProjectScreen() {
       </KeyboardAvoid>
       <S.PostButton onPress={handleSubmit} disabled={isSubmitting}>
         <S.PostButtonText>
-          {isSubmitting ? '저장 중...' : '게시하기'}
+        게시하기
         </S.PostButtonText>
       </S.PostButton>
       <ActionSheetModal
@@ -400,6 +443,12 @@ export default function PostCreateForProjectScreen() {
           {label: '카메라로 촬영', onPress: handleTakePhoto},
         ]}
       />
+      {isSubmitting && (
+        <S.LoadingOverlay>
+          <ActivityIndicator size="large" color="#fff" />
+          <S.LoadingText>저장 중...</S.LoadingText>
+        </S.LoadingOverlay>
+      )}
     </S.Container>
   );
 }
