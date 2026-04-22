@@ -45,8 +45,6 @@ const Login = () => {
       webClientId: GOOGLE_WEB_CLIENT_ID,
       iosClientId: GOOGLE_IOS_CLIENT_ID,
     });
-
-    console.log('GOOGLE_WEB_CLIENT_ID:', GOOGLE_WEB_CLIENT_ID);
   }, []);
 
   const socialLoginHandle = async (loginType: string): Promise<void> => {
