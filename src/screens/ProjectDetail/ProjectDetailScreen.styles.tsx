@@ -145,7 +145,7 @@ export const LogInputWrapper = styled.View<{isFocused: boolean}>`
 export const LogInput = styled.TextInput`
   font-size: 14px;
   color: #000;
- //background: red;
+  //background: red;
   text-align-vertical: center;
   padding: 0px;
 `;
@@ -165,8 +165,6 @@ export const LogEditHeader = styled.View`
   justify-content: space-between;
   margin-bottom: 4px;
 `;
-
-
 
 export const PostHeaderRow = styled.View`
   flex-direction: row;
@@ -263,7 +261,7 @@ export const PostMore = styled.Text`
   font-size: 14px;
   color: #999;
   padding-horizontal: 12px;
-  padding-bottom: 4px;
+  padding-bottom: 10px;
 `;
 
 export const PostDate = styled.Text`
@@ -591,8 +589,6 @@ export const LoadingOverlay = styled.View`
   z-index: 999;
 `;
 
-
-
 export const LogActionRow = styled.View`
   flex-direction: row;
   justify-content: flex-end;
@@ -625,4 +621,3 @@ export const LogIconRow = styled.View`
   gap: 8px;
   align-items: center;
 `;
-

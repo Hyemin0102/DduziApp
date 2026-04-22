@@ -97,6 +97,21 @@ interface CurrentForm {
   pendingLogs: PendingLog[];
 }
 
+function PostContentPreview({content}: {content: string}) {
+  const [isTruncated, setIsTruncated] = useState(false);
+  return (
+    <>
+      <S.PostContent numberOfLines={2}>{content}</S.PostContent>
+      <S.PostContent
+        style={{position: 'absolute', opacity: 0, pointerEvents: 'none'}}
+        onTextLayout={e => setIsTruncated(e.nativeEvent.lines.length > 2)}>
+        {content}
+      </S.PostContent>
+      {isTruncated && <S.PostMore>더보기</S.PostMore>}
+    </>
+  );
+}
+
 function renderTextWithLinks(text: string) {
   const parts = text.split(URL_REGEX);
   return (
@@ -155,8 +170,8 @@ export default function ProjectDetailScreen() {
     'private',
   );
 
-  const MAX_LENGTH_LOG = 3;
-  const MAX_LENGTH_POST = 2;
+  const MAX_LENGTH_LOG = 5;
+  const MAX_LENGTH_POST = 3;
 
   // ── 뜨개 로그
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
@@ -690,6 +705,7 @@ export default function ProjectDetailScreen() {
               onChangeText={v => setField('title', v)}
               placeholderTextColor="#ccc"
               multiline
+              maxLength={100}
             />
           ) : (
             <S.Title>{project!.title}</S.Title>
@@ -705,14 +721,11 @@ export default function ProjectDetailScreen() {
               multiline
               textAlignVertical="top"
               placeholderTextColor="#bbb"
+              maxLength={2000}
             />
           ) : project?.content ? (
             <S.Body>{project.content}</S.Body>
-          ) : (
-            <S.PlaceholderText>
-              프로젝트에 대해 자유롭게 설명해주세요
-            </S.PlaceholderText>
-          )}
+          ) : null}
 
           {!isCreateMode && project && (
             <S.MetaRow>
@@ -810,12 +823,13 @@ export default function ProjectDetailScreen() {
               {isEditingYarnInfo ? (
                 <S.InfoInput
                   autoFocus
-                  placeholder="브랜드, 색상, 두께 등"
+                  placeholder="어떤 실을 사용하셨나요?"
                   value={yarnInfo}
                   onChangeText={v => setField('yarnInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
                   onBlur={() => setIsEditingYarnInfo(false)}
+                  maxLength={200}
                 />
               ) : yarnInfo ? (
                 <S.LinkRow>
@@ -829,11 +843,9 @@ export default function ProjectDetailScreen() {
                 </S.LinkRow>
               ) : canEdit ? (
                 <TouchableOpacity onPress={() => setIsEditingYarnInfo(true)}>
-                  <S.InfoPlaceholder>브랜드, 색상, 두께 등</S.InfoPlaceholder>
+                  <S.InfoPlaceholder>어떤 실을 사용하셨나요?</S.InfoPlaceholder>
                 </TouchableOpacity>
-              ) : (
-                <S.InfoPlaceholder>브랜드, 색상, 두께 등</S.InfoPlaceholder>
-              )}
+              ) : null}
             </S.InfoContent>
           </S.InfoRow>
 
@@ -846,12 +858,13 @@ export default function ProjectDetailScreen() {
               {isEditingNeedleInfo ? (
                 <S.InfoInput
                   autoFocus
-                  placeholder="브랜드, 두께 등"
+                  placeholder="어떤 바늘을 사용하셨나요?"
                   value={needleInfo}
                   onChangeText={v => setField('needleInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
                   onBlur={() => setIsEditingNeedleInfo(false)}
+                  maxLength={200}
                 />
               ) : needleInfo ? (
                 <S.LinkRow>
@@ -865,11 +878,11 @@ export default function ProjectDetailScreen() {
                 </S.LinkRow>
               ) : canEdit ? (
                 <TouchableOpacity onPress={() => setIsEditingNeedleInfo(true)}>
-                  <S.InfoPlaceholder>브랜드, 두께 등</S.InfoPlaceholder>
+                  <S.InfoPlaceholder>
+                    어떤 바늘을 사용하셨나요?
+                  </S.InfoPlaceholder>
                 </TouchableOpacity>
-              ) : (
-                <S.InfoPlaceholder>브랜드, 두께 등</S.InfoPlaceholder>
-              )}
+              ) : null}
             </S.InfoContent>
           </S.InfoRow>
 
@@ -882,12 +895,13 @@ export default function ProjectDetailScreen() {
               {isEditingPatternInfo ? (
                 <S.InfoInput
                   autoFocus
-                  placeholder="사용한 도안에 대한 설명"
+                  placeholder="어떤 도안을 참고하셨나요?"
                   value={patternInfo}
                   onChangeText={v => setField('patternInfo', v)}
                   placeholderTextColor="#ccc"
                   multiline
                   onBlur={() => setIsEditingPatternInfo(false)}
+                  maxLength={1000}
                 />
               ) : patternInfo ? (
                 <S.LinkRow>
@@ -903,11 +917,11 @@ export default function ProjectDetailScreen() {
                 </S.LinkRow>
               ) : canEdit ? (
                 <TouchableOpacity onPress={() => setIsEditingPatternInfo(true)}>
-                  <S.InfoPlaceholder>사용한 도안에 대한 설명</S.InfoPlaceholder>
+                  <S.InfoPlaceholder>
+                    어떤 도안을 참고하셨나요?
+                  </S.InfoPlaceholder>
                 </TouchableOpacity>
-              ) : (
-                <S.InfoPlaceholder>사용한 도안에 대한 설명</S.InfoPlaceholder>
-              )}
+              ) : null}
             </S.InfoContent>
           </S.InfoRow>
 
@@ -1050,6 +1064,7 @@ export default function ProjectDetailScreen() {
                             onBlur={() => setFocusedLogId(null)}
                             placeholderTextColor="#ccc"
                             multiline
+                            maxLength={500}
                           />
                         </S.LogInputWrapper>
                       ) : (
@@ -1135,7 +1150,13 @@ export default function ProjectDetailScreen() {
                             <S.PostImageWrapper
                               key={img.id}
                               width={SCREEN_WIDTH - 36}>
-                              <S.PostImage source={{uri: thumbnailUrl(img.image_url) ?? img.image_url}} />
+                              <S.PostImage
+                                source={{
+                                  uri:
+                                    thumbnailUrl(img.image_url) ??
+                                    img.image_url,
+                                }}
+                              />
                               {post.post_images.length > 1 && (
                                 <S.PostImageCounter>
                                   {index + 1} / {post.post_images.length}
@@ -1165,17 +1186,7 @@ export default function ProjectDetailScreen() {
                           )}
                         </S.PostDateText>
                       </S.PostDateRow>
-                      {(() => {
-                        const lines = (post.content ?? '').split('\n');
-                        const preview = lines.slice(0, 2).join('\n');
-                        const hasMore = lines.length > 2;
-                        return (
-                          <>
-                            <S.PostContent>{preview}</S.PostContent>
-                            {hasMore && <S.PostMore>...</S.PostMore>}
-                          </>
-                        );
-                      })()}
+                      <PostContentPreview content={post.content ?? ''} />
                     </TouchableOpacity>
                   </S.PostCard>
                 ))}
@@ -1196,13 +1207,6 @@ export default function ProjectDetailScreen() {
             </>
           )}
         </S.Section>
-
-        {/* ══ 완료하기 ════════════════════════════════════ */}
-        {/* {isMyProject && !project?.is_completed && !isDirty && (
-          <S.CompleteButton onPress={() => setCompleteModalVisible(true)}>
-            <S.CompleteButtonText>완료하기</S.CompleteButtonText>
-          </S.CompleteButton>
-        )} */}
 
         <View style={{height: 40}} />
       </KeyboardAvoid>

@@ -34,6 +34,15 @@ interface PostItem {
   post_images: PostImage[];
 }
 
+function PostContent({content}: {content: string}) {
+  const [isTruncated, setIsTruncated] = useState(false);
+  return (
+    <>
+      <Text style={styles.content}>{content}</Text>
+    </>
+  );
+}
+
 export default function ProjectPostsAllScreen() {
   const route = useRoute<RouteProp<RouteParams, 'ProjectPostsAll'>>();
   const {projectId} = route.params;
@@ -131,9 +140,6 @@ export default function ProjectPostsAllScreen() {
       renderItem={({item, index}) => {
         const isLast = index === posts.length - 1 && !hasMore;
         const firstImage = item.post_images[0];
-        const lines = (item.content ?? '').split('\n');
-        const preview = lines.slice(0, 2).join('\n');
-        const hasMoreLines = lines.length > 2;
 
         return (
           <TouchableOpacity
@@ -144,12 +150,19 @@ export default function ProjectPostsAllScreen() {
             }>
             {firstImage && (
               <FastImage
-                source={{uri: thumbnailUrl(firstImage.image_url) ?? firstImage.image_url}}
+                source={{
+                  uri:
+                    thumbnailUrl(firstImage.image_url) ?? firstImage.image_url,
+                }}
                 style={styles.thumbnail}
                 resizeMode="cover"
               />
             )}
-            <View style={[styles.cardContent, !firstImage && styles.cardContentNoImage]}>
+            <View
+              style={[
+                styles.cardContent,
+                !firstImage && styles.cardContentNoImage,
+              ]}>
               <View style={styles.dateRow}>
                 <Icon name="calendar" size={11} color="#191919" />
                 <Text style={styles.date}>
@@ -160,12 +173,7 @@ export default function ProjectPostsAllScreen() {
                   })}
                 </Text>
               </View>
-              {item.content ? (
-                <>
-                  <Text style={styles.content}>{preview}</Text>
-                  {hasMoreLines && <Text style={styles.more}>...</Text>}
-                </>
-              ) : null}
+              {item.content ? <PostContent content={item.content} /> : null}
               {item.post_images.length > 1 && (
                 <View style={styles.imageCountRow}>
                   <Icon name="image" size={11} color="#bbb" />
@@ -189,7 +197,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 40,
   },
-  list: {paddingTop: 8, paddingBottom: 40, backgroundColor: '#fff', flexGrow: 1},
+  list: {
+    paddingTop: 8,
+    paddingBottom: 40,
+    backgroundColor: '#fff',
+    flexGrow: 1,
+  },
   footer: {paddingVertical: 16},
   totalCount: {
     fontSize: 12,

@@ -1,9 +1,5 @@
 import React, {useState, useCallback} from 'react';
-import {
-  Alert,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import {Alert, ScrollView, ActivityIndicator} from 'react-native';
 
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
@@ -12,7 +8,11 @@ import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import {uploadMultipleImages} from '@/lib/uploadImage';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {POST_ROUTES, PROJECTS_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
+import {
+  POST_ROUTES,
+  PROJECTS_ROUTES,
+  TAB_ROUTES,
+} from '@/constants/navigation.constant';
 import {PostsStackParamList} from '@/@types/navigation';
 import {ProjectItem} from '@/@types/database';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
@@ -63,7 +63,7 @@ export default function PostCreateForProjectScreen() {
       uri: img.image_url,
     })),
   );
-  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);  //이미지 DB삭제
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]); //이미지 DB삭제
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -175,7 +175,11 @@ export default function PostCreateForProjectScreen() {
     setImages(prev => prev.filter(i => i.key !== key));
   };
 
-  const renderImageItem = ({item, drag, isActive}: RenderItemParams<UnifiedImage>) => (
+  const renderImageItem = ({
+    item,
+    drag,
+    isActive,
+  }: RenderItemParams<UnifiedImage>) => (
     <ScaleDecorator>
       <S.ImagePreview
         style={{marginRight: 10, opacity: isActive ? 0.8 : 1}}
@@ -238,7 +242,9 @@ export default function PostCreateForProjectScreen() {
             existingInFinal.map(img =>
               supabase
                 .from('post_images')
-                .update({display_order: images.findIndex(i => i.key === img.key)})
+                .update({
+                  display_order: images.findIndex(i => i.key === img.key),
+                })
                 .eq('id', img.id!),
             ),
           );
@@ -370,7 +376,8 @@ export default function PostCreateForProjectScreen() {
                           setSelectedProjectTitle(p.title);
                           setShowProjectPicker(false);
                         }}>
-                        <S.ProjectItemText selected={selectedProjectId === p.id}>
+                        <S.ProjectItemText
+                          selected={selectedProjectId === p.id}>
                           {p.title}
                         </S.ProjectItemText>
                         {selectedProjectId === p.id && (
@@ -420,20 +427,19 @@ export default function PostCreateForProjectScreen() {
         <S.Section>
           <S.Label>내용 *</S.Label>
           <S.TextArea
-            placeholder="오늘 뜬 내용을 자유롭게 적어주세요"
+            placeholder="게시물의 내용을 작성해주세요"
             value={content}
             onChangeText={setContent}
             multiline
             numberOfLines={10}
             textAlignVertical="top"
             placeholderTextColor="#999"
+            maxLength={2000}
           />
         </S.Section>
       </KeyboardAvoid>
       <S.PostButton onPress={handleSubmit} disabled={isSubmitting}>
-        <S.PostButtonText>
-        게시하기
-        </S.PostButtonText>
+        <S.PostButtonText>게시하기</S.PostButtonText>
       </S.PostButton>
       <ActionSheetModal
         visible={imageSheetVisible}

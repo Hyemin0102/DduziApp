@@ -16,8 +16,6 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const PostImage = ({uri}: {uri: string}) => {
   const [loaded, setLoaded] = useState(false);
 
-
-
   return (
     <S.ImagePlaceholder>
       <S.PostImage
@@ -38,8 +36,7 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
   const hasImages = post.post_images && post.post_images.length > 0;
   const multipleImages = hasImages && post.post_images.length > 1;
 
-  console.log('isTruncated',isTruncated);
-  
+  console.log('isTruncated', isTruncated);
 
   const profileInitial = post.users.nickname?.charAt(0)?.toUpperCase() ?? '?';
 
@@ -52,7 +49,11 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
         }>
         {post.users.profile_image ? (
           <S.ProfileImage
-            source={{uri: profileUrl(post.users.profile_image) ?? post.users.profile_image}}
+            source={{
+              uri:
+                profileUrl(post.users.profile_image) ??
+                post.users.profile_image,
+            }}
             resizeMode="cover"
           />
         ) : (
@@ -82,22 +83,22 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
               setActiveIndex(idx);
             }}
             style={{height: SCREEN_WIDTH}}>
-         {post.post_images.map((image, index) => {
-  const url = thumbnailUrl(image.image_url) ?? image.image_url;
+            {post.post_images.map((image, index) => {
+              const url = thumbnailUrl(image.image_url) ?? image.image_url;
 
-  return (
-    <S.ImageContainer key={index}>
-      <PostImage uri={url} />
-      {multipleImages && (
-        <S.ImageCounter>
-          <S.ImageCounterText>
-            {index + 1} / {post.post_images.length}
-          </S.ImageCounterText>
-        </S.ImageCounter>
-      )}
-    </S.ImageContainer>
-  );
-})}
+              return (
+                <S.ImageContainer key={index}>
+                  <PostImage uri={url} />
+                  {multipleImages && (
+                    <S.ImageCounter>
+                      <S.ImageCounterText>
+                        {index + 1} / {post.post_images.length}
+                      </S.ImageCounterText>
+                    </S.ImageCounter>
+                  )}
+                </S.ImageContainer>
+              );
+            })}
           </ScrollView>
 
           {/* 이미지 dots */}
@@ -131,20 +132,17 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
             </S.StatusBadge>
           </S.BadgeRow>
         )}
-<S.Content
-  numberOfLines={2}
-  ellipsizeMode="clip"
->
-  {content}
-</S.Content>
-<S.Content
-  style={{position: 'absolute', opacity: 0, pointerEvents: 'none'}}
-  onTextLayout={e => {
-    setIsTruncated(e.nativeEvent.lines.length > 2);
-  }}>
-  {content}
-</S.Content>
-{isTruncated && <S.More>...더보기</S.More>}
+        <S.Content numberOfLines={2} ellipsizeMode="clip">
+          {content}
+        </S.Content>
+        <S.Content
+          style={{position: 'absolute', opacity: 0, pointerEvents: 'none'}}
+          onTextLayout={e => {
+            setIsTruncated(e.nativeEvent.lines.length > 2);
+          }}>
+          {content}
+        </S.Content>
+        {isTruncated && <S.More>...더보기</S.More>}
         <S.Date>{new Date(post.created_at).toLocaleDateString('ko-KR')}</S.Date>
       </S.ContentSection>
     </S.CardContainer>
