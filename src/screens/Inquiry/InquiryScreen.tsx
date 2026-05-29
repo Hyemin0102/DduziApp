@@ -38,6 +38,10 @@ export default function InquiryScreen() {
       });
       if (error) throw error;
 
+      await supabase.functions.invoke('send-inquiry-notification', {
+        body: {user_id: user.id, content: content.trim()},
+      });
+
       Alert.alert('완료', '피드백이 전달되었습니다.\n더 나은 서비스로 보답할게요!', [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
