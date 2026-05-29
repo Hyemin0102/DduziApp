@@ -29,6 +29,7 @@ export const ProfileImage = styled(FastImage)`
   width: 160px;
   height: 160px;
   border-radius: 80px;
+  border: 4px solid #000;
 `;
 
 export const ProfileImagePlaceholder = styled.View`
@@ -38,6 +39,7 @@ export const ProfileImagePlaceholder = styled.View`
   background-color: #f1f1ef;
   justify-content: center;
   align-items: center;
+  
 `;
 
 export const ProfileImagePlaceholderText = styled.Text`

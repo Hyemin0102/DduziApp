@@ -32,12 +32,13 @@ export const EmptyContainer = styled.View`
   flex: 1;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
   gap: 12px;
+  padding-top: 40px;
 `;
 
-export const EmptyIcon = styled.Text`
-  font-size: 64px;
+export const EmptyIcon = styled.Image`
+  width: 160px;
+  height: 160px;
   margin-bottom: 8px;
 `;
 

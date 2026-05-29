@@ -13,45 +13,47 @@ export const InnerContainer = styled.View`
   flex: 1;
   justify-content: space-between;
   align-items: center;
-  padding: 60px 24px 40px;
+  padding-top: 60px;
+ 
 `;
 
 export const TopContent = styled.View`
-  flex: 1;
   align-items: center;
   justify-content: center;
+  padding-left: 24px;
+  padding-right: 24px;
 `;
 
-export const LogoImage = styled.Image`
-  width: 160px;
-  height: 160px;
-  resize-mode: contain;
-
-`;
-
-export const TextImage = styled.Image`
-  width: 80px;
-  height: 30px;
-  resize-mode: contain;
-
-`;
+export  const LogoText = styled.Text`
+  font-family: Ownglyph PDH;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 127.01px;
+  line-height: 127.01px;
+  letter-spacing: -2.54px;
+  text-align: center;
+`
 
 export const SubTitle = styled.Text`
-  font-size: 14px;
-  color: #aaaaaa;
-  margin-top: 20px;
-  text-align: center;
-  line-height: 20px;
+  font-family: Pretendard;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 27px;
+  letter-spacing: -0.72px;
 `;
 
-export const SubTitleAccent = styled.Text`
-  font-size: 16px;
-  font-weight: 700;
-  //color: #555555;
-   color: #aaaaaa;
-  margin-top: 6px;
-  text-align: center;
+export const ImageWrapper = styled.View`
+  width: 100%;
+  flex: 1;
 `;
+
+export const LoginImage = styled.Image`
+  width: 100%;
+  height: 100%;
+  resize-mode: cover;
+`;
+
 
 export const ErrorBox = styled.View`
   width: 100%;
@@ -71,8 +73,8 @@ export const ErrorText = styled.Text`
 
 export const ButtonContainer = styled.View`
   width: 100%;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  padding: 12px 20px;
 `;
 
 interface SocialButtonProps {

@@ -1,24 +1,54 @@
 import React, {useRef, useState} from 'react';
-import {Animated, Button, PanResponder} from 'react-native';
+import {Animated, PanResponder, View} from 'react-native';
 import {useAuth} from '../../contexts/AuthContext';
 import * as S from './OnboardingScreen.style';
-import MainDduzi from '../../assets/images/main_dduzi.svg';
 
-const slides = [
+interface SlideImage {
+  source: ReturnType<typeof require>;
+  width: number;
+  aspectRatio: number;
+  marginTop?: number;
+}
+
+interface Slide {
+  headline: string;
+  description1: string;
+  description2: string;
+  image: SlideImage;
+}
+
+const slides: Slide[] = [
   {
     headline: '오늘 뭐 뜨지?',
-    description:
-      '뜨지는 뜨개를 좋아하는 사람들이\n조용히 모인 공간이에요.\n뜨지를 구경하다 보면 어느새 손이 근질거릴 거예요.',
+    description1: '뜨지는 뜨개를 좋아하는 사람들이\n조용히 모인 공간이에요.',
+    description2: '뜨지를 구경하다보면\n어느새 손이 근질거릴거예요.',
+    image: {
+      source: require('../../assets/images/1_onboarding.png'),
+      width: 431,
+      aspectRatio: 431.37 / 335.5,
+      marginTop: 40,
+    },
   },
   {
     headline: '문어발 뜨개인이신가요?',
-    description:
-      '실, 바늘, 도안, 데일리 뜨개 기록, 게시물까지\n하나의 프로젝트에서 관리해요.\n프로젝트가 많아도 문제없어요.',
+    description1: '실, 바늘, 도안, 데일리 뜨개 기록, 게시물까지\n하나의 프로젝트에서 관리해요.',
+    description2: '프로젝트가 많아도 뜨개를\n즐기는 데는 문제없어요.',
+    image: {
+      source: require('../../assets/images/2_onboarding.png'),
+      width: 375,
+      aspectRatio: 375 / 259.63,
+    },
   },
   {
     headline: '완성했으면 자랑해야죠!',
-    description:
-      '자유롭게 뜨개 게시물을 올려 내 피드를 꾸며봐요.\n좋아요, 댓글 말고 내 작품 자랑만 해요.',
+    description1: '좋아요, 댓글이 사라진 피드에\n사람들의 반응 걱정없이 내작품 자랑만 해요.',
+    description2: '자, 이제 뜨지를 시작해볼까요?',
+    image: {
+      source: require('../../assets/images/3_onboarding.png'),
+      width: 260,
+      aspectRatio: 536 / 750,
+      marginTop: 20,
+    },
   },
 ];
 
@@ -68,11 +98,17 @@ const OnboardingScreen = () => {
       <S.GestureView {...panResponder.panHandlers}>
         <S.ContentArea style={{opacity: fadeAnim}}>
           <S.Headline>{slide.headline}</S.Headline>
-          <S.Description>{slide.description}</S.Description>
-          {currentIndex === slides.length - 1 && (
-            <S.ReadyText>자, 이제 뜨러 가볼까요?</S.ReadyText>
-          )}
-          <MainDduzi width={241} height={247} style={{marginTop: 'auto', alignSelf: 'center',}} />
+          <View style={{gap:18}}>
+            <S.Description>{slide.description1}</S.Description>
+            <S.Description>{slide.description2}</S.Description>
+          </View>
+          <View style={{flex: 1, marginTop: slide.image.marginTop}}>
+            <S.SlideImage
+              source={slide.image.source}
+              style={{width: slide.image.width, height: undefined, aspectRatio: slide.image.aspectRatio}}
+              resizeMode="contain"
+            />
+          </View>
         </S.ContentArea>
 
         <S.BottomArea>

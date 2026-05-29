@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1E53CA7213E4452746428DAC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		3D89CB323B8941DAB30CCF9D /* OngeulipBakdahyeon.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E5A5F4C6828746CDA9DF99CD /* OngeulipBakdahyeon.ttf */; };
+		3E3960665ADC48D1B1D96A67 /* 온글잎 박다현체.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 11EC2CCA3B634AF693C7EB1C /* 온글잎 박다현체.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		97AD99BE164948D5866B8639 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 573BA360A6A7432893457340 /* BootSplash.storyboard */; };
@@ -17,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		11EC2CCA3B634AF693C7EB1C /* 온글잎 박다현체.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "온글잎 박다현체.ttf"; path = "../src/assets/fonts/온글잎 박다현체.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* dduziApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dduziApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = dduziApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = dduziApp/Info.plist; sourceTree = "<group>"; };
@@ -28,6 +31,7 @@
 		720133E177CE48289FC9FEC7 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = dduziApp/Colors.xcassets; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = dduziApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = dduziApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		E5A5F4C6828746CDA9DF99CD /* OngeulipBakdahyeon.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = OngeulipBakdahyeon.ttf; path = ../src/assets/fonts/OngeulipBakdahyeon.ttf; sourceTree = "<group>"; };
 		EAE146EF2F6CE4E3007F9DEB /* dduziApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = dduziApp.entitlements; path = dduziApp/dduziApp.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -68,6 +72,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		32A8374AF44542CAB57F3155 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				11EC2CCA3B634AF693C7EB1C /* 온글잎 박다현체.ttf */,
+				E5A5F4C6828746CDA9DF99CD /* OngeulipBakdahyeon.ttf */,
+			);
+			name = Resources;
+			path = "";
+			sourceTree = "<group>";
+		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
@@ -83,6 +97,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				32A8374AF44542CAB57F3155 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -171,6 +186,8 @@
 				97AD99BE164948D5866B8639 /* BootSplash.storyboard in Resources */,
 				AF566B93A2904D9B8E8D819F /* Colors.xcassets in Resources */,
 				1E53CA7213E4452746428DAC /* PrivacyInfo.xcprivacy in Resources */,
+				3E3960665ADC48D1B1D96A67 /* 온글잎 박다현체.ttf in Resources */,
+				3D89CB323B8941DAB30CCF9D /* OngeulipBakdahyeon.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,13 +218,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -222,13 +235,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-dduziApp/Pods-dduziApp-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -406,7 +415,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -475,7 +487,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

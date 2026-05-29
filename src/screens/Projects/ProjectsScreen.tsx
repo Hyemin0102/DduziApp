@@ -84,13 +84,13 @@ export default function ProjectsScreen() {
       <FlatList
         data={projects}
         keyExtractor={item => item.id}
-        contentContainerStyle={projects.length === 0 ? {flex: 1} : {}}
+        contentContainerStyle={{flexGrow: 1}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
           <S.Empty>
-            <S.EmptyIcon>🧶</S.EmptyIcon>
+            <S.EmptyIcon source={require('../../assets/images/dduzi_image.png')} resizeMode="contain" />
             <S.EmptyText>아직 프로젝트가 없어요</S.EmptyText>
             <S.EmptySubText>첫 프로젝트를 시작해보세요!</S.EmptySubText>
             <S.EmptyButton onPress={handleCreateProject}>

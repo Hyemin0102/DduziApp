@@ -21,13 +21,14 @@ import Icon from 'react-native-vector-icons/Feather';
 import {TAB_ROUTES} from '@/constants/navigation.constant';
 import ProjectsScreen from '../Projects/ProjectsScreen';
 import ProjectsStack from './stacks/ProjectsStack';
-import HouseSimple from '../../assets/icons/HouseSimple.svg';
-import HouseColor from '../../assets/icons/HouseColor.svg';
-import PostSimple from '../../assets/icons/PostSimple.svg';
-import PostColor from '../../assets/icons/PostColor.svg';
-import ProjectSimple from '../../assets/icons/ProjectSimple.svg';
-import ProjectColor from '../../assets/icons/ProjectColor.svg';
-import MypageSimple from '../../assets/icons/MypageSimple.svg';
+import HouseSimple from '../../assets/icons/tab_HouseSimple.svg';
+import HouseColor from '../../assets/icons/tab_HouseColor.svg';
+import PostSimple from '../../assets/icons/tab_MyPosts.svg';
+import PostColor from '../../assets/icons/tab_MyPostsColor.svg';
+import ProjectSimple from '../../assets/icons/tab_MyProjects.svg';
+import ProjectColor from '../../assets/icons/tab_MyProjectsColor.svg';
+import MypageSimple from '../../assets/icons/tab_MyPage.svg';
+import MypageColor from '../../assets/icons/tab_MyPageColor.svg';
 
 type TabIconComponent = React.ComponentType<SvgProps>;
 
@@ -189,6 +190,7 @@ const TabNavigator = () => {
             tabBarIcon: ({focused}) => (
               <TabIconWithLabel
                 icon={MypageSimple}
+                activeIcon={MypageColor}
                 label="마이페이지"
                 focused={focused}
                 size={22}

@@ -343,15 +343,13 @@ const Login = () => {
         )}
         <S.InnerContainer>
           <S.TopContent>
-            <S.LogoImage
-              source={require('../../assets/images/dduzi_logo.png')}
-            />
-            <S.TextImage
-              source={require('../../assets/images/Dduzi_text.png')}
-            />
-            {/* <S.SubTitle>오늘 뭐 뜨지?</S.SubTitle> */}
-            {/* <S.SubTitleAccent>오늘 뭐 뜨지?</S.SubTitleAccent> */}
+            <S.LogoText>뜨지</S.LogoText>
+            <S.SubTitle>일기처럼 기록하는 나만의 뜨개 SNS</S.SubTitle>
           </S.TopContent>
+
+          <S.ImageWrapper>
+            <S.LoginImage source={require('../../assets/images/login.png')} />
+          </S.ImageWrapper>
 
           <S.ButtonContainer>
             {error && (

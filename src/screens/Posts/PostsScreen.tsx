@@ -280,14 +280,14 @@ export default function PostsScreen({route}: PostsScreenProps) {
         keyExtractor={item => item.id}
         key={activeTab}
         numColumns={3}
-        contentContainerStyle={{}}
+        contentContainerStyle={{flexGrow: 1}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
           !loading ? (
             <S.EmptyContainer>
-              <S.EmptyIcon>📝</S.EmptyIcon>
+              <S.EmptyIcon source={require('../../assets/images/dduzi_image.png')} resizeMode="contain" />
               <S.EmptyText>
                 {isMyPage
                   ? activeTab === 'inProgress'

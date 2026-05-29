@@ -45,8 +45,8 @@ export const ContentArea = styled(Animated.View)`
 `;
 
 export const Headline = styled.Text`
-  font-size: 30px;
-  font-weight: 800;
+  font-size: 44px;
+  font-family: 'Ownglyph_PDH-Rg';
   color: #191919;
   margin-bottom: 20px;
   line-height: 42px;
@@ -55,7 +55,7 @@ export const Headline = styled.Text`
 
 export const Description = styled.Text`
   font-size: 16px;
-  color: #888888;
+  color: #191919;
   line-height: 26px;
 `;
 
@@ -67,6 +67,7 @@ export const BottomArea = styled.View`
   gap: 16px;
   z-index: 2;
   margin-top: 40px;
+  
 `;
 
 export const Pagination = styled.View`
@@ -104,4 +105,9 @@ export const ActionButtonText = styled.Text`
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.2px;
+`;
+
+export const SlideImage = styled.Image`
+  //margin-top: auto;
+  align-self: center;
 `;

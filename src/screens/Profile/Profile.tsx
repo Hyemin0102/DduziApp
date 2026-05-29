@@ -63,7 +63,7 @@ const ProfileScreen = () => {
     };
   }, [nickname]);
 
-  const displayImage = imageUri || user.profile_image;
+  const DEFAULT_PROFILE = require('../../assets/images/default_profile.png');
 
   const handleImageEditPress = () => {
     setImageSheetVisible(true);
@@ -161,20 +161,21 @@ const ProfileScreen = () => {
 
   const nicknameChanged = nickname.trim() !== user.nickname;
 
+  console.log('user.profile_image',user.profile_image);
+  
+
   return (
     <S.Container>
       <KeyboardAvoid>
         {/* 프로필 이미지 */}
         <S.ImageSection>
           <S.ImageWrapper>
-            {displayImage ? (
-              <S.ProfileImage source={{uri: displayImage}} />
+            {imageUri ? (
+              <S.ProfileImage source={{uri: imageUri}} />
+            ) : user.profile_image ? (
+              <S.ProfileImage source={{uri: user.profile_image}} />
             ) : (
-              <S.ProfileImagePlaceholder>
-                <S.ProfileImagePlaceholderText>
-                  {nickname.trim().charAt(0)?.toUpperCase() || '?'}
-                </S.ProfileImagePlaceholderText>
-              </S.ProfileImagePlaceholder>
+              <S.ProfileImage source={DEFAULT_PROFILE} />
             )}
             <S.ImageEditBadge onPress={handleImageEditPress}>
               <S.ImageEditBadgeText>✎</S.ImageEditBadgeText>

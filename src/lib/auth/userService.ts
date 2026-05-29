@@ -23,7 +23,7 @@ interface CreateUserProfileParams {
 const getDefaultImageUrl = (): string => {
   const {data} = supabase.storage
     .from('profile')
-    .getPublicUrl('default/myPage.png');
+    .getPublicUrl('default/default_profile.png');
 
   return data.publicUrl;
 };

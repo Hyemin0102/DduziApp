@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/OngeulipBakdahyeon.ttf",
+      "sha1": "58cc2b6ae63bd7fe7c4101420dd4760718fff76a"
+    },
+    {
+      "path": "src/assets/fonts/온글잎 박다현체.ttf",
+      "sha1": "58cc2b6ae63bd7fe7c4101420dd4760718fff76a"
+    }
+  ]
+}
