@@ -8,15 +8,12 @@ import OnboardingScreen from '../Onboarding/OnboardingScreen';
 import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
-import PostCreateScreen from '../PostCreate/PostCreateScreen';
-import PostCreateForProjectScreen from '../PostCreate/PostCreateForProjectScreen';
-import {Title} from '../PostDetail/PostDetailScreen.styles';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 //루트 네비게이터
 const Navigator = () => {
-  const {isLoggedIn, needsProfileSetup, hasSeenOnboarding} = useAuth();
+  const {isLoggedIn, needsProfileSetup} = useAuth();
   const navigationRef = useRef<any>(null);
 
   return (
@@ -27,15 +24,15 @@ const Navigator = () => {
         console.log('🧭 현재 라우터:', currentRoute?.name);
       }}>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
-        {!hasSeenOnboarding ? (
-          // 최초 설치 - 온보딩
-          <RootStack.Screen
-            name={ROOT_ROUTES.ONBOARDING}
-            component={OnboardingScreen}
-          />
-        ) : !isLoggedIn ? (
-          //비회원
-          <RootStack.Screen name={ROOT_ROUTES.AUTH} component={AuthStack} />
+        {!isLoggedIn ? (
+          // 비로그인 - 온보딩 → 로그인 순서로 스택 구성
+          <>
+            <RootStack.Screen
+              name={ROOT_ROUTES.ONBOARDING}
+              component={OnboardingScreen}
+            />
+            <RootStack.Screen name={ROOT_ROUTES.AUTH} component={AuthStack} />
+          </>
         ) : needsProfileSetup ? (
           // 최초 로그인
           <RootStack.Screen

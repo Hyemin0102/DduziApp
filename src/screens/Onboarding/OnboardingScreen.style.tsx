@@ -28,13 +28,6 @@ export const TapZoneRight = styled.Pressable`
   z-index: 1;
 `;
 
-export const BottomAreaWrapper = styled.View`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-`;
 
 export const ContentArea = styled(Animated.View)`
   flex: 1;
@@ -42,6 +35,8 @@ export const ContentArea = styled(Animated.View)`
   align-items: start;
   padding-top: 80px;
   padding-horizontal: 26px;
+  gap: 20px;
+  
 `;
 
 export const Headline = styled.Text`
@@ -60,13 +55,13 @@ export const Description = styled.Text`
 `;
 
 export const BottomArea = styled.View`
-  min-height: 130px;
-  padding: 0 24px 44px;
+ min-height: 130px;
+  padding: 0 24px ;
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
   z-index: 2;
-  margin-top: 40px;
+ margin-top: 40px;
   
 `;
 

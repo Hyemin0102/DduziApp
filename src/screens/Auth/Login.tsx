@@ -400,7 +400,7 @@ const Login = () => {
             )}
 
             {/* DEV ONLY */}
-            <S.DevButton
+            {/* <S.DevButton
               onPress={async () => {
                 await AsyncStorage.removeItem('onboarding_completed');
                 Alert.alert(
@@ -409,7 +409,7 @@ const Login = () => {
                 );
               }}>
               <S.DevButtonText>온보딩 초기화 (개발용)</S.DevButtonText>
-            </S.DevButton>
+            </S.DevButton> */}
           </S.ButtonContainer>
         </S.InnerContainer>
       </S.ScrollViewContainer>

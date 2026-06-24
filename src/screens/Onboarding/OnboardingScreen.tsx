@@ -1,6 +1,9 @@
 import React, {useRef, useState} from 'react';
 import {Animated, PanResponder, View} from 'react-native';
-import {useAuth} from '../../contexts/AuthContext';
+import {useNavigation} from '@react-navigation/native';
+import {RootStackNavigationProp} from '../../@types/navigation';
+import {ROOT_ROUTES} from '../../constants/navigation.constant';
+// import {useAuth} from '../../contexts/AuthContext';
 import * as S from './OnboardingScreen.style';
 
 interface SlideImage {
@@ -26,7 +29,7 @@ const slides: Slide[] = [
       source: require('../../assets/images/1_onboarding.png'),
       width: 431,
       aspectRatio: 431.37 / 335.5,
-      marginTop: 40,
+      //marginTop: 40,
     },
   },
   {
@@ -47,13 +50,14 @@ const slides: Slide[] = [
       source: require('../../assets/images/3_onboarding.png'),
       width: 260,
       aspectRatio: 536 / 750,
-      marginTop: 20,
+      //marginTop: 20,
     },
   },
 ];
 
 const OnboardingScreen = () => {
-  const {completeOnboarding} = useAuth();
+  const navigation = useNavigation<RootStackNavigationProp>();
+  // const {completeOnboarding} = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentIndexRef = useRef(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -117,7 +121,7 @@ const OnboardingScreen = () => {
               <S.Dot key={i} active={i === currentIndex} />
             ))}
           </S.Pagination>
-          <S.ActionButton onPress={completeOnboarding}>
+          <S.ActionButton onPress={() => navigation.navigate(ROOT_ROUTES.AUTH as any)}>
             <S.ActionButtonText>뜨지 시작하기</S.ActionButtonText>
           </S.ActionButton>
         </S.BottomArea>
