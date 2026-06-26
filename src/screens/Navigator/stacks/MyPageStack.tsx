@@ -12,9 +12,10 @@ import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjec
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
 import ProjectsScreen from '@/screens/Projects/ProjectsScreen';
 import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
-import InquiryScreen from '@/screens/Inquiry/InquiryScreen';
 import TermsOfServiceScreen from '@/screens/TermsOfService/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
+import NoticeListScreen from '@/screens/Notice/NoticeListScreen';
+import NoticeDetailScreen from '@/screens/Notice/NoticeDetailScreen';
 import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
@@ -54,11 +55,6 @@ const MyPageStack = () => {
         options={{title: '설정'}}
       />
       <Stack.Screen
-        name={MY_PAGE_ROUTES.INQUIRY}
-        component={InquiryScreen}
-        options={{title: '문의하기'}}
-      />
-      <Stack.Screen
         name={MY_PAGE_ROUTES.TERMS_OF_SERVICE}
         component={TermsOfServiceScreen}
         options={{title: '서비스 이용약관'}}
@@ -67,7 +63,17 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.PRIVACY_POLICY}
         component={PrivacyPolicyScreen}
         options={{title: '개인정보 처리방침'}}
-      />    
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.NOTICE_LIST}
+        component={NoticeListScreen}
+        options={{title: '공지사항'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.NOTICE_DETAIL}
+        component={NoticeDetailScreen}
+        options={{title: '공지사항'}}
+      />
     </Stack.Navigator>
   );
 };

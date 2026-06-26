@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   ActivityIndicator,
@@ -13,19 +13,33 @@ import {ProjectsStackParamList} from '@/@types/navigation';
 import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import Icon from 'react-native-vector-icons/Feather';
+import {getSignedPdfUrl} from '@/lib/uploadPdf';
 
 type RouteProps = RouteProp<ProjectsStackParamList, typeof PROJECTS_ROUTES.PDF_VIEWER>;
 
 export default function PdfViewerScreen() {
   const route = useRoute<RouteProps>();
   const {navigation} = useCommonNavigation<any>();
-  const {pdfUrl, title} = route.params;
+  const {pdfUrl, pdfPath, title} = route.params;
 
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState(false);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(
+    pdfPath ? null : pdfUrl ?? null,
+  );
 
-  const source = {uri: pdfUrl, cache: true};
+  const loadSignedUrl = () => {
+    if (!pdfPath) return;
+    getSignedPdfUrl(pdfPath).then(url => {
+      if (url) setResolvedUrl(url);
+      else setError(true);
+    });
+  };
+
+  useEffect(loadSignedUrl, [pdfPath]);
+
+  const source = {uri: resolvedUrl ?? '', cache: true};
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -42,9 +56,17 @@ export default function PdfViewerScreen() {
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>PDF를 불러올 수 없어요.</Text>
-          <TouchableOpacity onPress={() => setError(false)}>
+          <TouchableOpacity
+            onPress={() => {
+              setError(false);
+              loadSignedUrl();
+            }}>
             <Text style={styles.retryText}>다시 시도</Text>
           </TouchableOpacity>
+        </View>
+      ) : !resolvedUrl ? (
+        <View style={styles.errorContainer}>
+          <ActivityIndicator size="large" color="#191919" />
         </View>
       ) : (
         <Pdf

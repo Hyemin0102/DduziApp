@@ -112,6 +112,7 @@ export const Label = styled.Text`
 `;
 
 export const Input = styled.TextInput`
+  flex: 1;
   font-size: 16px;
   color: #191919;
   padding: 0;
@@ -135,6 +136,7 @@ export const NicknameStatus = styled.Text<{isError: boolean}>`
   font-size: 12px;
   color: ${({isError}) => (isError ? '#e53935' : '#4CAF50')};
   margin-top: 6px;
+  
 `;
 
 export const CharCount = styled.Text`

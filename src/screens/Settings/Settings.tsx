@@ -1,16 +1,20 @@
 import React, {useState, useEffect} from 'react';
-import {Alert, ActivityIndicator} from 'react-native';
+import {Alert, ActivityIndicator, Linking} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import DeviceInfo from 'react-native-device-info';
+import Icon from 'react-native-vector-icons/Feather';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Settings.style';
 
-const APP_VERSION = '0.0.1';
+const APP_VERSION = DeviceInfo.getVersion();
 const BUNDLE_ID = 'com.dduzi.app';
+const FEEDBACK_EMAIL = 'hyeminjo0102@gmail.com';
 
 const Settings = () => {
-  const {provider} = useAuth();
+  const {provider, user} = useAuth();
   const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
@@ -49,16 +53,31 @@ const Settings = () => {
     );
   };
 
+  const handleNotice = () => {
+    navigation.navigate(MY_PAGE_ROUTES.NOTICE_LIST);
+  };
+
   const handleContact = () => {
-    navigation.navigate(MY_PAGE_ROUTES.INQUIRY);
+    Linking.openURL(
+      `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('[뜨지] 피드백')}`,
+    );
+  };
+
+  const handleCopyEmail = () => {
+    Clipboard.setString(FEEDBACK_EMAIL);
+    Alert.alert('복사 완료', '이메일 주소가 복사되었습니다.');
   };
 
   const handleTermsOfService = () => {
-    navigation.navigate(MY_PAGE_ROUTES.TERMS_OF_SERVICE);
+    Linking.openURL(
+      'https://amenable-shelf-49d.notion.site/38adaa46954d8089a9cdf7d6d68e55b0?pvs=73',
+    );
   };
 
   const handlePrivacyPolicy = () => {
-    navigation.navigate(MY_PAGE_ROUTES.PRIVACY_POLICY);
+    Linking.openURL(
+      'https://amenable-shelf-49d.notion.site/34adaa46954d80318ddacb8802c866e1',
+    );
   };
 
   const confirmDeleteAccount = async () => {
@@ -96,6 +115,10 @@ const Settings = () => {
             <S.MenuText>연결된 소셜 계정</S.MenuText>
             <S.MenuValue>{provider}</S.MenuValue>
           </S.MenuItem>
+          <S.MenuItem activeOpacity={1}>
+            <S.MenuText>연결된 이메일</S.MenuText>
+            <S.MenuValue>{user?.email || '-'}</S.MenuValue>
+          </S.MenuItem>
           {/* <S.MenuItem>
             <S.MenuText>알림 설정</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
@@ -120,6 +143,10 @@ const Settings = () => {
               )}
             </S.VersionBadge>
           </S.MenuItem>
+          <S.MenuItem onPress={handleNotice}>
+            <S.MenuText>공지사항</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
           <S.MenuItem onPress={handlePrivacyPolicy}>
             <S.MenuText>개인정보 처리방침</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
@@ -128,11 +155,20 @@ const Settings = () => {
             <S.MenuText>서비스 이용약관</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
-          <S.MenuItem onPress={handleContact}>
-            <S.MenuText>피드백 보내기</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
         </S.MenuSection>
+
+        <S.FeedbackSection>
+          <S.FeedbackButton onPress={handleContact}>
+            <S.FeedbackButtonText>피드백 보내기</S.FeedbackButtonText>
+          </S.FeedbackButton>
+          <S.HintText style={{textAlign: 'center', marginTop: 8}}>
+            메일 자동 연결이 안 될 경우 아래 주소로 보내주세요.
+          </S.HintText>
+          <S.FeedbackHintRow onPress={handleCopyEmail}>
+            <S.HintText>{FEEDBACK_EMAIL}</S.HintText>
+            <Icon name="copy" size={13} color="#999" />
+          </S.FeedbackHintRow>
+        </S.FeedbackSection>
 
         <S.DeleteButton onPress={handleDeleteAccount}>
           <S.DeleteButtonText>회원탈퇴</S.DeleteButtonText>

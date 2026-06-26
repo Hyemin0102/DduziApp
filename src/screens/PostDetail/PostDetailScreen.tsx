@@ -15,7 +15,8 @@ import {completePost} from '@/lib/post/postUtils';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {PROJECTS_ROUTES, POST_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
+import PinchZoomImage from '@/components/common/PinchZoomImage';
+import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
 
 type RouteParams = {
@@ -220,10 +221,7 @@ export default function PostDetailScreen() {
         {/* 작성자 정보 */}
         <S.AuthorSection
           onPress={() =>
-            navigation.navigate(TAB_ROUTES.POST_TAB, {
-              screen: POST_ROUTES.POSTS_MAIN,
-              params: {userId: post.user_id},
-            })
+            navigation.push(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
           }>
           <S.AuthorInfo>
             {post.profile_image ? (
@@ -270,10 +268,12 @@ export default function PostDetailScreen() {
               }}>
               {post.images.map((image, index) => (
                 <S.ImageWrapper key={image.id}>
-                  <S.PostImage
-                    source={{uri: image.image_url}}
-                    resizeMode="cover"
-                  />
+                  <PinchZoomImage uri={image.image_url}>
+                    <S.PostImage
+                      source={{uri: image.image_url}}
+                      resizeMode="cover"
+                    />
+                  </PinchZoomImage>
                   {post.images.length > 1 && (
                     <S.ImageCounter>
                       <S.ImageCounterText>

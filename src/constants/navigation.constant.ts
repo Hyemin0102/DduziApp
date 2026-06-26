@@ -47,7 +47,8 @@ export const MY_PAGE_ROUTES = {
   MY_PAGE_MAIN: 'MyPageMain',
   PROFILE_EDIT: 'ProfileEdit',
   SETTINGS: 'Settings',
-  INQUIRY: 'Inquiry',
   TERMS_OF_SERVICE: 'TermsOfService',
   PRIVACY_POLICY: 'PrivacyPolicy',
+  NOTICE_LIST: 'NoticeList',
+  NOTICE_DETAIL: 'NoticeDetail',
 } as const;

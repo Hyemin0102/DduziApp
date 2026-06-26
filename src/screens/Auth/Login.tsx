@@ -18,7 +18,7 @@ import {initializeKakaoSDK} from '@react-native-kakao/core';
 // 라이브러리 타입을 직접 사용
 import type {KakaoProfile} from '@react-native-seoul/kakao-login';
 import type {User as GoogleUser} from '@react-native-google-signin/google-signin';
-import {supabase, supabaseLocalDB} from '../../lib/supabase';
+import {supabase} from '../../lib/supabase';
 import {
   createOrUpdateUser,
   createUserProfile,
@@ -242,6 +242,7 @@ const Login = () => {
                       appleFullName ||
                       data.user.user_metadata?.full_name ||
                       email ||
+                      data.user.email ||
                       undefined,
                   },
                   'apple',

@@ -82,19 +82,27 @@ export default function PrivacyPolicyScreen() {
         • 개인정보를 안전하게 저장·전송하기 위한 암호화 기술 적용
       </Text>
 
-      <Text style={styles.sectionTitle}>제9조 (만 14세 미만 아동의 개인정보 처리)</Text>
+      <Text style={styles.sectionTitle}>제9조 (이용자가 업로드한 콘텐츠의 접근 및 이용 제한)</Text>
+      <Text style={styles.body}>
+        이용자가 서비스에 업로드하는 도안 파일(PDF), 사진 등 콘텐츠는 이용자의 소유이며, 개발자는 다음과 같은 원칙을 따릅니다.{'\n'}
+        • 업로드된 콘텐츠는 서비스 제공(저장, 전송, 오류 대응) 목적으로만 처리되며, 개발자가 그 내용을 임의로 열람·이용·제3자에게 제공하지 않습니다.{'\n'}
+        • 다만, 서비스 장애 대응, 이용자의 문의 처리, 법령에 따른 요청이 있는 경우에는 예외적으로 접근할 수 있습니다.{'\n'}
+        • 이용자가 업로드한 콘텐츠에 대한 저작권 등 권리는 원저작권자 또는 이용자에게 있으며, 개발자는 해당 콘텐츠에 대한 어떠한 이용 권한도 주장하지 않습니다.
+      </Text>
+
+      <Text style={styles.sectionTitle}>제10조 (만 14세 미만 아동의 개인정보 처리)</Text>
       <Text style={styles.body}>
         본 서비스는 만 14세 미만 아동을 대상으로 하지 않으며, 만 14세 미만 아동의 개인정보를 의도적으로 수집하지 않습니다.
       </Text>
 
-      <Text style={styles.sectionTitle}>제10조 (개인정보 보호 책임자 및 문의)</Text>
+      <Text style={styles.sectionTitle}>제11조 (개인정보 보호 책임자 및 문의)</Text>
       <Text style={styles.body}>
         이용자의 개인정보 관련 문의, 불만 처리, 피해 구제 등을 위해 개인정보 보호 책임자를 지정합니다.{'\n'}
         • 성명: Hyemin Jo{'\n'}
         • 이메일: hyeminjo0102@gmail.com
       </Text>
 
-      <Text style={styles.sectionTitle}>제11조 (권익침해 구제 방법)</Text>
+      <Text style={styles.sectionTitle}>제12조 (권익침해 구제 방법)</Text>
       <Text style={styles.body}>
         개인정보 침해로 인한 신고나 상담이 필요하신 경우 아래 기관에 문의하시기 바랍니다.{'\n'}
         • 개인정보 침해신고센터: (국번없이) 118 (privacy.kisa.or.kr){'\n'}

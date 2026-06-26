@@ -3,6 +3,7 @@ import {ScrollView, Dimensions} from 'react-native';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import PinchZoomImage from './PinchZoomImage';
 import Icon from 'react-native-vector-icons/Feather';
 import * as S from './PostCard.style';
 import {thumbnailUrl, profileUrl} from '@/lib/imageTransform';
@@ -36,7 +37,6 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
   const hasImages = post.post_images && post.post_images.length > 0;
   const multipleImages = hasImages && post.post_images.length > 1;
 
-  console.log('isTruncated', isTruncated);
 
   const profileInitial = post.users.nickname?.charAt(0)?.toUpperCase() ?? '?';
 
@@ -88,7 +88,9 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
 
               return (
                 <S.ImageContainer key={index}>
-                  <PostImage uri={url} />
+                  <PinchZoomImage uri={image.image_url}>
+                    <PostImage uri={url} />
+                  </PinchZoomImage>
                   {multipleImages && (
                     <S.ImageCounter>
                       <S.ImageCounterText>

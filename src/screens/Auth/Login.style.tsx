@@ -25,7 +25,7 @@ export const TopContent = styled.View`
 `;
 
 export  const LogoText = styled.Text`
-  font-family: Ownglyph PDH;
+  font-family: 'Ownglyph_PDH-Rg';
   font-weight: 400;
   font-style: normal;
   font-size: 127.01px;
@@ -46,12 +46,13 @@ export const SubTitle = styled.Text`
 export const ImageWrapper = styled.View`
   width: 100%;
   flex: 1;
+
 `;
 
 export const LoginImage = styled.Image`
   width: 100%;
   height: 100%;
-  resize-mode: cover;
+  resize-mode: contain;
 `;
 
 

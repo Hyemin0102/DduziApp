@@ -156,9 +156,8 @@ Deno.serve(async req => {
 
       if (tokens.refresh_token) {
         await serviceSupabase
-          .from('users')
-          .update({apple_refresh_token: tokens.refresh_token})
-          .eq('id', user.id);
+          .from('user_secrets')
+          .upsert({user_id: user.id, apple_refresh_token: tokens.refresh_token});
       }
 
       return new Response(JSON.stringify({success: true}), {
@@ -170,9 +169,9 @@ Deno.serve(async req => {
       const clientSecret = await generateClientSecret();
       const serviceId = Deno.env.get('APPLE_SERVICE_ID')!;
       const {data} = await serviceSupabase
-        .from('users')
+        .from('user_secrets')
         .select('apple_refresh_token')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (data?.apple_refresh_token) {

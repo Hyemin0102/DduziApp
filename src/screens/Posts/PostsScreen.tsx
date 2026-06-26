@@ -289,11 +289,9 @@ export default function PostsScreen({route}: PostsScreenProps) {
             <S.EmptyContainer>
               <S.EmptyIcon source={require('../../assets/images/dduzi_image.png')} resizeMode="contain" />
               <S.EmptyText>
-                {isMyPage
-                  ? activeTab === 'inProgress'
-                    ? '진행 중인 뜨개가 없어요'
-                    : '완료된 뜨개가 없어요'
-                  : '작성한 게시물이 없어요'}
+                {activeTab === 'inProgress'
+                  ? '진행 중인 뜨개가 없어요'
+                  : '완료된 뜨개가 없어요'}
               </S.EmptyText>
               {isMyPage && activeTab === 'inProgress' && (
                 <S.EmptyAddButton onPress={handleAddPost}>

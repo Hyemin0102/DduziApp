@@ -2,21 +2,9 @@ import 'react-native-url-polyfill/auto';
 import {createClient} from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const localSupabaseUrl = 'http://192.168.200.185:54321'; // CLI 기본 URL
-const localSupabaseAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
-const prodSupabaseUrl = 'https://aaeqoryqxtkcovplmpyx.supabase.co'; // Kakao 설정된 프로젝트
-const prodSupabaseAnonKey = 'sb_publishable_y99DR55KcQ_qNT6WgJDZeg_MaN-VvdI';
+const prodSupabaseUrl = 'https://xjqrqnlhejslenaagnel.supabase.co'; // dduzi_prod (Seoul)
+const prodSupabaseAnonKey = 'sb_publishable_6QKvRV65xfR5oKmqVx4T5A_J2gogaQ9';
 
-//DB작업(일반 사용자 권한)
-export const supabaseLocalDB = createClient(
-  localSupabaseUrl,
-  localSupabaseAnonKey,
-  {
-    auth: {
-      persistSession: false,
-    },
-  },
-);
 
 //Auth 작업(프로덕션)
 export const supabase = createClient(prodSupabaseUrl, prodSupabaseAnonKey, {

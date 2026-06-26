@@ -42,7 +42,7 @@ const Home = () => {
         `,
         )
         .eq('projects.visibility', 'public')
-        .order('created_at', {ascending: false});
+        .order('published_at', {ascending: false});
 
       if (error) throw error;
 

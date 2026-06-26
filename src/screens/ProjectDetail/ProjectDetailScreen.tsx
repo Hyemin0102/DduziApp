@@ -33,7 +33,12 @@ import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import * as S from './ProjectDetailScreen.styles';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import DocumentPicker from 'react-native-document-picker';
-import {uploadPdf, getPdfNameFromUrl} from '@/lib/uploadPdf';
+import {
+  uploadPdf,
+  getPdfNameFromUrl,
+  removePdf,
+  MAX_PDF_SIZE_BYTES,
+} from '@/lib/uploadPdf';
 import {thumbnailUrl} from '@/lib/imageTransform';
 
 type RouteProps = RouteProp<
@@ -182,6 +187,10 @@ export default function ProjectDetailScreen() {
   // ── dirty 감지
   const originalRef = useRef<OriginalValues | null>(null);
   const [isDirty, setIsDirty] = useState(isCreateMode);
+  const isDirtyRef = useRef(isDirty);
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
 
   const updateDirty = useCallback(
     (overrides: Partial<CurrentForm> = {}) => {
@@ -399,15 +408,17 @@ export default function ProjectDetailScreen() {
     }
   }, [isDirty, isSubmitting, isCreateMode, project?.title, navigation]);
 
+  // ── 현재 로그인 유저 id (생성/수정 모드 공통)
+  useEffect(() => {
+    supabase.auth.getUser().then(({data: {user}}) => {
+      setCurrentUserId(user?.id || null);
+    });
+  }, []);
+
   // ── fetch
   const fetchData = useCallback(async () => {
     if (!hasFetchedRef.current) setLoading(true); // 최초만
     try {
-      const {
-        data: {user},
-      } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id || null);
-
       const {data: projectData, error: projectError} = await supabase
         .from('projects')
         .select(
@@ -421,7 +432,10 @@ export default function ProjectDetailScreen() {
       if (projectError) throw projectError;
       const p = projectData as ProjectDetail;
       setProject(p);
-      populateForm(p);
+      // 저장하지 않은 변경사항이 있으면 폼은 덮어쓰지 않음 (다른 화면 다녀온 뒤 입력 유지)
+      if (!isDirtyRef.current) {
+        populateForm(p);
+      }
 
       const {data: postsData, error: postsError} = await supabase
         .from('posts')
@@ -530,6 +544,12 @@ export default function ProjectDetailScreen() {
         currentProjectId = projectId!;
       }
 
+      // 기존에 저장돼있던 PDF가 교체/제거됐으면 버킷에 남은 이전 파일 삭제
+      const previousPatternUrl = originalRef.current?.patternUrl;
+      if (previousPatternUrl && previousPatternUrl !== finalPatternUrl) {
+        removePdf(previousPatternUrl);
+      }
+
       if (isCreateMode) {
         Alert.alert('성공', '프로젝트가 작성되었습니다!', [
           {
@@ -543,7 +563,9 @@ export default function ProjectDetailScreen() {
         ]);
       } else {
         await fetchData();
-        Alert.alert('성공', '저장되었습니다.');
+        Alert.alert('성공', '저장되었습니다.', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
       }
     } catch (error) {
       console.error('프로젝트 저장 실패:', error);
@@ -637,6 +659,13 @@ export default function ProjectDetailScreen() {
       setFormVisibility(visibility);
       setIsDirty(false);
       setCompleteModalVisible(false);
+      Alert.alert(
+        '완료',
+        visibility === 'public'
+          ? '프로젝트가 공개로 완료되었습니다.'
+          : '프로젝트가 비공개로 완료되었습니다.',
+        [{text: '확인', onPress: () => navigation.goBack()}],
+      );
     } catch {
       Alert.alert('오류', '완료 처리에 실패했습니다.');
     }
@@ -651,10 +680,18 @@ export default function ProjectDetailScreen() {
     try {
       const result = await DocumentPicker.pickSingle({
         type: DocumentPicker.types.pdf,
+        copyTo: 'cachesDirectory',
       });
 
       if (!result.uri) return;
-      setPendingPdf({uri: result.uri, name: result.name ?? 'document.pdf'});
+      if (result.size && result.size > MAX_PDF_SIZE_BYTES) {
+        Alert.alert('알림', 'PDF 파일은 20MB 이하만 업로드할 수 있어요.');
+        return;
+      }
+      // 안드로이드의 content:// URI는 fetch()로 못 읽어서(status 0 에러) cachesDirectory로
+      // 복사된 file:// 경로(fileCopyUri)를 사용
+      const fileUri = result.fileCopyUri ?? result.uri;
+      setPendingPdf({uri: fileUri, name: result.name ?? 'document.pdf'});
       setIsDirty(true);
     } catch (e: any) {
       if (!DocumentPicker.isCancel(e)) {
@@ -965,7 +1002,7 @@ export default function ProjectDetailScreen() {
                       style={{flex: 1}}
                       onPress={() =>
                         navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
-                          pdfUrl: patternUrl,
+                          pdfPath: patternUrl,
                           title:
                             patternPdfName || getPdfNameFromUrl(patternUrl),
                         })

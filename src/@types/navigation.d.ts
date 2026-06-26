@@ -63,7 +63,7 @@ export type ProjectsStackParamList = {
   } | undefined;
   [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
-  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
+  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl?: string; pdfPath?: string; title?: string};
   [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 
@@ -93,7 +93,7 @@ export type HomeStackParamList = {
       display_order: number;
     }[];
   } | undefined;
-  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
+  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl?: string; pdfPath?: string; title?: string};
 };
 
 // Posts Stack
@@ -120,7 +120,7 @@ export type PostsStackParamList = {
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
   [PROJECTS_ROUTES.PROJECT_LOGS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
-  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl: string; title?: string};
+  [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl?: string; pdfPath?: string; title?: string};
 };
 
 // MyPage Stack
@@ -128,9 +128,10 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.MY_PAGE_MAIN]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
   [MY_PAGE_ROUTES.SETTINGS]: undefined;
-  [MY_PAGE_ROUTES.INQUIRY]: undefined;
   [MY_PAGE_ROUTES.TERMS_OF_SERVICE]: undefined;
   [MY_PAGE_ROUTES.PRIVACY_POLICY]: undefined;
+  [MY_PAGE_ROUTES.NOTICE_LIST]: undefined;
+  [MY_PAGE_ROUTES.NOTICE_DETAIL]: {noticeId: string; title?: string};
 };
 
 // ============= Navigation Props =============

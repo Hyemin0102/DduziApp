@@ -13,6 +13,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
 import Navigator from './src/screens/Navigator/Navigator';
 import AuthProvider from './src/contexts/AuthContext';
+import {ZoomOverlayProvider} from './src/components/common/ZoomOverlay';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 type SectionProps = PropsWithChildren<{
@@ -33,12 +34,14 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <StatusBar barStyle={'dark-content'} />
+    <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
+      <StatusBar barStyle={'dark-content'} backgroundColor="#fff" />
       <KeyboardProvider>
       <SafeAreaProvider>
         <AuthProvider>
-          <Navigator />
+          <ZoomOverlayProvider>
+            <Navigator />
+          </ZoomOverlayProvider>
         </AuthProvider>
       </SafeAreaProvider>
       </KeyboardProvider>
