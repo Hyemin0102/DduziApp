@@ -1,6 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import * as S from './Login.style';
-import {Alert, ActivityIndicator, Platform} from 'react-native';
+import {Alert, ActivityIndicator, Platform, Modal, TouchableOpacity, View, Text, StyleSheet} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import TermsOfServiceScreen from '@/screens/TermsOfService/TermsOfServiceScreen';
+import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../contexts/AuthContext';
 import {
@@ -35,8 +38,15 @@ const Login = () => {
   const {login, setNeedsProfileSetup} = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsAlreadyAgreed, setTermsAlreadyAgreed] = useState(false);
+  const [modalVisible, setModalVisible] = useState<'terms' | 'privacy' | null>(null);
 
   useEffect(() => {
+    AsyncStorage.getItem('terms_agreed').then(value => {
+      if (value === 'true') setTermsAlreadyAgreed(true);
+    });
+
     //카카오 로그인
     initializeKakaoSDK(KAKAO_SDK);
 
@@ -98,9 +108,14 @@ const Login = () => {
 
                   // login 함수 호출
                   await login(data.session.access_token, userProfile, 'kakao');
+                  await AsyncStorage.setItem('terms_agreed', 'true');
 
                   // 신규 사용자면 Profile 화면으로, 기존 사용자면 Home으로
                   if (result.isNewUser) {
+                    const suggestedNickname = kakaoProfile?.nickname || '';
+                    if (suggestedNickname) {
+                      await AsyncStorage.setItem('pending_nickname', suggestedNickname);
+                    }
                     await AsyncStorage.setItem('needsProfileSetup', 'true');
                     setNeedsProfileSetup(true);
                   } else {
@@ -124,6 +139,11 @@ const Login = () => {
             }
           } catch (error: any) {
             console.log('카카오 error', error);
+            Alert.alert(
+              '카카오 로그인 실패',
+              '카카오 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              [{text: '확인'}],
+            );
           }
           break;
 
@@ -166,8 +186,13 @@ const Login = () => {
 
                   // login 함수 호출
                   await login(data.session.access_token, userProfile, 'google');
+                  await AsyncStorage.setItem('terms_agreed', 'true');
 
                   if (result.isNewUser) {
+                    const suggestedNickname = data.user?.user_metadata?.full_name || '';
+                    if (suggestedNickname) {
+                      await AsyncStorage.setItem('pending_nickname', suggestedNickname);
+                    }
                     await AsyncStorage.setItem('needsProfileSetup', 'true');
                     setNeedsProfileSetup(true);
                   } else {
@@ -191,6 +216,16 @@ const Login = () => {
             }
           } catch (error: any) {
             console.log('구글 error', error);
+            const isCancelled =
+              error?.code === statusCodes.SIGN_IN_CANCELLED ||
+              error?.code === statusCodes.IN_PROGRESS;
+            if (!isCancelled) {
+              Alert.alert(
+                '구글 로그인 실패',
+                '구글 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                [{text: '확인'}],
+              );
+            }
           }
           break;
 
@@ -213,7 +248,8 @@ const Login = () => {
 
             const {identityToken, authorizationCode, fullName, email} =
               appleAuthRequestResponse;
-            console.log('fullname email:', fullName, email);
+            console.log('[Apple] Apple 응답 email:', email);
+            console.log('[Apple] fullName:', fullName);
 
             if (!identityToken) {
               throw new Error('no identity token present!');
@@ -226,6 +262,10 @@ const Login = () => {
             });
 
             if (error) throw error;
+
+            console.log('[Apple] Supabase user.id:', data.user?.id);
+            console.log('[Apple] Supabase user.email:', data.user?.email);
+            console.log('[Apple] Supabase app_metadata:', JSON.stringify(data.user?.app_metadata));
 
             if (data.user && data.session) {
               try {
@@ -261,6 +301,7 @@ const Login = () => {
                 });
 
                 await login(data.session.access_token, userProfile, 'apple');
+                await AsyncStorage.setItem('terms_agreed', 'true');
 
                 // authorization_code → refresh_token 교환 후 저장 (탈퇴 시 revoke에 사용)
                 // authorization_code는 5분 내에만 유효하므로 로그인 직후 처리
@@ -281,6 +322,10 @@ const Login = () => {
                 }
 
                 if (result.isNewUser) {
+                  const suggestedNickname = appleFullName || email || data.user.email || '';
+                  if (suggestedNickname) {
+                    await AsyncStorage.setItem('pending_nickname', suggestedNickname);
+                  }
                   await AsyncStorage.setItem('needsProfileSetup', 'true');
                   setNeedsProfileSetup(true);
                 } else {
@@ -315,6 +360,11 @@ const Login = () => {
               console.log('애플 로그인 취소됨');
             } else {
               console.log('애플 error', error);
+              Alert.alert(
+                '애플 로그인 실패',
+                '애플 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                [{text: '확인'}],
+              );
             }
           }
           break;
@@ -359,11 +409,44 @@ const Login = () => {
               </S.ErrorBox>
             )}
 
+            {/* 약관 동의 체크박스 — 이미 동의한 경우 표시하지 않음 */}
+            {!termsAlreadyAgreed && (
+              <TouchableOpacity
+                style={styles.termsRow}
+                onPress={() => setTermsAgreed(prev => !prev)}
+                activeOpacity={0.7}>
+                <View style={[styles.checkbox, termsAgreed && styles.checkboxChecked]}>
+                  {termsAgreed && <Icon name="check" size={13} color="#fff" />}
+                </View>
+                <Text style={styles.termsText}>
+                  <Text
+                    style={styles.termsLink}
+                    onPress={e => {
+                      e.stopPropagation();
+                      setModalVisible('terms');
+                    }}>
+                    서비스 이용약관
+                  </Text>
+                  {'  및  '}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={e => {
+                      e.stopPropagation();
+                      setModalVisible('privacy');
+                    }}>
+                    개인정보처리방침
+                  </Text>
+                  {'에 동의합니다 (필수)'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
             <S.SocialButton
               provider="kakao"
               onPress={() => socialLoginHandle('kakao')}
-              disabled={isLoading}
-              activeOpacity={0.8}>
+              disabled={isLoading || !(termsAlreadyAgreed || termsAgreed)}
+              activeOpacity={0.8}
+              style={{opacity: termsAlreadyAgreed || termsAgreed ? 1 : 0.4}}>
               <S.ButtonInner>
                 <S.ButtonIcon
                   source={require('../../assets/images/kakao_icon.png')}
@@ -375,8 +458,9 @@ const Login = () => {
             <S.SocialButton
               provider="google"
               onPress={() => socialLoginHandle('google')}
-              disabled={isLoading}
-              activeOpacity={0.8}>
+              disabled={isLoading || !(termsAlreadyAgreed || termsAgreed)}
+              activeOpacity={0.8}
+              style={{opacity: termsAlreadyAgreed || termsAgreed ? 1 : 0.4}}>
               <S.ButtonInner>
                 <S.ButtonIcon
                   source={require('../../assets/images/google_icon.png')}
@@ -389,8 +473,9 @@ const Login = () => {
               <S.SocialButton
                 provider="apple"
                 onPress={() => socialLoginHandle('apple')}
-                disabled={isLoading}
-                activeOpacity={0.8}>
+                disabled={isLoading || !(termsAlreadyAgreed || termsAgreed)}
+                activeOpacity={0.8}
+                style={{opacity: termsAlreadyAgreed || termsAgreed ? 1 : 0.4}}>
                 <S.ButtonInner>
                   <S.ButtonIcon
                     source={require('../../assets/images/apple_icon.png')}
@@ -399,23 +484,82 @@ const Login = () => {
                 </S.ButtonInner>
               </S.SocialButton>
             )}
-
-            {/* DEV ONLY */}
-            {/* <S.DevButton
-              onPress={async () => {
-                await AsyncStorage.removeItem('onboarding_completed');
-                Alert.alert(
-                  '온보딩 초기화',
-                  'onboarding_completed 키를 삭제했어요.',
-                );
-              }}>
-              <S.DevButtonText>온보딩 초기화 (개발용)</S.DevButtonText>
-            </S.DevButton> */}
           </S.ButtonContainer>
         </S.InnerContainer>
       </S.ScrollViewContainer>
+
+      {/* 약관/개인정보 모달 */}
+      <Modal
+        visible={modalVisible !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalVisible(null)}>
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {modalVisible === 'terms' ? '서비스 이용약관' : '개인정보처리방침'}
+            </Text>
+            <TouchableOpacity onPress={() => setModalVisible(null)} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <Icon name="x" size={22} color="#191919" />
+            </TouchableOpacity>
+          </View>
+          {modalVisible === 'terms' ? <TermsOfServiceScreen /> : <PrivacyPolicyScreen />}
+        </SafeAreaView>
+      </Modal>
     </S.Container>
   );
 };
+
+const styles = StyleSheet.create({
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    paddingHorizontal: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#ccc',
+    marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#191919',
+    borderColor: '#191919',
+  },
+  termsText: {
+    fontSize: 13,
+    color: '#555',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  termsLink: {
+    color: '#191919',
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#191919',
+  },
+});
 
 export default Login;

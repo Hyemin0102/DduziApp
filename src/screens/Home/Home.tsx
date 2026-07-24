@@ -22,7 +22,18 @@ const Home = () => {
 
   const fetchPosts = async () => {
     try {
-      const {data, error} = await supabase
+      const {data: {user}} = await supabase.auth.getUser();
+
+      const blockedIds: string[] = [];
+      if (user) {
+        const {data: blocks} = await supabase
+          .from('blocks')
+          .select('blocked_id')
+          .eq('blocker_id', user.id);
+        if (blocks) blocks.forEach(b => blockedIds.push(b.blocked_id));
+      }
+
+      let query = supabase
         .from('posts')
         .select(
           `
@@ -44,6 +55,11 @@ const Home = () => {
         .eq('projects.visibility', 'public')
         .order('published_at', {ascending: false});
 
+      if (blockedIds.length > 0) {
+        query = query.not('user_id', 'in', `(${blockedIds.join(',')})`);
+      }
+
+      const {data, error} = await query;
       if (error) throw error;
 
       const allPosts: Post[] = data
@@ -59,7 +75,7 @@ const Home = () => {
     } catch (error) {
       console.error('게시물 로드 실패:', error);
     } finally {
-      setLoading(false); // 데이터만 오면 바로 스켈레톤 해제
+      setLoading(false);
     }
   };
 

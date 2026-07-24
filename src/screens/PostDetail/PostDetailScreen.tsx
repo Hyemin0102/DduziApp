@@ -34,7 +34,10 @@ export default function PostDetailScreen() {
   const [post, setPost] = useState<PostDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showActionSheet, setShowActionSheet] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
+  const [showReportReasonSheet, setShowReportReasonSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const hasFetchedRef = useRef(false);
@@ -173,6 +176,34 @@ export default function PostDetailScreen() {
     ]);
   };
 
+  const handleReport = async (reason: string) => {
+    if (!user || !post) return;
+    try {
+      setIsReporting(true);
+      await supabase.from('reports').insert({
+        reporter_id: user.id,
+        post_id: post.id,
+        reason,
+      });
+      await supabase.functions.invoke('send-report-email', {
+        body: {
+          reporterId: user.id,
+          reporterNickname: user.nickname ?? '알 수 없음',
+          postId: post.id,
+          postContent: post.content,
+          reason,
+        },
+      });
+      Alert.alert('신고 완료', '신고가 접수되었습니다. 24시간 내에 검토 후 처리하겠습니다.');
+    } catch (error) {
+      console.error('❌ 신고 실패:', error);
+      Alert.alert('오류', '신고 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsReporting(false);
+      setShowReportSheet(false);
+    }
+  };
+
   const handleConfirmComplete = async (visibility: 'public' | 'private') => {
     if (!post) return;
     setLoading(true);
@@ -244,11 +275,15 @@ export default function PostDetailScreen() {
               </S.Date>
             </S.AuthorTextContainer>
           </S.AuthorInfo>
-          {isMyPost && (
+          {isMyPost ? (
             <TouchableOpacity onPress={() => setShowActionSheet(true)}>
               <S.MoreButton>⋯</S.MoreButton>
             </TouchableOpacity>
-          )}
+          ) : post ? (
+            <TouchableOpacity onPress={() => setShowReportSheet(true)}>
+              <S.MoreButton>⋯</S.MoreButton>
+            </TouchableOpacity>
+          ) : null}
         </S.AuthorSection>
 
         {/* 이미지 갤러리 */}
@@ -329,6 +364,28 @@ export default function PostDetailScreen() {
         actions={[
           {label: '수정하기', icon: '✏️', onPress: handleEdit},
           {label: isDeleting ? '삭제 중...' : '삭제하기', icon: '🗑️', onPress: handleDelete, isDestructive: true},
+        ]}
+      />
+
+      <ActionSheetModal
+        visible={showReportSheet}
+        onClose={() => setShowReportSheet(false)}
+        actions={[
+          {label: '신고하기', onPress: () => {
+            setShowReportSheet(false);
+            setTimeout(() => setShowReportReasonSheet(true), 300);
+          }, isDestructive: true},
+        ]}
+      />
+
+      <ActionSheetModal
+        visible={showReportReasonSheet}
+        onClose={() => setShowReportReasonSheet(false)}
+        actions={[
+          {label: '스팸', onPress: () => handleReport('스팸')},
+          {label: '부적절한 콘텐츠', onPress: () => handleReport('부적절한 콘텐츠'), isDestructive: true},
+          {label: '저작권 침해', onPress: () => handleReport('저작권 침해'), isDestructive: true},
+          {label: '기타', onPress: () => handleReport('기타')},
         ]}
       />
 

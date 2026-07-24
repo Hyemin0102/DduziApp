@@ -6,6 +6,8 @@ import {
   Dimensions,
   Animated,
   View,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
@@ -18,6 +20,8 @@ import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import AppHeader from '@/components/Header/AppHeader';
 import Icon from 'react-native-vector-icons/Feather';
 import {PostsStackParamList} from '@/@types/navigation';
+import ActionSheetModal from '@/components/modal/ActionSheetModal';
+import {useAuth} from '@/contexts/AuthContext';
 
 type TabType = 'inProgress' | 'completed';
 
@@ -128,12 +132,14 @@ const GridCell = ({
 
 export default function PostsScreen({route}: PostsScreenProps) {
   const {navigation} = useCommonNavigation<any>();
+  const {user: authUser} = useAuth();
   const [posts, setPosts] = useState<PostListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
   const [nickname, setNickname] = useState<string | null>(null);
+  const [showBlockSheet, setShowBlockSheet] = useState(false);
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
@@ -230,6 +236,45 @@ export default function PostsScreen({route}: PostsScreenProps) {
     navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {});
   };
 
+  const handleBlock = () => {
+    Alert.alert(
+      '유저 차단',
+      `${nickname ?? '이 유저'}를 차단하시겠습니까?\n차단하면 이 유저의 게시물이 피드에서 보이지 않습니다.`,
+      [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '차단',
+          style: 'destructive',
+          onPress: async () => {
+            if (!currentUserId || !targetUserId) return;
+            try {
+              await supabase.from('blocks').insert({
+                blocker_id: currentUserId,
+                blocked_id: targetUserId,
+              });
+              await supabase.functions.invoke('send-block-email', {
+                body: {
+                  blockerId: currentUserId,
+                  blockerNickname: authUser?.nickname ?? '알 수 없음',
+                  blockedId: targetUserId,
+                  blockedNickname: nickname ?? '알 수 없음',
+                },
+              });
+              Alert.alert('차단 완료', '해당 유저를 차단했습니다.', [
+                {text: '확인', onPress: () => navigation.goBack()},
+              ]);
+            } catch (error) {
+              console.error('❌ 차단 실패:', error);
+              Alert.alert('오류', '차단 처리 중 오류가 발생했습니다.');
+            } finally {
+              setShowBlockSheet(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView
       style={{flex: 1, backgroundColor: '#fff'}}
@@ -238,6 +283,13 @@ export default function PostsScreen({route}: PostsScreenProps) {
         showBack={!!targetUserId}
         title={targetUserId ? (nickname ?? '') : '내 뜨개'}
         titleDirection="left"
+        right={
+          !isMyPage ? (
+            <TouchableOpacity onPress={() => setShowBlockSheet(true)}>
+              <Icon name="more-horizontal" size={22} color="#191919" />
+            </TouchableOpacity>
+          ) : undefined
+        }
       />
     <S.Container>
       <S.ProfileSection>
@@ -303,6 +355,14 @@ export default function PostsScreen({route}: PostsScreenProps) {
         }
       />
     </S.Container>
+
+    <ActionSheetModal
+      visible={showBlockSheet}
+      onClose={() => setShowBlockSheet(false)}
+      actions={[
+        {label: '차단하기', onPress: handleBlock, isDestructive: true},
+      ]}
+    />
     </SafeAreaView>
   );
 }

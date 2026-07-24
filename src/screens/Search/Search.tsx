@@ -60,6 +60,15 @@ const Search = () => {
       const {data: userData} = await supabase.auth.getUser();
       const currentUserId = userData?.user?.id ?? null;
 
+      const blockedIds: string[] = [];
+      if (currentUserId) {
+        const {data: blocks} = await supabase
+          .from('blocks')
+          .select('blocked_id')
+          .eq('blocker_id', currentUserId);
+        if (blocks) blocks.forEach(b => blockedIds.push(b.blocked_id));
+      }
+
       const {data: postIds, error: rpcError} = await supabase.rpc(
         'search_posts',
         {search_query: query},
@@ -104,6 +113,7 @@ const Search = () => {
       const results: Post[] = data
         ? (data as any[])
             .filter((post: any) => {
+              if (blockedIds.includes(post.user_id)) return false;
               const proj = post.projects;
               if (post.project_id && !proj) return false;
               if (!proj || proj.visibility !== 'private') return true;

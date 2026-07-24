@@ -53,13 +53,16 @@ export const createOrUpdateUser = async (
     if (!existingUser) {
       const defaultImageUrl = getDefaultImageUrl();
 
+      // 충돌 없는 임시 닉네임으로 INSERT (실제 닉네임은 프로필 설정에서 확정)
+      const tempNickname = `user_${user.id.slice(0, 8)}`;
+
       //테이블 insert
       const {data: newUser, error: insertError} = await supabase
         .from('users')
         .insert({
           id: user.id,
           email: user.email || null,
-          nickname: profile?.nickname || user.user_metadata?.name,
+          nickname: tempNickname,
           bio: null,
           profile_image: defaultImageUrl,
           provider: user.app_metadata?.provider,

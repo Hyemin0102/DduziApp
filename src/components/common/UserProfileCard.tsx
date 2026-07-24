@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, Text} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {UserProfile} from '../../@types/auth';
@@ -23,6 +23,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   const {user: authUser} = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   // 내 페이지면 AuthContext 사용 (프로필 수정 즉시 반영)
   useEffect(() => {
@@ -32,7 +33,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
     }
   }, [isMyPage, authUser]);
 
-  // 다른 유저 프로필은 화면 포커스 시 재조회
+  // 다른 유저 프로필은 화면 포커스 시 재조회 (이미 불러온 유저면 스피너 없이 백그라운드 갱신)
   useFocusEffect(
     useCallback(() => {
       if (isMyPage) return;
@@ -41,8 +42,9 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
           setLoading(false);
           return;
         }
+        const isFirstLoad = loadedUserIdRef.current !== userId;
         try {
-          setLoading(true);
+          if (isFirstLoad) setLoading(true);
           const {data, error} = await supabase
             .from('users')
             .select('*')
@@ -50,9 +52,10 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
             .single();
           if (error) throw error;
           setUser(data);
+          loadedUserIdRef.current = userId;
         } catch (error) {
           console.error('❌ 프로필 로드 실패:', error);
-          setUser(null);
+          if (isFirstLoad) setUser(null);
         } finally {
           setLoading(false);
         }

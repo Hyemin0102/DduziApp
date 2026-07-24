@@ -112,7 +112,7 @@ export default function PrivacyPolicyScreen() {
       </Text>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>본 개인정보처리방침은 2025년 4월 6일부터 시행됩니다.</Text>
+        <Text style={styles.footerText}>본 개인정보처리방침은 2026년 6월 25일부터 시행됩니다.</Text>
       </View>
     </ScrollView>
   );
