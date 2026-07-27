@@ -377,7 +377,7 @@ const Login = () => {
         <S.InnerContainer>
           <S.TopContent>
             <S.LogoText>뜨지</S.LogoText>
-            <S.SubTitle>일기처럼 기록하는 나만의 뜨개 SNS</S.SubTitle>
+            <S.SubTitle>일기처럼 기록하고 공유하는 뜨개 SNS</S.SubTitle>
           </S.TopContent>
 
           <S.ImageWrapper>
