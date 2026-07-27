@@ -3,6 +3,7 @@ import {Dimensions} from 'react-native';
 import FastImage from 'react-native-fast-image';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const IMAGE_HEIGHT = Math.min(SCREEN_WIDTH, 500);
 
 export const CardContainer = styled.View`
   background-color: #fff;
@@ -51,7 +52,7 @@ export const Username = styled.Text`
 
 export const ImageContainer = styled.View`
   width: ${`${SCREEN_WIDTH}px`};
-  height: ${`${SCREEN_WIDTH}px`};
+  height: ${`${IMAGE_HEIGHT}px`};
   position: relative;
 `;
 

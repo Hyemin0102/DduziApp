@@ -46,7 +46,6 @@ export const uploadImage = async (
       .from(bucket)
       .getPublicUrl(filePath);
 
-    console.log('✅ 업로드 성공:', urlData.publicUrl);
     return urlData.publicUrl;
   } catch (error) {
     console.error('이미지 업로드 실패:', error);

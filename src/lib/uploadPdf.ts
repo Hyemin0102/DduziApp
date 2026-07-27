@@ -99,7 +99,6 @@ export const uploadPdf = async (
       return null;
     }
 
-    console.log('✅ PDF 업로드 성공:', filePath);
     return filePath;
   } catch (error) {
     console.error('PDF 업로드 실패:', error);

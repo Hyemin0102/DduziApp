@@ -112,10 +112,6 @@ const Login = () => {
 
                   // 신규 사용자면 Profile 화면으로, 기존 사용자면 Home으로
                   if (result.isNewUser) {
-                    const suggestedNickname = kakaoProfile?.nickname || '';
-                    if (suggestedNickname) {
-                      await AsyncStorage.setItem('pending_nickname', suggestedNickname);
-                    }
                     await AsyncStorage.setItem('needsProfileSetup', 'true');
                     setNeedsProfileSetup(true);
                   } else {
@@ -139,11 +135,14 @@ const Login = () => {
             }
           } catch (error: any) {
             console.log('카카오 error', error);
-            Alert.alert(
-              '카카오 로그인 실패',
-              '카카오 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-              [{text: '확인'}],
-            );
+            const isCancelled = error?.message?.includes('SdkError error 0');
+            if (!isCancelled) {
+              Alert.alert(
+                '카카오 로그인 실패',
+                '카카오 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                [{text: '확인'}],
+              );
+            }
           }
           break;
 
@@ -154,65 +153,57 @@ const Login = () => {
             const userInfo = await GoogleSignin.signIn();
             console.log('구글 userInfo 전체:', JSON.stringify(userInfo));
 
-            if (userInfo.data?.idToken) {
-              const {data, error} = await supabase.auth.signInWithIdToken({
-                provider: 'google',
-                token: userInfo.data?.idToken,
-              });
+            if (!userInfo.data?.idToken) return;
 
-              if (error) throw error;
+            const {data, error} = await supabase.auth.signInWithIdToken({
+              provider: 'google',
+              token: userInfo.data.idToken,
+            });
 
-              if (data.user && data.session) {
-                try {
-                  const result = await createOrUpdateUser(
-                    data.user,
-                    {
-                      nickname: data.user?.user_metadata.full_name,
-                      profileImageUrl: data.user?.user_metadata.picture,
-                    },
-                    'google',
+            if (error) throw error;
+
+            if (data.user && data.session) {
+              try {
+                const result = await createOrUpdateUser(
+                  data.user,
+                  {
+                    nickname: data.user?.user_metadata.full_name,
+                    profileImageUrl: data.user?.user_metadata.picture,
+                  },
+                  'google',
+                );
+                console.log('구글 로그인 결과', result);
+
+                const userProfile = createUserProfile({
+                  supabaseUser: data.user,
+                  dbUser: result.user,
+                  provider: 'google',
+                  rawProfile: {
+                    id: data.user.id,
+                  } as GoogleUser['user'],
+                });
+
+                await login(data.session.access_token, userProfile, 'google');
+                await AsyncStorage.setItem('terms_agreed', 'true');
+
+                if (result.isNewUser) {
+                  await AsyncStorage.setItem('needsProfileSetup', 'true');
+                  setNeedsProfileSetup(true);
+                } else {
+                  await AsyncStorage.removeItem('needsProfileSetup');
+                  setNeedsProfileSetup(false);
+                }
+              } catch (userError: any) {
+                if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
+                  const conflictProvider = userError.message.split(':')[1];
+                  await handleProviderConflict(conflictProvider, 'google');
+                } else {
+                  console.error(
+                    '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
+                    userError,
                   );
-                  console.log('구글 로그인 결과', result);
-
-                  // UserProfile 객체 구성
-                  const userProfile = createUserProfile({
-                    supabaseUser: data.user,
-                    dbUser: result.user,
-                    provider: 'google',
-                    rawProfile: {
-                      id: data.user.id,
-                    } as GoogleUser['user'],
-                  });
-
-                  // login 함수 호출
-                  await login(data.session.access_token, userProfile, 'google');
-                  await AsyncStorage.setItem('terms_agreed', 'true');
-
-                  if (result.isNewUser) {
-                    const suggestedNickname = data.user?.user_metadata?.full_name || '';
-                    if (suggestedNickname) {
-                      await AsyncStorage.setItem('pending_nickname', suggestedNickname);
-                    }
-                    await AsyncStorage.setItem('needsProfileSetup', 'true');
-                    setNeedsProfileSetup(true);
-                  } else {
-                    await AsyncStorage.removeItem('needsProfileSetup');
-                    setNeedsProfileSetup(false);
-                  }
-                } catch (userError: any) {
-                  if (userError?.message?.startsWith('PROVIDER_CONFLICT:')) {
-                    const conflictProvider = userError.message.split(':')[1];
-                    await handleProviderConflict(conflictProvider, 'google');
-                  } else {
-                    console.error(
-                      '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
-                      userError,
-                    );
-                  }
                 }
               }
-            } else {
-              throw new Error('no ID token present!');
             }
           } catch (error: any) {
             console.log('구글 error', error);
@@ -248,8 +239,6 @@ const Login = () => {
 
             const {identityToken, authorizationCode, fullName, email} =
               appleAuthRequestResponse;
-            console.log('[Apple] Apple 응답 email:', email);
-            console.log('[Apple] fullName:', fullName);
 
             if (!identityToken) {
               throw new Error('no identity token present!');
@@ -263,9 +252,6 @@ const Login = () => {
 
             if (error) throw error;
 
-            console.log('[Apple] Supabase user.id:', data.user?.id);
-            console.log('[Apple] Supabase user.email:', data.user?.email);
-            console.log('[Apple] Supabase app_metadata:', JSON.stringify(data.user?.app_metadata));
 
             if (data.user && data.session) {
               try {
@@ -322,10 +308,6 @@ const Login = () => {
                 }
 
                 if (result.isNewUser) {
-                  const suggestedNickname = appleFullName || email || data.user.email || '';
-                  if (suggestedNickname) {
-                    await AsyncStorage.setItem('pending_nickname', suggestedNickname);
-                  }
                   await AsyncStorage.setItem('needsProfileSetup', 'true');
                   setNeedsProfileSetup(true);
                 } else {

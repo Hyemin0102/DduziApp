@@ -23,16 +23,6 @@ const ProfileScreen = () => {
   const route = useRoute();
   const isInitialSetup = route.name === 'Profile';
   const [nickname, setNickname] = useState(user?.nickname ?? '');
-
-  useEffect(() => {
-    if (!isInitialSetup) return;
-    AsyncStorage.getItem('pending_nickname').then(pending => {
-      if (pending) {
-        setNickname(pending);
-        AsyncStorage.removeItem('pending_nickname');
-      }
-    });
-  }, []);
   const [bio, setBio] = useState(user?.bio ?? '');
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -171,7 +161,6 @@ const ProfileScreen = () => {
 
   const nicknameChanged = nickname.trim() !== user.nickname;
 
-  console.log('user.profile_image',user.profile_image);
   
 
   return (

@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {ScrollView, Dimensions} from 'react-native';
+import React, {useState, useRef, useCallback} from 'react';
+import {FlatList, Dimensions, ViewToken} from 'react-native';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -13,6 +13,7 @@ interface PostCardProps {
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const IMAGE_HEIGHT = Math.min(SCREEN_WIDTH, 500);
 
 const PostImage = ({uri}: {uri: string}) => {
   const [loaded, setLoaded] = useState(false);
@@ -33,6 +34,14 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
   const {navigation} = useCommonNavigation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isTruncated, setIsTruncated] = useState(false);
+  const onViewableItemsChanged = useRef(
+    ({viewableItems}: {viewableItems: ViewToken[]}) => {
+      if (viewableItems.length > 0 && viewableItems[0].index != null) {
+        setActiveIndex(viewableItems[0].index);
+      }
+    },
+  ).current;
+  const viewabilityConfig = useRef({viewAreaCoveragePercentThreshold: 50}).current;
   const content = post.content ?? '';
   const hasImages = post.post_images && post.post_images.length > 0;
   const multipleImages = hasImages && post.post_images.length > 1;
@@ -69,26 +78,17 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
       {/* 이미지 */}
       {hasImages && (
         <>
-          <ScrollView
+          <FlatList
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            snapToInterval={SCREEN_WIDTH}
-            decelerationRate="fast"
-            scrollEventThrottle={16}
-            onScroll={e => {
-              const idx = Math.round(
-                e.nativeEvent.contentOffset.x / SCREEN_WIDTH,
-              );
-              setActiveIndex(idx);
-            }}
-            style={{height: SCREEN_WIDTH}}>
-            {post.post_images.map((image, index) => {
-              const url = thumbnailUrl(image.image_url) ?? image.image_url;
-
+            data={post.post_images}
+            keyExtractor={(_, index) => String(index)}
+            renderItem={({item, index}) => {
+              const url = thumbnailUrl(item.image_url) ?? item.image_url;
               return (
-                <S.ImageContainer key={index}>
-                  <PinchZoomImage uri={image.image_url}>
+                <S.ImageContainer>
+                  <PinchZoomImage uri={item.image_url}>
                     <PostImage uri={url} />
                   </PinchZoomImage>
                   {multipleImages && (
@@ -100,8 +100,18 @@ const PostCard: React.FC<PostCardProps> = ({post}) => {
                   )}
                 </S.ImageContainer>
               );
+            }}
+            getItemLayout={(_, index) => ({
+              length: SCREEN_WIDTH,
+              offset: SCREEN_WIDTH * index,
+              index,
             })}
-          </ScrollView>
+            initialNumToRender={1}
+            windowSize={3}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            style={{height: IMAGE_HEIGHT}}
+          />
 
           {/* 이미지 dots */}
           {multipleImages && (

@@ -1,6 +1,7 @@
 // screens/Posts/PostsScreen.tsx
 import React, {useState, useCallback, useEffect, useRef} from 'react';
 import {
+  DeviceEventEmitter,
   FlatList,
   RefreshControl,
   Dimensions,
@@ -260,6 +261,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
                   blockedNickname: nickname ?? '알 수 없음',
                 },
               });
+              DeviceEventEmitter.emit('userBlocked', {blockedId: targetUserId});
               Alert.alert('차단 완료', '해당 유저를 차단했습니다.', [
                 {text: '확인', onPress: () => navigation.goBack()},
               ]);
