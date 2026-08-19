@@ -96,7 +96,6 @@ const Login = () => {
                     },
                     'kakao',
                   );
-                  console.log('카카오 로그인 결과', result);
 
                   // UserProfile 객체 구성
                   const userProfile = createUserProfile({
@@ -151,7 +150,6 @@ const Login = () => {
             await GoogleSignin.hasPlayServices();
 
             const userInfo = await GoogleSignin.signIn();
-            console.log('구글 userInfo 전체:', JSON.stringify(userInfo));
 
             if (!userInfo.data?.idToken) return;
 
@@ -172,7 +170,6 @@ const Login = () => {
                   },
                   'google',
                 );
-                console.log('구글 로그인 결과', result);
 
                 const userProfile = createUserProfile({
                   supabaseUser: data.user,
@@ -273,7 +270,6 @@ const Login = () => {
                   },
                   'apple',
                 );
-                console.log('애플 로그인 결과', result);
 
                 const userProfile = createUserProfile({
                   supabaseUser: data.user,

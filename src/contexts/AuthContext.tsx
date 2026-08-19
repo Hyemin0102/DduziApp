@@ -14,8 +14,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [provider, setProvider] = useState<string>('');
   const [needsProfileSetup, setNeedsProfileSetup] = useState<boolean>(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(false);
-  console.log('✅ Authuser', user);
-
   //supabase 테이블 + users 테이블
   const fetchUserWithProfile = async (session: any): Promise<UserProfile> => {
     const {data: dbUser, error} = await supabase
@@ -23,8 +21,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       .select('*')
       .eq('id', session.user.id)
       .maybeSingle();
-
-    console.log('🥳session', session);
 
     if (error) {
       console.error('❌ users 테이블 조회 에러:', error);
