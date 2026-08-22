@@ -180,12 +180,19 @@ export default function PostDetailScreen() {
     if (!user || !post) return;
     try {
       setIsReporting(true);
-      await supabase.from('reports').insert({
+      const {error: insertError} = await supabase.from('reports').insert({
         reporter_id: user.id,
         post_id: post.id,
         reason,
       });
-      await supabase.functions.invoke('send-report-email', {
+      if (insertError) {
+        if (insertError.code === '23505') {
+          Alert.alert('알림', '이미 신고한 게시물입니다.');
+          return;
+        }
+        throw insertError;
+      }
+      const {error: fnError} = await supabase.functions.invoke('send-report-email', {
         body: {
           reporterId: user.id,
           reporterNickname: user.nickname ?? '알 수 없음',
@@ -194,13 +201,16 @@ export default function PostDetailScreen() {
           reason,
         },
       });
+      if (fnError) {
+        console.error('❌ 신고 이메일 발송 실패:', fnError);
+      }
       Alert.alert('신고 완료', '신고가 접수되었습니다. 24시간 내에 검토 후 처리하겠습니다.');
     } catch (error) {
       console.error('❌ 신고 실패:', error);
       Alert.alert('오류', '신고 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsReporting(false);
-      setShowReportSheet(false);
+      setShowReportReasonSheet(false);
     }
   };
 
@@ -389,7 +399,7 @@ export default function PostDetailScreen() {
         ]}
       />
 
-      <CompletePostModal
+<CompletePostModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onConfirm={handleConfirmComplete}

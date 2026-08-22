@@ -68,6 +68,7 @@ export interface SimplePost {
   content?: string | null;
   created_at: string;
   updated_at: string;
+  published_at?: string | null;
   post_images: Array<Pick<PostImage, 'id' | 'image_url' | 'display_order'>>;
 }
 

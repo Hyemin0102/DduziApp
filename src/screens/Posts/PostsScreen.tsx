@@ -249,11 +249,12 @@ export default function PostsScreen({route}: PostsScreenProps) {
           onPress: async () => {
             if (!currentUserId || !targetUserId) return;
             try {
-              await supabase.from('blocks').insert({
+              const {error: insertError} = await supabase.from('blocks').insert({
                 blocker_id: currentUserId,
                 blocked_id: targetUserId,
               });
-              await supabase.functions.invoke('send-block-email', {
+              if (insertError) throw insertError;
+              const {error: fnError} = await supabase.functions.invoke('send-block-email', {
                 body: {
                   blockerId: currentUserId,
                   blockerNickname: authUser?.nickname ?? '알 수 없음',
@@ -261,6 +262,9 @@ export default function PostsScreen({route}: PostsScreenProps) {
                   blockedNickname: nickname ?? '알 수 없음',
                 },
               });
+              if (fnError) {
+                console.error('❌ 차단 이메일 발송 실패:', fnError);
+              }
               DeviceEventEmitter.emit('userBlocked', {blockedId: targetUserId});
               Alert.alert('차단 완료', '해당 유저를 차단했습니다.', [
                 {text: '확인', onPress: () => navigation.goBack()},

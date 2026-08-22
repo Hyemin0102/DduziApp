@@ -57,7 +57,7 @@ const Home = () => {
       `,
       )
       .eq('projects.visibility', 'public')
-      .order('published_at', {ascending: false})
+      .order('created_at', {ascending: false})
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
     if (ids.length > 0) {
