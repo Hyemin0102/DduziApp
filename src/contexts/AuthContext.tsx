@@ -70,14 +70,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           setUser(null);
           setProvider('');
           setNeedsProfileSetup(false);
-          //setHasSeenOnboarding(false);
 
-          // AsyncStorage 정리
-          await AsyncStorage.removeItem('authToken');
-          await AsyncStorage.removeItem('user');
-          await AsyncStorage.removeItem('provider');
-          await AsyncStorage.removeItem('needsProfileSetup');
-          //await AsyncStorage.removeItem('onboarding_completed');
+          await AsyncStorage.multiRemove(['user', 'provider', 'needsProfileSetup']);
         }
       },
     );
@@ -109,41 +103,22 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
       if (session) {
         const userData = await fetchUserWithProfile(session);
+        const sessionProvider = session.user.app_metadata.provider || 'google';
 
         setIsLoggedIn(true);
         setUser(userData);
-        setProvider(session.user.app_metadata.provider || 'google');
+        setProvider(sessionProvider);
 
-        await AsyncStorage.setItem('authToken', session.access_token);
         await AsyncStorage.setItem('user', JSON.stringify(userData));
-        await AsyncStorage.setItem(
-          'provider',
-          session.user.app_metadata.provider || 'google',
-        );
+        await AsyncStorage.setItem('provider', sessionProvider);
 
-        // needsProfileSetup 플래그 확인
         const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
         setNeedsProfileSetup(needsSetup === 'true');
       } else {
-        // Supabase 세션이 없으면 기존 AsyncStorage 확인
-        const authToken = await AsyncStorage.getItem('authToken');
-        const storedUser = await AsyncStorage.getItem('user');
-        const storedProvider = await AsyncStorage.getItem('provider');
-
-        if (authToken && storedUser) {
-          setIsLoggedIn(true);
-          setUser(JSON.parse(storedUser));
-          setProvider(storedProvider || '');
-
-          // needsProfileSetup 플래그 확인
-          const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
-          setNeedsProfileSetup(needsSetup === 'true');
-        } else {
-          setIsLoggedIn(false);
-          setUser(null);
-          setProvider('');
-          setNeedsProfileSetup(false);
-        }
+        setIsLoggedIn(false);
+        setUser(null);
+        setProvider('');
+        setNeedsProfileSetup(false);
       }
     } catch (error) {
       console.error('checkAuthStatus error:', error);
@@ -156,9 +131,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     }
   };
 
-  //스토리지 상태 저장
-  const login = async (token: any, userData: any, provider: any) => {
-    await AsyncStorage.setItem('authToken', token);
+  const login = async (_token: any, userData: any, provider: any) => {
     await AsyncStorage.setItem('user', JSON.stringify(userData));
     await AsyncStorage.setItem('provider', provider);
     setIsLoggedIn(true);
@@ -218,7 +191,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       }
 
       try {
-        await AsyncStorage.multiRemove(['authToken', 'user', 'provider', 'needsProfileSetup']);
+        await AsyncStorage.multiRemove(['user', 'provider', 'needsProfileSetup']);
       } catch (storageError) {
         console.error('❌ AsyncStorage 정리 실패:', storageError);
       }
