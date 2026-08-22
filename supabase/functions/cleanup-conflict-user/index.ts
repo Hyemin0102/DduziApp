@@ -1,15 +1,40 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 Deno.serve(async (req) => {
   try {
-    const { userId, conflictProvider } = await req.json()
-
-    if (!userId || !conflictProvider) {
+    // JWT 검증: Authorization 헤더 필수
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'userId와 conflictProvider는 필수입니다.' }),
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401 },
+      )
+    }
+
+    const { conflictProvider } = await req.json()
+
+    if (!conflictProvider) {
+      return new Response(
+        JSON.stringify({ error: 'conflictProvider는 필수입니다.' }),
         { status: 400 },
       )
     }
+
+    // 요청자의 JWT에서 uid 추출 (body로 받은 userId를 신뢰하지 않음)
+    const userSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    )
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser()
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401 },
+      )
+    }
+
+    const userId = user.id
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
