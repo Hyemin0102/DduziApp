@@ -170,10 +170,15 @@ export const ProjectBannerTextGroup = styled.View`
   margin-left: 10px;
 `;
 
+export const ProjectBannerRight = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+`;
+
 export const ProjectBannerChevron = styled.Text`
   font-size: 16px;
   color: #555;
-  margin-left: 8px;
 `;
 
 // 콘텐츠 섹션

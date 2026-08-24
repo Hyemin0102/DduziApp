@@ -40,6 +40,8 @@ export default function PostDetailScreen() {
   const [isReporting, setIsReporting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaveLoading, setIsSaveLoading] = useState(false);
   const hasFetchedRef = useRef(false);
 
   const isMyPost = post && user && post.user_id === user.id;
@@ -121,10 +123,46 @@ export default function PostDetailScreen() {
 
       setPost(postDetail);
       hasFetchedRef.current = true;
+
+      // 저장 여부 조회 (본인 프로젝트 제외)
+      if (user && project?.id && user.id !== (postData as any).user_id) {
+        const {data: savedData} = await supabase
+          .from('saved_projects')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('project_id', project.id)
+          .maybeSingle();
+        setIsSaved(!!savedData);
+      }
     } catch (error) {
       console.error('❌ 게시물 로드 실패:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (!user || !post?.project_id || isSaveLoading) return;
+    setIsSaveLoading(true);
+    try {
+      if (isSaved) {
+        await supabase
+          .from('saved_projects')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('project_id', post.project_id);
+        setIsSaved(false);
+      } else {
+        await supabase
+          .from('saved_projects')
+          .insert({user_id: user.id, project_id: post.project_id});
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error('❌ 뜨개함 저장 실패:', error);
+      Alert.alert('오류', '뜨개함 저장 중 문제가 발생했습니다.');
+    } finally {
+      setIsSaveLoading(false);
     }
   };
 
@@ -362,7 +400,24 @@ export default function PostDetailScreen() {
                 </S.ProjectBannerTitle>
               </S.ProjectBannerTextGroup>
             </S.ProjectBannerLeft>
-            <S.ProjectBannerChevron>›</S.ProjectBannerChevron>
+            <S.ProjectBannerRight>
+              {!isMyPost && (
+                <TouchableOpacity
+                  onPress={e => {
+                    e.stopPropagation?.();
+                    handleToggleSave();
+                  }}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  disabled={isSaveLoading}>
+                  <Icon
+                    name="bookmark"
+                    size={18}
+                    color={isSaved ? 'red' : '#bbb'}
+                  />
+                </TouchableOpacity>
+              )}
+              <S.ProjectBannerChevron>›</S.ProjectBannerChevron>
+            </S.ProjectBannerRight>
           </S.ProjectBanner>
         )}
       </ScrollView>
