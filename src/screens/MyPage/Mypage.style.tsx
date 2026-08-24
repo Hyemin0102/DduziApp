@@ -64,6 +64,22 @@ export const ErrorText = styled.Text`
   color: #666;
 `;
 
+export const AccountSection = styled.View`
+  background-color: #fff;
+  border-radius: 12px;
+  margin: 12px 16px 0;
+  overflow: hidden;
+`;
+
+export const AccountItem = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+`;
+
 export const ProfileCard = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;

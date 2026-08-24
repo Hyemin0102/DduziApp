@@ -14,7 +14,7 @@ const BUNDLE_ID = 'com.dduzi.app';
 const FEEDBACK_EMAIL = 'hyeminjo0102@gmail.com';
 
 const Settings = () => {
-  const {provider, user} = useAuth();
+  const {provider} = useAuth();
   const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
@@ -109,23 +109,7 @@ const Settings = () => {
   return (
     <S.Container>
       <S.ScrollView contentContainerStyle={{paddingVertical: 16, gap: 8}}>
-        <S.SectionLabel>계정</S.SectionLabel>
-        <S.MenuSection>
-          <S.MenuItem activeOpacity={1}>
-            <S.MenuText>연결된 소셜 계정</S.MenuText>
-            <S.MenuValue>{provider}</S.MenuValue>
-          </S.MenuItem>
-          <S.MenuItem activeOpacity={1}>
-            <S.MenuText>연결된 이메일</S.MenuText>
-            <S.MenuValue>{user?.email || '-'}</S.MenuValue>
-          </S.MenuItem>
-          {/* <S.MenuItem>
-            <S.MenuText>알림 설정</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem> */}
-        </S.MenuSection>
-
-        <S.SectionLabel>정보</S.SectionLabel>
+<S.SectionLabel>정보</S.SectionLabel>
         <S.MenuSection>
           <S.MenuItem activeOpacity={1}>
             <S.MenuText>앱 버전</S.MenuText>

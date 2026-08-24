@@ -68,6 +68,17 @@ const Mypage = () => {
           <S.ProfileArrow>›</S.ProfileArrow>
         </S.ProfileCard>
 
+        <S.AccountSection>
+          <S.AccountItem>
+            <S.MenuText>연결된 소셜 계정</S.MenuText>
+            <S.MenuValue>{user.provider}</S.MenuValue>
+          </S.AccountItem>
+          <S.AccountItem>
+            <S.MenuText>연결된 이메일</S.MenuText>
+            <S.MenuValue>{user.email || '-'}</S.MenuValue>
+          </S.AccountItem>
+        </S.AccountSection>
+
         <S.MenuSection>
           <S.MenuItem onPress={handleSettings}>
             <S.MenuText>설정</S.MenuText>

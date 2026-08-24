@@ -27,12 +27,6 @@ const Search = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('transitionEnd', () => {
-      inputRef.current?.focus();
-    });
-    return unsubscribe;
-  }, [navigation]);
 
   // 탭 전환 시 상태 정리 (혹시 탭 네비게이터 안으로 이동할 경우 대비)
   useFocusEffect(
