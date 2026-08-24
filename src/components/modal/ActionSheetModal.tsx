@@ -14,6 +14,8 @@ export interface ActionSheetAction {
   icon?: string;
   onPress: () => void;
   isDestructive?: boolean;
+  disabled?: boolean;
+  disabledHint?: string;
 }
 
 interface ActionSheetModalProps {
@@ -72,6 +74,7 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
   };
 
   const handleActionPress = (action: ActionSheetAction) => {
+    if (action.disabled) return;
     animateClose(() => {
       onClose();
       setTimeout(() => {
@@ -104,11 +107,25 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
               <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => handleActionPress(action)}
-                activeOpacity={0.7}>
-                {action.icon && <Text style={styles.actionIcon}>{action.icon}</Text>}
-                <Text style={[styles.actionText, action.isDestructive && styles.destructiveText]}>
-                  {action.label}
-                </Text>
+                activeOpacity={action.disabled ? 1 : 0.7}>
+                {action.icon && (
+                  <Text style={[styles.actionIcon, action.disabled && styles.disabledText]}>
+                    {action.icon}
+                  </Text>
+                )}
+                <View style={styles.actionTextCol}>
+                  <Text
+                    style={[
+                      styles.actionText,
+                      action.isDestructive && styles.destructiveText,
+                      action.disabled && styles.disabledText,
+                    ]}>
+                    {action.label}
+                  </Text>
+                  {action.disabled && action.disabledHint && (
+                    <Text style={styles.disabledHintText}>{action.disabledHint}</Text>
+                  )}
+                </View>
               </TouchableOpacity>
             </React.Fragment>
           ))}
@@ -159,13 +176,24 @@ const styles = StyleSheet.create({
   actionIcon: {
     fontSize: 20,
   },
+  actionTextCol: {
+    marginLeft: 12,
+    flex: 1,
+  },
   actionText: {
     fontSize: 17,
     color: '#000',
-    marginLeft: 12,
   },
   destructiveText: {
     color: '#FF3B30',
+  },
+  disabledText: {
+    color: '#ccc',
+  },
+  disabledHintText: {
+    fontSize: 12,
+    color: '#bbb',
+    marginTop: 2,
   },
   divider: {
     height: 1,

@@ -105,6 +105,14 @@ export const CardLeft = styled.View`
   gap: 12px;
 `;
 
+export const CardThumbnail = styled(FastImage)`
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  flex-shrink: 0;
+`;
+
 export const CardInfo = styled.View`
   flex: 1;
 `;

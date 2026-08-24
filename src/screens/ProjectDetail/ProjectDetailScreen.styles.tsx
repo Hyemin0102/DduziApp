@@ -417,6 +417,7 @@ export const MetaRow = styled.View`
   padding-vertical: 14px;
   border-bottom-width: 0.5px;
   border-bottom-color: #f0f0f0;
+
 `;
 
 /** 라벨 + 부연설명을 세로로 쌓는 왼쪽 영역 */
@@ -620,4 +621,160 @@ export const LogIconRow = styled.View`
   flex-direction: row;
   gap: 8px;
   align-items: center;
+`;
+
+// ─── 대표이미지 ─────────────────────────────────────────────
+
+export const TitleWithThumbnailRow = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
+export const ThumbnailWrapper = styled.TouchableOpacity`
+  position: relative;
+`;
+
+export const ThumbnailImage = styled(FastImage)`
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background-color: #f0f0f0;
+`;
+
+export const ThumbnailPlaceholder = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background-color: #f5f5f5;
+  align-items: center;
+  justify-content: center;
+  border-width: 1.5px;
+  border-color: #e8e8e8;
+  border-style: dashed;
+`;
+
+export const ThumbnailEditBadge = styled.View`
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: #191919;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const TitleInputFlex = styled.TextInput`
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  padding: 0;
+  line-height: 28px;
+  flex: 1;
+`;
+
+export const TitleFlex = styled.Text`
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  flex: 1;
+`;
+
+// ─── 상태 세그먼트 컨트롤 ────────────────────────────────────
+
+export const StatusSegment = styled.View`
+  flex-direction: row;
+  gap: 6px;
+`;
+
+export const StatusSegmentButton = styled.TouchableOpacity<{active: boolean}>`
+  padding-horizontal: 14px;
+  padding-vertical: 6px;
+  border-radius: 20px;
+  background-color: ${({active}) => (active ? '#191919' : '#f0f0f0')};
+`;
+
+export const StatusSegmentText = styled.Text<{active: boolean}>`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({active}) => (active ? '#fff' : '#999')};
+`;
+
+// ─── 날짜 선택 행 ────────────────────────────────────────────
+
+export const DateRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+  padding-bottom: 14px;
+`;
+
+export const DateChip = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding-horizontal: 10px;
+  padding-vertical: 5px;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: #e8e8e8;
+  background-color: #fafafa;
+`;
+
+export const DateChipText = styled.Text`
+  font-size: 12px;
+  color: #555;
+`;
+
+export const DateRangeSep = styled.Text`
+  font-size: 12px;
+  color: #bbb;
+`;
+
+// ─── 게시물 이미지 선택 모달 ─────────────────────────────────
+
+export const PostImagePickerOverlay = styled.View`
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: flex-end;
+`;
+
+export const PostImagePickerSheet = styled.SafeAreaView`
+  background-color: #fff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  max-height: 70%;
+`;
+
+export const PostImagePickerHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+`;
+
+export const PostImagePickerTitle = styled.Text`
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+`;
+
+export const PostImageGrid = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 12px;
+  gap: 4px;
+`;
+
+export const PostImageThumb = styled.TouchableOpacity`
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f0f0f0;
 `;

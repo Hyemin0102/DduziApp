@@ -42,14 +42,18 @@ export interface ProjectBase {
   is_completed: boolean;
   visibility: 'public' | 'private';
   progress?: number;
+  thumbnail_url?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
   created_at: string;
   updated_at: string;
 }
 
 // 프로젝트 목록용
-export type ProjectItem = Pick;
-ProjectBase,
-  'id' | 'title' | 'created_at' | 'updated_at' | 'is_completed' | 'visibility';
+export type ProjectItem = Pick<
+  ProjectBase,
+  'id' | 'title' | 'created_at' | 'updated_at' | 'is_completed' | 'visibility' | 'thumbnail_url' | 'started_at' | 'completed_at'
+>;
 
 // 프로젝트 상세용 (knitting_logs 포함)
 export interface ProjectDetail extends ProjectBase {

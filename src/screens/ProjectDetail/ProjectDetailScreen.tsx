@@ -16,6 +16,7 @@ import {
   Dimensions,
   Linking,
   Switch,
+  Modal,
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -30,6 +31,7 @@ import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
 import CompletePostModal from '@/components/modal/CompletePostModal';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
+import CalendarModal from '@/components/modal/CalendarModal';
 import * as S from './ProjectDetailScreen.styles';
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import DocumentPicker from 'react-native-document-picker';
@@ -39,7 +41,10 @@ import {
   removePdf,
   MAX_PDF_SIZE_BYTES,
 } from '@/lib/uploadPdf';
-import {thumbnailUrl} from '@/lib/imageTransform';
+import {thumbnailUrl as toThumbnailUrl} from '@/lib/imageTransform';
+import {uploadImage} from '@/lib/uploadImage';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import FastImage from 'react-native-fast-image';
 
 type RouteProps = RouteProp<
   {
@@ -75,6 +80,9 @@ function checkDirty(
     original.patternUrl !== current.patternUrl ||
     original.formIsCompleted !== current.formIsCompleted ||
     original.formVisibility !== current.formVisibility ||
+    original.thumbnailUrl !== current.thumbnailUrl ||
+    original.startedAt !== current.startedAt ||
+    original.completedAt !== current.completedAt ||
     current.pendingLogs.some(l => l.content.trim() !== '')
   );
 }
@@ -88,6 +96,9 @@ interface OriginalValues {
   patternUrl: string;
   formIsCompleted: boolean;
   formVisibility: 'public' | 'private';
+  thumbnailUrl: string;
+  startedAt: string;
+  completedAt: string;
 }
 
 interface CurrentForm {
@@ -99,6 +110,9 @@ interface CurrentForm {
   patternUrl: string;
   formIsCompleted: boolean;
   formVisibility: 'public' | 'private';
+  thumbnailUrl: string;
+  startedAt: string;
+  completedAt: string;
   pendingLogs: PendingLog[];
 }
 
@@ -139,7 +153,6 @@ export default function ProjectDetailScreen() {
   const {navigation} = useCommonNavigation<any>();
   const projectId = route.params?.projectId;
   const isCreateMode = route.params?.mode === 'create' || !projectId;
-
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [posts, setPosts] = useState<SimplePost[]>([]);
   const [loading, setLoading] = useState(!isCreateMode);
@@ -174,6 +187,19 @@ export default function ProjectDetailScreen() {
   const [formVisibility, setFormVisibility] = useState<'public' | 'private'>(
     'private',
   );
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [startedAt, setStartedAt] = useState('');
+  console.log('시작일',startedAt);
+  
+  const [completedAt, setCompletedAt] = useState('');
+  const [pendingThumbnail, setPendingThumbnail] = useState<string | null>(null);
+
+  // ── 캘린더 / 썸네일 UI 상태
+  const [calendarMode, setCalendarMode] = useState<'single' | 'range'>('single');
+  const [calendarTarget, setCalendarTarget] = useState<'started' | 'completed'>('started');
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showThumbnailSheet, setShowThumbnailSheet] = useState(false);
+  const [showPostImagePicker, setShowPostImagePicker] = useState(false);
 
   const MAX_LENGTH_LOG = 5;
   const MAX_LENGTH_POST = 3;
@@ -203,6 +229,9 @@ export default function ProjectDetailScreen() {
         patternUrl,
         formIsCompleted,
         formVisibility,
+        thumbnailUrl,
+        startedAt,
+        completedAt,
         pendingLogs,
         ...overrides,
       };
@@ -217,6 +246,9 @@ export default function ProjectDetailScreen() {
       patternUrl,
       formIsCompleted,
       formVisibility,
+      thumbnailUrl,
+      startedAt,
+      completedAt,
       pendingLogs,
     ],
   );
@@ -238,6 +270,9 @@ export default function ProjectDetailScreen() {
         patternUrl: setPatternUrl,
         formIsCompleted: setFormIsCompleted,
         formVisibility: setFormVisibility,
+        thumbnailUrl: setThumbnailUrl,
+        startedAt: setStartedAt,
+        completedAt: setCompletedAt,
       };
       setters[key](value);
       updateDirty({[key]: value});
@@ -344,6 +379,9 @@ export default function ProjectDetailScreen() {
       patternUrl: p.pattern_url || '',
       formIsCompleted: p.is_completed || false,
       formVisibility: p.visibility || 'private',
+      thumbnailUrl: p.thumbnail_url || '',
+      startedAt: p.started_at || '',
+      completedAt: p.completed_at || '',
     };
     originalRef.current = values;
     setTitle(values.title);
@@ -354,8 +392,12 @@ export default function ProjectDetailScreen() {
     setPatternUrl(values.patternUrl);
     setFormIsCompleted(values.formIsCompleted);
     setFormVisibility(values.formVisibility);
+    setThumbnailUrl(values.thumbnailUrl);
+    setStartedAt(values.startedAt);
+    setCompletedAt(values.completedAt);
     setPatternPdfName(p.pattern_pdf_name || '');
     setPendingPdf(null);
+    setPendingThumbnail(null);
     setIsDirty(false);
 
     const today = new Date();
@@ -424,6 +466,7 @@ export default function ProjectDetailScreen() {
         .select(
           `id, user_id, title, content, yarn_info, needle_info,
            pattern_info, pattern_url, pattern_pdf_name, is_completed, visibility,
+           thumbnail_url, started_at, completed_at,
            created_at, updated_at,
            knitting_logs ( id, project_id, content, created_at )`,
         )
@@ -476,6 +519,23 @@ export default function ProjectDetailScreen() {
     }
     setIsSubmitting(true);
     try {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const finalCompletedAt = formIsCompleted ? (completedAt || todayStr) : null;
+      const finalStartedAt = startedAt || todayStr;
+
+      // 썸네일 업로드
+      let finalThumbnailUrl = thumbnailUrl;
+      if (pendingThumbnail) {
+        const uploaded = await uploadImage(
+          pendingThumbnail,
+          'post-images',
+          `project-thumbnails/${currentUserId}`,
+        );
+        if (uploaded) finalThumbnailUrl = uploaded;
+        setPendingThumbnail(null);
+      }
+
       // pendingPdf가 있으면 저장 시점에 업로드
       let finalPatternUrl = patternUrl;
       let finalPatternPdfName = patternPdfName;
@@ -518,7 +578,11 @@ export default function ProjectDetailScreen() {
             pattern_info: patternInfo.trim() || null,
             pattern_url: finalPatternUrl.trim() || null,
             pattern_pdf_name: finalPatternPdfName.trim() || null,
+            is_completed: formIsCompleted,
             visibility: formVisibility,
+            thumbnail_url: finalThumbnailUrl || null,
+            started_at: finalStartedAt,
+            completed_at: finalCompletedAt,
           })
           .select()
           .single();
@@ -537,6 +601,9 @@ export default function ProjectDetailScreen() {
             pattern_pdf_name: finalPatternPdfName.trim() || null,
             is_completed: formIsCompleted,
             visibility: formVisibility,
+            thumbnail_url: finalThumbnailUrl || null,
+            started_at: finalStartedAt,
+            completed_at: finalCompletedAt,
             updated_at: new Date().toISOString(),
           })
           .eq('id', projectId!);
@@ -582,6 +649,10 @@ export default function ProjectDetailScreen() {
     patternUrl,
     patternPdfName,
     pendingPdf,
+    pendingThumbnail,
+    thumbnailUrl,
+    startedAt,
+    completedAt,
     currentUserId,
     formIsCompleted,
     formVisibility,
@@ -705,6 +776,75 @@ export default function ProjectDetailScreen() {
     setField('patternUrl', '');
   };
 
+  // ── 썸네일 핸들러
+  const handlePickThumbnailFromGallery = async () => {
+    setShowThumbnailSheet(false);
+    const result = await launchImageLibrary({mediaType: 'photo', quality: 0.8});
+    if (result.assets?.[0]?.uri) {
+      setPendingThumbnail(result.assets[0].uri);
+      updateDirty({thumbnailUrl: result.assets[0].uri});
+      setIsDirty(true);
+    }
+  };
+
+  const handlePickThumbnailFromCamera = async () => {
+    setShowThumbnailSheet(false);
+    const result = await launchCamera({mediaType: 'photo', quality: 0.8});
+    if (result.assets?.[0]?.uri) {
+      setPendingThumbnail(result.assets[0].uri);
+      setIsDirty(true);
+    }
+  };
+
+  const handlePickThumbnailFromPost = (imageUrl: string) => {
+    setShowPostImagePicker(false);
+    setThumbnailUrl(imageUrl);
+    setPendingThumbnail(null);
+    updateDirty({thumbnailUrl: imageUrl});
+  };
+
+  // ── 캘린더 핸들러
+  const openCalendar = (target: 'started' | 'completed') => {
+    setCalendarTarget(target);
+    setCalendarMode(formIsCompleted ? 'range' : 'single');
+    setShowCalendar(true);
+  };
+
+  const handleCalendarConfirm = ({
+    date,
+    startDate,
+    endDate,
+  }: {
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    setShowCalendar(false);
+    if (calendarMode === 'single') {
+      setField('startedAt', date ?? '');
+    } else {
+      setField('startedAt', startDate ?? '');
+      setField('completedAt', endDate ?? '');
+    }
+  };
+
+  // 날짜 표시 포맷
+  const formatDateDisplay = (d: string, fallback = '날짜 선택') => {
+    if (!d) return fallback;
+    const [y, m, day] = d.split('-');
+    return `${y}.${parseInt(m)}.${parseInt(day)}`;
+  };
+
+  const todayDisplay = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}`;
+  })();
+
+  // 게시물 이미지 목록 (썸네일 선택용)
+  const allPostImages = posts.flatMap(p =>
+    p.post_images.map(img => img.image_url),
+  );
+
   if (loading) {
     return (
       <S.Container>
@@ -735,18 +875,43 @@ export default function ProjectDetailScreen() {
       <KeyboardAvoid>
         {/* ══ SNS 스타일: 제목 + 설명 ══════════════════════ */}
         <S.PostArea>
-          {canEdit ? (
-            <S.TitleInput
-              placeholder="프로젝트 이름을 입력해주세요"
-              value={title}
-              onChangeText={v => setField('title', v)}
-              placeholderTextColor="#ccc"
-              multiline
-              maxLength={100}
-            />
-          ) : (
-            <S.Title>{project!.title}</S.Title>
-          )}
+          <S.TitleWithThumbnailRow>
+            {(canEdit || thumbnailUrl || pendingThumbnail) && (
+              <S.ThumbnailWrapper
+                onPress={canEdit ? () => setShowThumbnailSheet(true) : undefined}
+                activeOpacity={canEdit ? 0.7 : 1}
+                disabled={!canEdit}>
+                {pendingThumbnail ? (
+                  <S.ThumbnailImage source={{uri: pendingThumbnail}} />
+                ) : thumbnailUrl ? (
+                  <S.ThumbnailImage source={{uri: thumbnailUrl}} />
+                ) : (
+                  <S.ThumbnailPlaceholder>
+                    <Icon name="camera" size={20} color="#ccc" />
+                  </S.ThumbnailPlaceholder>
+                )}
+                {canEdit && (thumbnailUrl || pendingThumbnail) && (
+                  <S.ThumbnailEditBadge>
+                    <Icon name="camera" size={10} color="#fff" />
+                  </S.ThumbnailEditBadge>
+                )}
+              </S.ThumbnailWrapper>
+            )}
+            <View style={{flex: 1}}>
+              {canEdit ? (
+                <S.TitleInputFlex
+                  placeholder="프로젝트 이름을 입력해주세요"
+                  value={title}
+                  onChangeText={v => setField('title', v)}
+                  placeholderTextColor="#ccc"
+                  multiline
+                  maxLength={100}
+                />
+              ) : (
+                <S.TitleFlex>{project!.title}</S.TitleFlex>
+              )}
+            </View>
+          </S.TitleWithThumbnailRow>
 
           <S.PostAreaDivider />
 
@@ -764,13 +929,13 @@ export default function ProjectDetailScreen() {
             <S.Body>{project.content}</S.Body>
           ) : null}
 
-          {!isCreateMode && project && (
+          {/* {!isCreateMode && project && (
             <S.MetaRow>
               <S.Date>
                 {new Date(project.created_at).toLocaleDateString('ko-KR')}
               </S.Date>
             </S.MetaRow>
-          )}
+          )} */}
 
           {isMyProject && (
             <S.ActionSheetTrigger onPress={() => setShowActionSheet(true)}>
@@ -780,25 +945,57 @@ export default function ProjectDetailScreen() {
         </S.PostArea>
 
         {/* ══ 상태 설정 (내 프로젝트) ══════════════════════ */}
-        {canEdit && !isCreateMode && (
+        {canEdit && (
           <S.MetaSection>
-            {/* 뜨개 상태 – 배지 탭으로 전환 */}
-            <S.MetaRow>
+            {/* 뜨개 상태 – 세그먼트 컨트롤 + 날짜 */}
+            <S.MetaRow style={{alignItems: 'flex-start', paddingBottom: 14}}>
               <S.MetaRowLeft>
-                <S.MetaRowTitle>뜨개 상태</S.MetaRowTitle>
-                <S.MetaRowSub>탭해서 변경</S.MetaRowSub>
+                <S.MetaRowTitle style={{paddingTop: 6}}>뜨개 상태</S.MetaRowTitle>
               </S.MetaRowLeft>
-              <TouchableOpacity
-                onPress={() => setField('formIsCompleted', !formIsCompleted)}
-                activeOpacity={0.7}>
-                <S.StatusBadge
-                  variant={formIsCompleted ? 'completed' : 'progress'}>
-                  <S.StatusText
-                    variant={formIsCompleted ? 'completed' : 'progress'}>
-                    {formIsCompleted ? '완료' : '진행 중'}
-                  </S.StatusText>
-                </S.StatusBadge>
-              </TouchableOpacity>
+              <View style={{alignItems: 'flex-end', gap: 10}}>
+                <S.StatusSegment>
+                  <S.StatusSegmentButton
+                    active={!formIsCompleted}
+                    onPress={() => {
+                      if (formIsCompleted) {
+                        setField('formIsCompleted', false);
+                      }
+                    }}>
+                    <S.StatusSegmentText active={!formIsCompleted}>
+                      진행 중
+                    </S.StatusSegmentText>
+                  </S.StatusSegmentButton>
+                  <S.StatusSegmentButton
+                    active={formIsCompleted}
+                    onPress={() => {
+                      if (!formIsCompleted) setField('formIsCompleted', true);
+                    }}>
+                    <S.StatusSegmentText active={formIsCompleted}>
+                      완료
+                    </S.StatusSegmentText>
+                  </S.StatusSegmentButton>
+                </S.StatusSegment>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  {formIsCompleted ? (
+                    <>
+                      <S.DateChip onPress={() => openCalendar('started')}>
+                        <Icon name="calendar" size={12} color="#888" />
+                        <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
+                      </S.DateChip>
+                      <S.DateRangeSep>~</S.DateRangeSep>
+                      <S.DateChip onPress={() => openCalendar('completed')}>
+                        <Icon name="calendar" size={12} color="#888" />
+                        <S.DateChipText>{formatDateDisplay(completedAt, '종료일')}</S.DateChipText>
+                      </S.DateChip>
+                    </>
+                  ) : (
+                    <S.DateChip onPress={() => openCalendar('started')}>
+                      <Icon name="calendar" size={12} color="#888" />
+                      <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
+                    </S.DateChip>
+                  )}
+                </View>
+              </View>
             </S.MetaRow>
 
             {/* 게시물 공개 여부 – 토글 스위치 */}
@@ -1190,7 +1387,7 @@ export default function ProjectDetailScreen() {
                               <S.PostImage
                                 source={{
                                   uri:
-                                    thumbnailUrl(img.image_url) ??
+                                    toThumbnailUrl(img.image_url) ??
                                     img.image_url,
                                 }}
                               />
@@ -1290,6 +1487,74 @@ export default function ProjectDetailScreen() {
           initialVisibility={project?.visibility || 'private'}
         />
       )}
+
+      {/* 캘린더 모달 */}
+      <CalendarModal
+        visible={showCalendar}
+        mode={formIsCompleted ? 'range' : 'single'}
+        initialDate={!formIsCompleted ? startedAt : undefined}
+        initialStart={formIsCompleted ? startedAt : undefined}
+        initialEnd={formIsCompleted ? completedAt : undefined}
+        maxDate={new Date().toISOString().split('T')[0]}
+        onConfirm={handleCalendarConfirm}
+        onClose={() => setShowCalendar(false)}
+      />
+
+      {/* 대표이미지 선택 바텀시트 */}
+      <ActionSheetModal
+        visible={showThumbnailSheet}
+        onClose={() => setShowThumbnailSheet(false)}
+        actions={[
+          {label: '갤러리에서 선택', onPress: handlePickThumbnailFromGallery},
+          {label: '카메라로 촬영', onPress: handlePickThumbnailFromCamera},
+          {
+            label: '게시물에서 선택',
+            onPress: () => {
+              setShowThumbnailSheet(false);
+              setTimeout(() => setShowPostImagePicker(true), 300);
+            },
+            disabled: allPostImages.length === 0,
+          },
+        ]}>
+        <View style={{paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4}}>
+          <S.InfoLabel style={{fontSize: 13, color: '#999'}}>
+            언제든 다시 등록/수정할 수 있어요.
+          </S.InfoLabel>
+        </View>
+      </ActionSheetModal>
+
+      {/* 게시물 이미지 선택 모달 */}
+      <Modal
+        visible={showPostImagePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPostImagePicker(false)}>
+        <S.PostImagePickerOverlay>
+          <S.PostImagePickerSheet>
+            <S.PostImagePickerHeader>
+              <S.PostImagePickerTitle>게시물에서 선택</S.PostImagePickerTitle>
+              <TouchableOpacity onPress={() => setShowPostImagePicker(false)}>
+                <Icon name="x" size={20} color="#555" />
+              </TouchableOpacity>
+            </S.PostImagePickerHeader>
+            <ScrollView>
+              <S.PostImageGrid>
+                {allPostImages.map((uri, idx) => (
+                  <S.PostImageThumb
+                    key={idx}
+                    onPress={() => handlePickThumbnailFromPost(uri)}>
+                    <FastImage
+                      source={{uri}}
+                      style={{width: '100%', height: '100%'}}
+                      resizeMode={FastImage.resizeMode.cover}
+                    />
+                  </S.PostImageThumb>
+                ))}
+              </S.PostImageGrid>
+            </ScrollView>
+          </S.PostImagePickerSheet>
+        </S.PostImagePickerOverlay>
+      </Modal>
     </S.Container>
   );
 }

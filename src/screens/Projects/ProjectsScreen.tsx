@@ -20,6 +20,9 @@ interface SavedProject {
   isCompleted: boolean;
   ownerNickname: string;
   ownerProfileImage: string | null;
+  thumbnailUrl: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
 }
 
 export default function ProjectsScreen() {
@@ -46,7 +49,7 @@ export default function ProjectsScreen() {
       const [projectsRes, savedRes] = await Promise.all([
         supabase
           .from('projects')
-          .select('id, title, created_at, updated_at, is_completed, visibility')
+          .select('id, title, created_at, updated_at, is_completed, visibility, thumbnail_url, started_at, completed_at')
           .eq('user_id', user.id)
           .order('created_at', {ascending: false}),
         supabase
@@ -60,6 +63,9 @@ export default function ProjectsScreen() {
               title,
               visibility,
               is_completed,
+              thumbnail_url,
+              started_at,
+              completed_at,
               users!inner (
                 nickname,
                 profile_image
@@ -83,6 +89,9 @@ export default function ProjectsScreen() {
           isCompleted: item.projects.is_completed,
           ownerNickname: item.projects.users.nickname,
           ownerProfileImage: item.projects.users.profile_image,
+          thumbnailUrl: item.projects.thumbnail_url,
+          startedAt: item.projects.started_at,
+          completedAt: item.projects.completed_at,
         }));
         setSavedProjects(saved);
       }
@@ -146,7 +155,27 @@ export default function ProjectsScreen() {
   const activeSaved = savedProjects.filter(p => p.visibility === 'public');
   const privateSaved = savedProjects.filter(p => p.visibility === 'private');
 
-  const renderMyProject = (item: ProjectItem) => (
+  const formatDate = (d: string | null | undefined) => {
+    if (!d) return null;
+    const [y, m, day] = d.split('-');
+    return `${y}.${parseInt(m)}.${parseInt(day)}`;
+  };
+
+  const getDateLabel = (
+    isCompleted: boolean,
+    startedAt: string | null | undefined,
+    completedAt: string | null | undefined,
+  ) =>
+    isCompleted
+      ? startedAt || completedAt
+        ? `${formatDate(startedAt) ?? ''} ~ ${formatDate(completedAt) ?? ''}`
+        : null
+      : formatDate(startedAt);
+
+  const renderMyProject = (item: ProjectItem) => {
+    const dateLabel = getDateLabel(item.is_completed, item.started_at, item.completed_at);
+
+    return (
     <S.Card
       key={item.id}
       activeOpacity={0.75}
@@ -164,20 +193,23 @@ export default function ProjectsScreen() {
               <Icon name="lock" size={14} color="#bbb" />
             )}
           </S.TitleRow>
-          <S.CardDate>
-            {new Date(item.created_at).toLocaleDateString('ko-KR')}
-          </S.CardDate>
+          {dateLabel && <S.CardDate>{dateLabel}</S.CardDate>}
         </S.CardInfo>
       </S.CardLeft>
       <S.CardRight>
+        {item.thumbnail_url ? (
+          <S.CardThumbnail source={{uri: item.thumbnail_url}} />
+        ) : null}
         <Icon name="chevron-right" size={16} color="#ccc" />
       </S.CardRight>
     </S.Card>
   );
+  };
 
   const renderSavedProject = (item: SavedProject, disabled = false) => {
     const isSelected = selectedIds.includes(item.savedId);
     const avatarUri = profileUrl(item.ownerProfileImage) ?? item.ownerProfileImage;
+    const dateLabel = getDateLabel(item.isCompleted, item.startedAt, item.completedAt);
     return (
       <S.SavedCard
         key={item.savedId}
@@ -211,12 +243,13 @@ export default function ProjectsScreen() {
             <S.SavedCardTitle numberOfLines={1} disabled={disabled}>
               {item.title}
             </S.SavedCardTitle>
-            <S.CardDate>
-              {new Date(item.savedAt).toLocaleDateString('ko-KR')}
-            </S.CardDate>
+            {dateLabel && <S.CardDate>{dateLabel}</S.CardDate>}
           </S.SavedCardInfo>
         </S.SavedCardLeft>
         <S.SavedCardRight>
+          {item.thumbnailUrl ? (
+            <S.CardThumbnail source={{uri: item.thumbnailUrl}} />
+          ) : null}
           {disabled && <Icon name="lock" size={15} color="#ccc" />}
           <Icon name="chevron-right" size={16} color={disabled ? '#ddd' : '#ccc'} />
         </S.SavedCardRight>
@@ -337,11 +370,6 @@ export default function ProjectsScreen() {
                   ? '첫 프로젝트를 시작해보세요!'
                   : '프로젝트를 완료해보세요!'}
               </S.EmptySubText>
-              {activeTab === 'inProgress' && (
-                <S.EmptyButton onPress={handleCreateProject}>
-                  <S.EmptyButtonText>프로젝트 추가하기</S.EmptyButtonText>
-                </S.EmptyButton>
-              )}
             </S.Empty>
           }
           renderItem={({item}) => renderMyProject(item)}
