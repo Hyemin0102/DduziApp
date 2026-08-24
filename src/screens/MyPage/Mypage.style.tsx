@@ -31,6 +31,20 @@ export const MenuText = styled.Text`
   color: #191919;
 `;
 
+export const AccountLabel = styled.Text`
+  font-size: 15px;
+  color: #191919;
+  min-width: 120px;
+`;
+
+export const AccountValue = styled.Text`
+  font-size: 14px;
+  color: #999;
+  flex: 1;
+  flex-wrap: wrap;
+  text-align: right;
+`;
+
 export const MenuArrow = styled.Text`
   font-size: 20px;
   color: #ccc;
@@ -73,11 +87,11 @@ export const AccountSection = styled.View`
 
 export const AccountItem = styled.View`
   flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 14px 16px;
   border-bottom-width: 1px;
   border-bottom-color: #f0f0f0;
+  gap: 12px;
 `;
 
 export const ProfileCard = styled.TouchableOpacity`

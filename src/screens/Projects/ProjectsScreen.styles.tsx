@@ -1,4 +1,5 @@
 import styled from '@emotion/native';
+import FastImage from 'react-native-fast-image';
 
 export const Container = styled.View`
   flex: 1;
@@ -11,14 +12,16 @@ export const Center = styled.View`
   justify-content: center;
 `;
 
+/* ─── Summary (탭 역할 겸) ─── */
+
 export const Summary = styled.View`
   flex-direction: row;
-  padding-vertical: 28px;
+  padding-vertical: 24px;
   border-bottom-width: 1px;
   border-bottom-color: #f0f0f0;
 `;
 
-export const SummaryItem = styled.View`
+export const SummaryItem = styled.TouchableOpacity`
   flex: 1;
   align-items: center;
 `;
@@ -27,19 +30,22 @@ export const SummaryDivider = styled.View`
   width: 1px;
   height: 32px;
   background-color: #eee;
+  align-self: center;
 `;
 
-export const SummaryCount = styled.Text`
+export const SummaryCount = styled.Text<{active: boolean}>`
   font-size: 22px;
   font-weight: 700;
-  color: #191919;
+  color: ${({active}) => (active ? '#191919' : '#ccc')};
 `;
 
-export const SummaryLabel = styled.Text`
+export const SummaryLabel = styled.Text<{active: boolean}>`
   font-size: 12px;
-  color: #999;
+  color: ${({active}) => (active ? '#191919' : '#ccc')};
   margin-top: 3px;
 `;
+
+/* ─── Empty ─── */
 
 export const Empty = styled.View`
   flex: 1;
@@ -79,6 +85,8 @@ export const EmptyButtonText = styled.Text`
   font-weight: 600;
 `;
 
+/* ─── 내 프로젝트 카드 ─── */
+
 export const Card = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
@@ -95,13 +103,6 @@ export const CardLeft = styled.View`
   align-items: center;
   flex: 1;
   gap: 12px;
-`;
-
-export const StatusDot = styled.View<{completed: boolean}>`
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background-color: ${({completed}) => (completed ? '#4CAF50' : '#f59e0b')};
 `;
 
 export const CardInfo = styled.View`
@@ -133,39 +134,113 @@ export const CardRight = styled.View`
   margin-left: 8px;
 `;
 
-export const StatusBadge = styled.Text<{
-  variant: 'progress' | 'completed' | 'public' | 'private';
-}>`
-  font-size: 11px;
-  font-weight: 600;
-  padding-horizontal: 8px;
-  padding-vertical: 3px;
-  border-radius: 10px;
-  background-color: ${({variant}) => {
-    switch (variant) {
-      case 'progress':
-        return '#fff8e1';
-      case 'completed':
-        return '#e8f5e9';
-      case 'public':
-        return '#e3f2fd';
-      case 'private':
-        return '#f5f5f5';
-    }
-  }};
-  color: ${({variant}) => {
-    switch (variant) {
-      case 'progress':
-        return '#f59e0b';
-      case 'completed':
-        return '#4CAF50';
-      case 'public':
-        return '#1e88e5';
-      case 'private':
-        return '#999';
-    }
-  }};
+/* ─── 뜨개함 카드 ─── */
+
+export const SavedCard = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-horizontal: 20px;
+  padding-vertical: 14px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+  background-color: #fff;
 `;
+
+export const SavedCardLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  gap: 10px;
+`;
+
+export const SavedCardRight = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+`;
+
+export const SavedCardInfo = styled.View`
+  flex: 1;
+`;
+
+export const OwnerNickname = styled.Text`
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 2px;
+`;
+
+export const SavedCardTitle = styled.Text<{disabled?: boolean}>`
+  font-size: 15px;
+  font-weight: 600;
+  color: ${({disabled}) => (disabled ? '#bbb' : '#111')};
+`;
+
+export const OwnerAvatar = styled(FastImage)`
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: #e0e0e0;
+`;
+
+export const OwnerAvatarPlaceholder = styled.View`
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: #f0f0f0;
+  align-items: center;
+  justify-content: center;
+`;
+
+/* ─── 편집 모드 ─── */
+
+export const SelectCircle = styled.View<{selected: boolean}>`
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  border-width: 1.5px;
+  border-color: ${({selected}) => (selected ? '#191919' : '#ccc')};
+  background-color: ${({selected}) => (selected ? '#191919' : 'transparent')};
+  align-items: center;
+  justify-content: center;
+`;
+
+export const EditRow = styled.View`
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px 20px;
+`;
+
+export const EditButton = styled.TouchableOpacity``;
+
+export const EditButtonText = styled.Text`
+  font-size: 14px;
+  color: #555;
+`;
+
+export const DeleteText = styled.Text`
+  font-size: 14px;
+  color: #e53935;
+`;
+
+/* ─── 비공개 섹션 ─── */
+
+export const SectionDivider = styled.View`
+  height: 8px;
+  background-color: #f5f5f5;
+  margin-top: 8px;
+`;
+
+export const SectionHeader = styled.Text`
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+  padding: 14px 20px 8px;
+`;
+
+/* ─── 새 프로젝트 버튼 ─── */
 
 export const AddButton = styled.TouchableOpacity`
   margin: 24px 16px;
@@ -182,4 +257,38 @@ export const AddButtonText = styled.Text`
   font-size: 15px;
   font-weight: 600;
   color: #fff;
+`;
+
+/* 기존 코드와의 호환성 */
+export const StatusDot = styled.View<{completed: boolean}>`
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: ${({completed}) => (completed ? '#4CAF50' : '#f59e0b')};
+`;
+
+export const StatusBadge = styled.Text<{
+  variant: 'progress' | 'completed' | 'public' | 'private';
+}>`
+  font-size: 11px;
+  font-weight: 600;
+  padding-horizontal: 8px;
+  padding-vertical: 3px;
+  border-radius: 10px;
+  background-color: ${({variant}) => {
+    switch (variant) {
+      case 'progress': return '#fff8e1';
+      case 'completed': return '#e8f5e9';
+      case 'public': return '#e3f2fd';
+      case 'private': return '#f5f5f5';
+    }
+  }};
+  color: ${({variant}) => {
+    switch (variant) {
+      case 'progress': return '#f59e0b';
+      case 'completed': return '#4CAF50';
+      case 'public': return '#1e88e5';
+      case 'private': return '#999';
+    }
+  }};
 `;

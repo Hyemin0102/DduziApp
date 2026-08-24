@@ -70,12 +70,12 @@ const Mypage = () => {
 
         <S.AccountSection>
           <S.AccountItem>
-            <S.MenuText>연결된 소셜 계정</S.MenuText>
-            <S.MenuValue>{user.provider}</S.MenuValue>
+            <S.AccountLabel>연결된 소셜 계정</S.AccountLabel>
+            <S.AccountValue>{user.provider}</S.AccountValue>
           </S.AccountItem>
           <S.AccountItem>
-            <S.MenuText>연결된 이메일</S.MenuText>
-            <S.MenuValue>{user.email || '-'}</S.MenuValue>
+            <S.AccountLabel>연결된 이메일</S.AccountLabel>
+            <S.AccountValue>{user.email || '-'}</S.AccountValue>
           </S.AccountItem>
         </S.AccountSection>
 

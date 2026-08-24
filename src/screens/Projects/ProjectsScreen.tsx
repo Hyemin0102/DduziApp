@@ -1,5 +1,5 @@
 import React, {useState, useCallback} from 'react';
-import {FlatList, ActivityIndicator, RefreshControl} from 'react-native';
+import {FlatList, ScrollView, ActivityIndicator, RefreshControl, Alert} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import * as S from './ProjectsScreen.styles';
 import {supabase} from '@/lib/supabase';
@@ -7,36 +7,85 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {ProjectItem} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import AppHeader from '@/components/Header/AppHeader';
+import {profileUrl} from '@/lib/imageTransform';
+
+type TabType = 'inProgress' | 'completed' | 'saved';
+
+interface SavedProject {
+  savedId: string;
+  savedAt: string;
+  projectId: string;
+  title: string;
+  visibility: 'public' | 'private';
+  isCompleted: boolean;
+  ownerNickname: string;
+  ownerProfileImage: string | null;
+}
 
 export default function ProjectsScreen() {
   const {navigation} = useCommonNavigation<any>();
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('inProgress');
+  const [myProjects, setMyProjects] = useState<ProjectItem[]>([]);
+  const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchProjects();
+      fetchAll();
     }, []),
   );
 
-  const fetchProjects = async () => {
+  const fetchAll = async () => {
     try {
-      const {
-        data: {user},
-      } = await supabase.auth.getUser();
+      const {data: {user}} = await supabase.auth.getUser();
       if (!user) return;
 
-      const {data, error} = await supabase
-        .from('projects')
-        .select('id, title, created_at, updated_at, is_completed, visibility')
-        .eq('user_id', user.id)
-        .order('created_at', {ascending: false});
+      const [projectsRes, savedRes] = await Promise.all([
+        supabase
+          .from('projects')
+          .select('id, title, created_at, updated_at, is_completed, visibility')
+          .eq('user_id', user.id)
+          .order('created_at', {ascending: false}),
+        supabase
+          .from('saved_projects')
+          .select(`
+            id,
+            created_at,
+            project_id,
+            projects!inner (
+              id,
+              title,
+              visibility,
+              is_completed,
+              users!inner (
+                nickname,
+                profile_image
+              )
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', {ascending: false}),
+      ]);
 
-      if (error) throw error;
-      setProjects((data as ProjectItem[]) || []);
+      if (projectsRes.error) throw projectsRes.error;
+      setMyProjects((projectsRes.data as ProjectItem[]) || []);
+
+      if (!savedRes.error && savedRes.data) {
+        const saved: SavedProject[] = (savedRes.data as any[]).map(item => ({
+          savedId: item.id,
+          savedAt: item.created_at,
+          projectId: item.project_id,
+          title: item.projects.title,
+          visibility: item.projects.visibility,
+          isCompleted: item.projects.is_completed,
+          ownerNickname: item.projects.users.nickname,
+          ownerProfileImage: item.projects.users.profile_image,
+        }));
+        setSavedProjects(saved);
+      }
     } catch (error) {
       console.error('프로젝트 목록 조회 실패:', error);
     } finally {
@@ -47,15 +96,133 @@ export default function ProjectsScreen() {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchProjects();
+    fetchAll();
   };
 
   const handleCreateProject = () => {
     navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {mode: 'create'});
   };
 
-  const inProgressCount = projects.filter(p => !p.is_completed).length;
-  const completedCount = projects.filter(p => p.is_completed).length;
+  const switchTab = (tab: TabType) => {
+    setActiveTab(tab);
+    setIsEditMode(false);
+    setSelectedIds([]);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id],
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    Alert.alert(
+      '뜨개함에서 삭제',
+      `선택한 ${selectedIds.length}개를 뜨개함에서 삭제할까요?`,
+      [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await supabase.from('saved_projects').delete().in('id', selectedIds);
+              setSavedProjects(prev =>
+                prev.filter(p => !selectedIds.includes(p.savedId)),
+              );
+              setSelectedIds([]);
+              setIsEditMode(false);
+            } catch {
+              Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const inProgressProjects = myProjects.filter(p => !p.is_completed);
+  const completedProjects = myProjects.filter(p => p.is_completed);
+  const activeSaved = savedProjects.filter(p => p.visibility === 'public');
+  const privateSaved = savedProjects.filter(p => p.visibility === 'private');
+
+  const renderMyProject = (item: ProjectItem) => (
+    <S.Card
+      key={item.id}
+      activeOpacity={0.75}
+      onPress={() =>
+        navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+          projectId: item.id,
+          projectTitle: item.title,
+        })
+      }>
+      <S.CardLeft>
+        <S.CardInfo>
+          <S.TitleRow>
+            <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
+            {item.visibility !== 'public' && (
+              <Icon name="lock" size={14} color="#bbb" />
+            )}
+          </S.TitleRow>
+          <S.CardDate>
+            {new Date(item.created_at).toLocaleDateString('ko-KR')}
+          </S.CardDate>
+        </S.CardInfo>
+      </S.CardLeft>
+      <S.CardRight>
+        <Icon name="chevron-right" size={16} color="#ccc" />
+      </S.CardRight>
+    </S.Card>
+  );
+
+  const renderSavedProject = (item: SavedProject, disabled = false) => {
+    const isSelected = selectedIds.includes(item.savedId);
+    const avatarUri = profileUrl(item.ownerProfileImage) ?? item.ownerProfileImage;
+    return (
+      <S.SavedCard
+        key={item.savedId}
+        activeOpacity={0.75}
+        disabled={disabled && !isEditMode}
+        onPress={() => {
+          if (isEditMode) {
+            toggleSelect(item.savedId);
+          } else if (!disabled) {
+            navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+              projectId: item.projectId,
+              projectTitle: item.title,
+            });
+          }
+        }}>
+        <S.SavedCardLeft>
+          {isEditMode && (
+            <S.SelectCircle selected={isSelected}>
+              {isSelected && <Icon name="check" size={11} color="#fff" />}
+            </S.SelectCircle>
+          )}
+          {avatarUri ? (
+            <S.OwnerAvatar source={{uri: avatarUri}} />
+          ) : (
+            <S.OwnerAvatarPlaceholder>
+              <Icon name="user" size={14} color="#ccc" />
+            </S.OwnerAvatarPlaceholder>
+          )}
+          <S.SavedCardInfo>
+            <S.OwnerNickname numberOfLines={1}>{item.ownerNickname}</S.OwnerNickname>
+            <S.SavedCardTitle numberOfLines={1} disabled={disabled}>
+              {item.title}
+            </S.SavedCardTitle>
+            <S.CardDate>
+              {new Date(item.savedAt).toLocaleDateString('ko-KR')}
+            </S.CardDate>
+          </S.SavedCardInfo>
+        </S.SavedCardLeft>
+        <S.SavedCardRight>
+          {disabled && <Icon name="lock" size={15} color="#ccc" />}
+          <Icon name="chevron-right" size={16} color={disabled ? '#ddd' : '#ccc'} />
+        </S.SavedCardRight>
+      </S.SavedCard>
+    );
+  };
 
   if (loading) {
     return (
@@ -65,76 +232,123 @@ export default function ProjectsScreen() {
     );
   }
 
+  const currentProjects =
+    activeTab === 'inProgress' ? inProgressProjects : completedProjects;
+
   return (
     <S.Container>
-      {projects.length > 0 && (
-        <S.Summary>
-          <S.SummaryItem>
-            <S.SummaryCount>{inProgressCount}</S.SummaryCount>
-            <S.SummaryLabel>진행 중</S.SummaryLabel>
-          </S.SummaryItem>
-          <S.SummaryDivider />
-          <S.SummaryItem>
-            <S.SummaryCount>{completedCount}</S.SummaryCount>
-            <S.SummaryLabel>완료</S.SummaryLabel>
-          </S.SummaryItem>
-        </S.Summary>
+      {/* Summary (탭 역할 겸) */}
+      <S.Summary>
+        <S.SummaryItem onPress={() => switchTab('inProgress')}>
+          <S.SummaryCount active={activeTab === 'inProgress'}>
+            {inProgressProjects.length}
+          </S.SummaryCount>
+          <S.SummaryLabel active={activeTab === 'inProgress'}>진행 중</S.SummaryLabel>
+        </S.SummaryItem>
+        <S.SummaryDivider />
+        <S.SummaryItem onPress={() => switchTab('completed')}>
+          <S.SummaryCount active={activeTab === 'completed'}>
+            {completedProjects.length}
+          </S.SummaryCount>
+          <S.SummaryLabel active={activeTab === 'completed'}>완료</S.SummaryLabel>
+        </S.SummaryItem>
+        <S.SummaryDivider />
+        <S.SummaryItem onPress={() => switchTab('saved')}>
+          <S.SummaryCount active={activeTab === 'saved'}>
+            {savedProjects.length}
+          </S.SummaryCount>
+          <S.SummaryLabel active={activeTab === 'saved'}>뜨개함</S.SummaryLabel>
+        </S.SummaryItem>
+      </S.Summary>
+
+      {/* 뜨개함 탭 */}
+      {activeTab === 'saved' ? (
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }>
+          {savedProjects.length === 0 ? (
+            <S.Empty>
+              <S.EmptyIcon
+                source={require('../../assets/images/dduzi_image.png')}
+                resizeMode="contain"
+              />
+              <S.EmptyText>저장한 프로젝트가 없어요</S.EmptyText>
+              <S.EmptySubText>마음에 드는 프로젝트를 저장해보세요!</S.EmptySubText>
+            </S.Empty>
+          ) : (
+            <>
+              <S.EditRow>
+                {isEditMode ? (
+                  <>
+                    <S.EditButton
+                      onPress={() => {
+                        setIsEditMode(false);
+                        setSelectedIds([]);
+                      }}>
+                      <S.EditButtonText>취소</S.EditButtonText>
+                    </S.EditButton>
+                    {selectedIds.length > 0 && (
+                      <S.EditButton onPress={handleDeleteSelected}>
+                        <S.DeleteText>삭제 ({selectedIds.length})</S.DeleteText>
+                      </S.EditButton>
+                    )}
+                  </>
+                ) : (
+                  <S.EditButton onPress={() => setIsEditMode(true)}>
+                    <S.EditButtonText>편집</S.EditButtonText>
+                  </S.EditButton>
+                )}
+              </S.EditRow>
+              {activeSaved.map(item => renderSavedProject(item))}
+              {privateSaved.length > 0 && (
+                <>
+                  <S.SectionDivider />
+                  <S.SectionHeader>비공개된 프로젝트</S.SectionHeader>
+                  {privateSaved.map(item => renderSavedProject(item, true))}
+                </>
+              )}
+            </>
+          )}
+        </ScrollView>
+      ) : (
+        /* 진행중 / 완료 탭 */
+        <FlatList
+          data={currentProjects}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{flexGrow: 1}}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          ListEmptyComponent={
+            <S.Empty>
+              <S.EmptyIcon
+                source={require('../../assets/images/dduzi_image.png')}
+                resizeMode="contain"
+              />
+              <S.EmptyText>
+                {activeTab === 'inProgress'
+                  ? '진행 중인 프로젝트가 없어요'
+                  : '완료된 프로젝트가 없어요'}
+              </S.EmptyText>
+              <S.EmptySubText>
+                {activeTab === 'inProgress'
+                  ? '첫 프로젝트를 시작해보세요!'
+                  : '프로젝트를 완료해보세요!'}
+              </S.EmptySubText>
+              {activeTab === 'inProgress' && (
+                <S.EmptyButton onPress={handleCreateProject}>
+                  <S.EmptyButtonText>프로젝트 추가하기</S.EmptyButtonText>
+                </S.EmptyButton>
+              )}
+            </S.Empty>
+          }
+          renderItem={({item}) => renderMyProject(item)}
+        />
       )}
 
-      <FlatList
-        data={projects}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{flexGrow: 1}}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        ListEmptyComponent={
-          <S.Empty>
-            <S.EmptyIcon source={require('../../assets/images/dduzi_image.png')} resizeMode="contain" />
-            <S.EmptyText>아직 프로젝트가 없어요</S.EmptyText>
-            <S.EmptySubText>첫 프로젝트를 시작해보세요!</S.EmptySubText>
-            <S.EmptyButton onPress={handleCreateProject}>
-              <S.EmptyButtonText>프로젝트 추가하기</S.EmptyButtonText>
-            </S.EmptyButton>
-          </S.Empty>
-        }
-        renderItem={({item}) => (
-          <S.Card
-            activeOpacity={0.75}
-            onPress={() =>
-              navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
-                projectId: item.id,
-                projectTitle: item.title,
-              })
-            }>
-            <S.CardLeft>
-              {/* <S.StatusDot completed={item.is_completed} /> */}
-
-              <S.CardInfo>
-                <S.TitleRow>
-                  <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
-                  {item.visibility !== 'public' && (
-                    <Icon name="lock" size={14} color="#bbb" />
-                  )}
-                </S.TitleRow>
-                <S.CardDate>
-                  {new Date(item.created_at).toLocaleDateString('ko-KR')}
-                </S.CardDate>
-              </S.CardInfo>
-            </S.CardLeft>
-            <S.CardRight>
-              <S.StatusBadge
-                variant={item.is_completed ? 'completed' : 'progress'}>
-                {item.is_completed ? '완료' : '진행 중'}
-              </S.StatusBadge>
-
-              <Icon name="chevron-right" size={16} color="#ccc" />
-            </S.CardRight>
-          </S.Card>
-        )}
-      />
-
-      {projects.length > 0 && (
+      {activeTab !== 'saved' && (
         <S.AddButton onPress={handleCreateProject}>
           <S.AddButtonText>새 프로젝트</S.AddButtonText>
           <Icon name="plus" size={15} color="#fff" />
