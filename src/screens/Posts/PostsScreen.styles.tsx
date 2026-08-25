@@ -199,23 +199,6 @@ export const TabRow = styled.View`
   flex-direction: row;
 `;
 
-export const SortRow = styled.View`
-  flex-direction: row;
-  justify-content: flex-end;
-  padding: 10px 16px;
-`;
-
-export const SortButton = styled.TouchableOpacity`
-  flex-direction: row-reverse;
-  align-items: center;
-  gap: 4px;
-`;
-
-export const SortButtonText = styled.Text`
-  font-size: 13px;
-  color: #666;
-`;
-
 export const ViewModeToggle = styled.View`
   flex-direction: row;
   gap: 8px;
