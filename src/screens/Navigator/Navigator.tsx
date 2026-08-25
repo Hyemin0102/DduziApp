@@ -8,6 +8,7 @@ import OnboardingScreen from '../Onboarding/OnboardingScreen';
 import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
+import {trackScreenView} from '../../lib/mixpanel';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -15,13 +16,17 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Navigator = () => {
   const {isLoggedIn, needsProfileSetup} = useAuth();
   const navigationRef = useRef<any>(null);
+  const currentScreenNameRef = useRef<string | undefined>(undefined);
 
   return (
     <NavigationContainer
       ref={navigationRef}
       onStateChange={() => {
         const currentRoute = navigationRef.current?.getCurrentRoute();
-        console.log('🧭 현재 라우터:', currentRoute?.name);
+        if (currentRoute?.name && currentRoute.name !== currentScreenNameRef.current) {
+          currentScreenNameRef.current = currentRoute.name;
+          trackScreenView(currentRoute.name);
+        }
       }}>
       <RootStack.Navigator screenOptions={{headerShown: false}}>
         {!isLoggedIn ? (

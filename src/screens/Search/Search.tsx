@@ -12,6 +12,7 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
+import {trackEvent} from '@/lib/mixpanel';
 
 interface MostSavedProject {
   project_id: string;
@@ -88,6 +89,7 @@ const Search = () => {
 
     setLoading(true);
     setHasSearched(true);
+    trackEvent('search_performed', {query});
 
     try {
       const {data: userData} = await supabase.auth.getUser();
@@ -221,6 +223,7 @@ const Search = () => {
                       key={keyword}
                       activeOpacity={0.7}
                       onPress={() => {
+                        trackEvent('trending_keyword_tapped', {keyword});
                         setSearchQuery(keyword);
                         handleSearch(keyword);
                       }}>
@@ -253,12 +256,15 @@ const Search = () => {
                       project.completed_at,
                     )}
                     thumbnailUrl={project.thumbnail_url}
-                    onPress={() =>
+                    onPress={() => {
+                      trackEvent('most_saved_project_tapped', {
+                        project_id: project.project_id,
+                      });
                       navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
                         projectId: project.project_id,
                         projectTitle: project.title,
-                      })
-                    }
+                      });
+                    }}
                   />
                 ))}
               </>

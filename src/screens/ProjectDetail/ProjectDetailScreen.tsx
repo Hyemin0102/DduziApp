@@ -45,6 +45,7 @@ import {thumbnailUrl as toThumbnailUrl} from '@/lib/imageTransform';
 import {uploadImage} from '@/lib/uploadImage';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
+import {trackEvent} from '@/lib/mixpanel';
 
 type RouteProps = RouteProp<
   {
@@ -171,6 +172,7 @@ export default function ProjectDetailScreen() {
   const [isEditingYarnInfo, setIsEditingYarnInfo] = useState(false);
   const [isEditingNeedleInfo, setIsEditingNeedleInfo] = useState(false);
   const hasFetchedRef = useRef(false);
+  const viewTrackedRef = useRef(false);
   const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
   const [logInputHeights, setLogInputHeights] = useState<
     Record<string, number>
@@ -293,7 +295,19 @@ export default function ProjectDetailScreen() {
       {id: tempId, content: '', isExisting: false, isEditable: true},
       ...prev,
     ]);
-  }, []);
+    trackEvent('knitting_log_added', {project_id: projectId});
+  }, [projectId]);
+
+  const handleAddPostPress = useCallback(() => {
+    trackEvent('post_create_started', {
+      source: 'project_detail',
+      project_id: projectId,
+    });
+    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
+      projectId,
+      projectTitle: project?.title,
+    });
+  }, [navigation, projectId, project?.title]);
 
   const removePendingLog = useCallback((log: PendingLog) => {
     Alert.alert('로그 삭제', '이 로그를 삭제할까요?', [
@@ -480,6 +494,15 @@ export default function ProjectDetailScreen() {
         populateForm(p);
       }
 
+      if (!viewTrackedRef.current) {
+        viewTrackedRef.current = true;
+        trackEvent('project_viewed', {
+          project_id: p.id,
+          owner_id: p.user_id,
+          is_own_content: p.user_id === currentUserId,
+        });
+      }
+
       const {data: postsData, error: postsError} = await supabase
         .from('posts')
         .select(
@@ -509,6 +532,7 @@ export default function ProjectDetailScreen() {
 
   useEffect(() => {
     hasFetchedRef.current = false;
+    viewTrackedRef.current = false;
   }, [projectId]);
 
   // ── 저장
@@ -537,6 +561,7 @@ export default function ProjectDetailScreen() {
       }
 
       // pendingPdf가 있으면 저장 시점에 업로드
+      const didUploadPdf = Boolean(pendingPdf);
       let finalPatternUrl = patternUrl;
       let finalPatternPdfName = patternPdfName;
       if (pendingPdf) {
@@ -588,6 +613,7 @@ export default function ProjectDetailScreen() {
           .single();
         if (error) throw new Error('프로젝트 생성에 실패했습니다.');
         currentProjectId = newProject.id;
+        trackEvent('project_created', {project_id: currentProjectId});
       } else {
         const {error} = await supabase
           .from('projects')
@@ -609,6 +635,13 @@ export default function ProjectDetailScreen() {
           .eq('id', projectId!);
         if (error) throw new Error('프로젝트 수정에 실패했습니다.');
         currentProjectId = projectId!;
+        if (!project?.is_completed && formIsCompleted) {
+          trackEvent('project_completed', {project_id: currentProjectId});
+        }
+      }
+
+      if (didUploadPdf) {
+        trackEvent('pattern_pdf_uploaded', {project_id: currentProjectId});
       }
 
       // 기존에 저장돼있던 PDF가 교체/제거됐으면 버킷에 남은 이전 파일 삭제
@@ -1310,12 +1343,16 @@ export default function ProjectDetailScreen() {
               })}
               {pendingLogs.length > MAX_LENGTH_LOG && (
                 <S.ViewAllButton
-                  onPress={() =>
+                  onPress={() => {
+                    trackEvent('project_view_all_tapped', {
+                      type: 'logs',
+                      project_id: projectId,
+                    });
                     navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
                       projectId: projectId!,
                       projectTitle: project?.title,
-                    })
-                  }>
+                    });
+                  }}>
                   <S.ViewAllButtonText>
                     전체 보기 ({pendingLogs.length}개)
                   </S.ViewAllButtonText>
@@ -1330,13 +1367,7 @@ export default function ProjectDetailScreen() {
           <S.PostHeaderRow>
             <S.Label>게시물 ({posts.length})</S.Label>
             {isMyProject && posts.length > 0 && (
-              <S.AddButton
-                onPress={() =>
-                  navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
-                    projectId,
-                    projectTitle: project?.title,
-                  })
-                }>
+              <S.AddButton onPress={handleAddPostPress}>
                 <Icon name="plus" size={16} color="#fff" />
                 <S.AddButtonText>게시물 추가</S.AddButtonText>
               </S.AddButton>
@@ -1351,13 +1382,7 @@ export default function ProjectDetailScreen() {
             <S.EmptyPosts>
               <S.EmptyText>아직 게시물이 없어요</S.EmptyText>
               {isMyProject && (
-                <S.EmptyAddButton
-                  onPress={() =>
-                    navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
-                      projectId,
-                      projectTitle: project?.title,
-                    })
-                  }>
+                <S.EmptyAddButton onPress={handleAddPostPress}>
                   <S.EmptyAddButtonText>
                     첫 게시물 추가하기
                   </S.EmptyAddButtonText>
@@ -1427,12 +1452,16 @@ export default function ProjectDetailScreen() {
               </View>
               {posts.length > MAX_LENGTH_POST && (
                 <S.ViewAllButton
-                  onPress={() =>
+                  onPress={() => {
+                    trackEvent('project_view_all_tapped', {
+                      type: 'posts',
+                      project_id: projectId,
+                    });
                     navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {
                       projectId: projectId!,
                       projectTitle: project?.title,
-                    })
-                  }>
+                    });
+                  }}>
                   <S.ViewAllButtonText>
                     전체 보기 ({posts.length}개)
                   </S.ViewAllButtonText>

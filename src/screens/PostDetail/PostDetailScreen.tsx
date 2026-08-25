@@ -18,6 +18,7 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from '@/components/common/PinchZoomImage';
 import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
+import {trackEvent} from '@/lib/mixpanel';
 
 type RouteParams = {
   PostDetail: {
@@ -43,6 +44,7 @@ export default function PostDetailScreen() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const hasFetchedRef = useRef(false);
+  const viewTrackedRef = useRef(false);
 
   const isMyPost = post && user && post.user_id === user.id;
 
@@ -56,6 +58,7 @@ export default function PostDetailScreen() {
 
   useEffect(() => {
     hasFetchedRef.current = false;
+    viewTrackedRef.current = false;
   }, [postId]);
 
   const fetchPostDetail = async () => {
@@ -124,6 +127,15 @@ export default function PostDetailScreen() {
       setPost(postDetail);
       hasFetchedRef.current = true;
 
+      if (!viewTrackedRef.current) {
+        viewTrackedRef.current = true;
+        trackEvent('post_viewed', {
+          post_id: postDetail.id,
+          owner_id: postDetail.user_id,
+          is_own_content: user ? postDetail.user_id === user.id : false,
+        });
+      }
+
       // 저장 여부 조회 (본인 프로젝트 제외)
       if (user && project?.id && user.id !== (postData as any).user_id) {
         const {data: savedData} = await supabase
@@ -152,11 +164,13 @@ export default function PostDetailScreen() {
           .eq('user_id', user.id)
           .eq('project_id', post.project_id);
         setIsSaved(false);
+        trackEvent('project_unsaved', {project_id: post.project_id});
       } else {
         await supabase
           .from('saved_projects')
           .insert({user_id: user.id, project_id: post.project_id});
         setIsSaved(true);
+        trackEvent('project_saved', {project_id: post.project_id});
       }
     } catch (error) {
       console.error('❌ 뜨개함 저장 실패:', error);
@@ -230,6 +244,7 @@ export default function PostDetailScreen() {
         }
         throw insertError;
       }
+      trackEvent('post_reported', {post_id: post.id, reason});
       const {error: fnError} = await supabase.functions.invoke('send-report-email', {
         body: {
           reporterId: user.id,

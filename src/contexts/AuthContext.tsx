@@ -4,6 +4,7 @@ import {AuthContextType, AuthProviderProps, UserProfile} from '../@types/auth';
 import {supabase} from '../lib/supabase';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {identifyUser, resetUser, trackEvent} from '../lib/mixpanel';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -72,6 +73,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           setNeedsProfileSetup(false);
 
           await AsyncStorage.multiRemove(['user', 'provider', 'needsProfileSetup']);
+          resetUser();
         }
       },
     );
@@ -109,6 +111,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         setUser(userData);
         setProvider(sessionProvider);
 
+        identifyUser(userData.id, {
+          nickname: userData.nickname,
+          provider: sessionProvider,
+        });
+
         await AsyncStorage.setItem('user', JSON.stringify(userData));
         await AsyncStorage.setItem('provider', sessionProvider);
 
@@ -137,6 +144,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     setIsLoggedIn(true);
     setUser(userData);
     setProvider(provider);
+
+    identifyUser(userData.id, {nickname: userData.nickname, provider});
+    trackEvent('login_completed', {provider});
   };
 
   // 사용자 프로필 업데이트 (로컬 상태만)
@@ -174,6 +184,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       // Supabase 로그아웃 - 이후 onAuthStateChange에서 상태 초기화 처리
       await supabase.auth.signOut();
 
+      trackEvent('logout_completed', {provider});
       console.log('✅ 로그아웃 완료');
     } catch (error) {
       console.error('❌ 로그아웃 에러:', error);

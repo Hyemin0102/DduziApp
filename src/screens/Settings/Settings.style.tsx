@@ -63,20 +63,6 @@ export const FeedbackSection = styled.View`
   margin: 8px 16px 0;
 `;
 
-export const FeedbackButton = styled.TouchableOpacity`
-  background-color: #191919;
-  border-radius: 10px;
-  height: 50px;
-  align-items: center;
-  justify-content: center;
-`;
-
-export const FeedbackButtonText = styled.Text`
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-`;
-
 export const FeedbackHintRow = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;

@@ -14,6 +14,7 @@ import KeyboardAvoid from '@/components/common/KeyboardAvoid';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {checkNicknameDuplicate} from '@/lib/auth/userService';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
+import {trackEvent} from '@/lib/mixpanel';
 
 const MAX_BIO_LENGTH = 150;
 
@@ -141,6 +142,8 @@ const ProfileScreen = () => {
         bio,
         profile_image: profileImageUrl,
       });
+
+      trackEvent('profile_updated', {is_initial_setup: isInitialSetup});
 
       if (isInitialSetup) {
         await AsyncStorage.removeItem('needsProfileSetup');

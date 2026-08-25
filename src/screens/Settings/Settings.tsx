@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Alert, ActivityIndicator, Linking} from 'react-native';
+import {Alert, ActivityIndicator, Linking, Platform} from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import DeviceInfo from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/Feather';
@@ -8,6 +8,7 @@ import {deleteAccount} from '@/lib/auth/deleteAccount';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Settings.style';
+import {trackEvent} from '@/lib/mixpanel';
 
 const APP_VERSION = DeviceInfo.getVersion();
 const BUNDLE_ID = 'com.dduzi.app';
@@ -18,6 +19,7 @@ const Settings = () => {
   const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
+  const [appStoreId, setAppStoreId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(
@@ -25,12 +27,13 @@ const Settings = () => {
     )
       .then(res => res.json())
       .then(json => {
-      
-        
+
+
         if (json.resultCount > 0) {
           const storeVersion: string = json.results[0].version;
           //setVersionStatus(storeVersion === APP_VERSION ? 'latest' : 'update');
         setVersionStatus("latest")
+        setAppStoreId(String(json.results[0].trackId));
         } else {
           //setVersionStatus('unknown');
           setVersionStatus("latest")
@@ -57,7 +60,24 @@ const Settings = () => {
     navigation.navigate(MY_PAGE_ROUTES.NOTICE_LIST);
   };
 
+  const handleAppReview = () => {
+    trackEvent('app_review_tapped');
+    if (Platform.OS === 'ios') {
+      if (!appStoreId) return;
+      Linking.openURL(
+        `itms-apps://itunes.apple.com/app/id${appStoreId}?action=write-review`,
+      );
+    } else {
+      Linking.openURL(`market://details?id=${BUNDLE_ID}`).catch(() =>
+        Linking.openURL(
+          `https://play.google.com/store/apps/details?id=${BUNDLE_ID}`,
+        ),
+      );
+    }
+  };
+
   const handleContact = () => {
+    trackEvent('feedback_button_tapped');
     Linking.openURL(
       `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('[뜨지] 피드백')}`,
     );
@@ -141,11 +161,20 @@ const Settings = () => {
           </S.MenuItem>
         </S.MenuSection>
 
+        <S.SectionLabel>피드백</S.SectionLabel>
+        <S.MenuSection>
+          <S.MenuItem onPress={handleAppReview}>
+            <S.MenuText>앱 리뷰 작성하기</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+          <S.MenuItem onPress={handleContact}>
+            <S.MenuText>피드백 보내기</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+        </S.MenuSection>
+
         <S.FeedbackSection>
-          <S.FeedbackButton onPress={handleContact}>
-            <S.FeedbackButtonText>피드백 보내기</S.FeedbackButtonText>
-          </S.FeedbackButton>
-          <S.HintText style={{textAlign: 'center', marginTop: 8}}>
+          <S.HintText style={{textAlign: 'center'}}>
             메일 자동 연결이 안 될 경우 아래 주소로 보내주세요.
           </S.HintText>
           <S.FeedbackHintRow onPress={handleCopyEmail}>

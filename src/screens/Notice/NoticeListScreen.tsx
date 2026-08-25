@@ -3,6 +3,7 @@ import {ActivityIndicator, FlatList, Text, TouchableOpacity, View, StyleSheet} f
 import {useNavigation} from '@react-navigation/native';
 import {supabase} from '@/lib/supabase';
 import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
+import {trackEvent} from '@/lib/mixpanel';
 
 interface Notice {
   id: string;
@@ -28,6 +29,7 @@ export default function NoticeListScreen() {
 
   const handlePress = useCallback(
     (notice: Notice) => {
+      trackEvent('notice_tapped', {notice_id: notice.id, title: notice.title});
       navigation.navigate(MY_PAGE_ROUTES.NOTICE_DETAIL, {
         noticeId: notice.id,
         title: notice.title,

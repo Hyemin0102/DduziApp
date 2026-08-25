@@ -22,6 +22,7 @@ import DraggableFlatList, {
 } from 'react-native-draggable-flatlist';
 import * as S from './PostCreateForProjectScreen.style';
 import {View} from 'react-native';
+import {trackEvent} from '@/lib/mixpanel';
 
 type RouteProps = RouteProp<
   PostsStackParamList,
@@ -284,6 +285,11 @@ export default function PostCreateForProjectScreen() {
           .select()
           .single();
         if (postError) throw postError;
+
+        trackEvent('post_created', {
+          project_id: selectedProjectId,
+          image_count: images.length,
+        });
 
         if (images.length > 0) {
           const imageUrls = await uploadMultipleImages(

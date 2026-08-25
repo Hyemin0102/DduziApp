@@ -1,0 +1,26 @@
+event_name,category,description,properties,trigger_location,file
+app_opened,lifecycle,"앱 콜드스타트, 또는 5초 이상 백그라운드에 있다가 포그라운드로 복귀할 때 (카메라/사진첩/OAuth 로그인 등 짧은 왕복은 제외)",(없음),useEffect + AppState 'active',App.tsx
+screen_viewed,navigation,화면 진입,screen_name,NavigationContainer onStateChange,src/screens/Navigator/Navigator.tsx
+login_completed,auth,로그인 성공,provider,AuthContext login(),src/contexts/AuthContext.tsx
+logout_completed,auth,로그아웃 성공,provider,AuthContext logout(),src/contexts/AuthContext.tsx
+search_performed,search,검색 실행,query,Search handleSearch(),src/screens/Search/Search.tsx
+trending_keyword_tapped,search,"""지금 많이 뜨고있어요"" 태그 탭",keyword,Search 트렌드 태그 onPress,src/screens/Search/Search.tsx
+most_saved_project_tapped,search,"""뜨개함에 많이 저장됐어요"" 카드 탭",project_id,Search 카드 onPress,src/screens/Search/Search.tsx
+project_created,project,프로젝트 생성 완료,project_id,ProjectDetailScreen handleSave() (create),src/screens/ProjectDetail/ProjectDetailScreen.tsx
+project_completed,project,프로젝트 진행중→완료 전환,project_id,ProjectDetailScreen handleSave() (update),src/screens/ProjectDetail/ProjectDetailScreen.tsx
+project_viewed,project,프로젝트 상세 진입 (같은 프로젝트 재진입 시 중복 없음),"project_id, owner_id, is_own_content",ProjectDetailScreen fetchData(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
+pattern_pdf_uploaded,project,도안 PDF 업로드,project_id,ProjectDetailScreen handleSave(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
+knitting_log_added,project,뜨개 로그 추가 버튼 클릭,project_id,ProjectDetailScreen addPendingLog(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
+project_view_all_tapped,project,뜨개로그/게시물 전체보기 클릭,"type (logs/posts), project_id",ProjectDetailScreen 전체보기 버튼,src/screens/ProjectDetail/ProjectDetailScreen.tsx
+project_saved,project,뜨개함에 프로젝트 저장,project_id,PostDetailScreen handleToggleSave(),src/screens/PostDetail/PostDetailScreen.tsx
+project_unsaved,project,뜨개함에서 프로젝트 저장 취소,project_id,PostDetailScreen handleToggleSave(),src/screens/PostDetail/PostDetailScreen.tsx
+projects_tab_switched,project,진행중/완료/뜨개함 탭 전환,tab,ProjectsScreen switchTab(),src/screens/Projects/ProjectsScreen.tsx
+post_create_started,post,게시물 작성 화면 진입 시작,"source (project_detail/posts_screen), project_id (project_detail일 때만)",ProjectDetailScreen/PostsScreen 게시물 추가 버튼,"src/screens/ProjectDetail/ProjectDetailScreen.tsx, src/screens/Posts/PostsScreen.tsx"
+post_created,post,게시물 작성 완료,"project_id, image_count",PostCreateForProjectScreen handleSubmit() (create),src/screens/PostCreate/PostCreateForProjectScreen.tsx
+post_viewed,post,게시물 상세 진입 (같은 게시물 재진입 시 중복 없음),"post_id, owner_id, is_own_content",PostDetailScreen fetchPostDetail(),src/screens/PostDetail/PostDetailScreen.tsx
+post_reported,moderation,게시물 신고 제출,"post_id, reason",PostDetailScreen handleReport(),src/screens/PostDetail/PostDetailScreen.tsx
+user_blocked,moderation,유저 차단,blocked_id,PostsScreen handleBlock(),src/screens/Posts/PostsScreen.tsx
+app_review_tapped,feedback,앱 리뷰 작성하기 탭,(없음),Settings handleAppReview(),src/screens/Settings/Settings.tsx
+feedback_button_tapped,feedback,피드백 보내기 탭,(없음),Settings handleContact(),src/screens/Settings/Settings.tsx
+notice_tapped,settings,공지사항 목록에서 개별 공지 탭,"notice_id, title",NoticeListScreen handlePress(),src/screens/Notice/NoticeListScreen.tsx
+profile_updated,settings,프로필 저장 완료 (최초 설정/수정 공통),is_initial_setup,Profile handleSave(),src/screens/Profile/Profile.tsx

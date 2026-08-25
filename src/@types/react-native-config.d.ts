@@ -6,6 +6,7 @@ declare module 'react-native-config' {
     GOOGLE_IOS_CLIENT_ID: string;
     RN_SUPABASE_URL: string;
     RN_SUPABASE_ANON_KEY: string;
+    MIXPANEL_TOKEN: string;
 
   }
 

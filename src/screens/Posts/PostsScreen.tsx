@@ -23,6 +23,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import {PostsStackParamList} from '@/@types/navigation';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import {useAuth} from '@/contexts/AuthContext';
+import {trackEvent} from '@/lib/mixpanel';
 
 type TabType = 'inProgress' | 'completed';
 
@@ -234,6 +235,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const completedCount = visiblePosts.filter(p => getIsCompleted(p)).length;
 
   const handleAddPost = () => {
+    trackEvent('post_create_started', {source: 'posts_screen'});
     navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {});
   };
 
@@ -254,6 +256,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
                 blocked_id: targetUserId,
               });
               if (insertError) throw insertError;
+              trackEvent('user_blocked', {blocked_id: targetUserId});
               const {error: fnError} = await supabase.functions.invoke('send-block-email', {
                 body: {
                   blockerId: currentUserId,
