@@ -8,6 +8,8 @@ import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import {ProjectItem} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
 import {profileUrl} from '@/lib/imageTransform';
+import {getProjectDateLabel} from '@/lib/projectDate';
+import SavedProjectCard from '@/components/common/SavedProjectCard';
 
 type TabType = 'inProgress' | 'completed' | 'saved';
 
@@ -155,25 +157,8 @@ export default function ProjectsScreen() {
   const activeSaved = savedProjects.filter(p => p.visibility === 'public');
   const privateSaved = savedProjects.filter(p => p.visibility === 'private');
 
-  const formatDate = (d: string | null | undefined) => {
-    if (!d) return null;
-    const [y, m, day] = d.split('-');
-    return `${y}.${parseInt(m)}.${parseInt(day)}`;
-  };
-
-  const getDateLabel = (
-    isCompleted: boolean,
-    startedAt: string | null | undefined,
-    completedAt: string | null | undefined,
-  ) =>
-    isCompleted
-      ? startedAt || completedAt
-        ? `${formatDate(startedAt) ?? ''} ~ ${formatDate(completedAt) ?? ''}`
-        : null
-      : formatDate(startedAt);
-
   const renderMyProject = (item: ProjectItem) => {
-    const dateLabel = getDateLabel(item.is_completed, item.started_at, item.completed_at);
+    const dateLabel = getProjectDateLabel(item.is_completed, item.started_at, item.completed_at);
 
     return (
     <S.Card
@@ -209,12 +194,24 @@ export default function ProjectsScreen() {
   const renderSavedProject = (item: SavedProject, disabled = false) => {
     const isSelected = selectedIds.includes(item.savedId);
     const avatarUri = profileUrl(item.ownerProfileImage) ?? item.ownerProfileImage;
-    const dateLabel = getDateLabel(item.isCompleted, item.startedAt, item.completedAt);
+    const dateLabel = getProjectDateLabel(item.isCompleted, item.startedAt, item.completedAt);
     return (
-      <S.SavedCard
+      <SavedProjectCard
         key={item.savedId}
-        activeOpacity={0.75}
-        disabled={disabled && !isEditMode}
+        ownerNickname={item.ownerNickname}
+        ownerAvatarUri={avatarUri}
+        title={item.title}
+        dateLabel={dateLabel}
+        thumbnailUrl={item.thumbnailUrl}
+        locked={disabled}
+        touchDisabled={disabled && !isEditMode}
+        leftAccessory={
+          isEditMode ? (
+            <S.SelectCircle selected={isSelected}>
+              {isSelected && <Icon name="check" size={11} color="#fff" />}
+            </S.SelectCircle>
+          ) : undefined
+        }
         onPress={() => {
           if (isEditMode) {
             toggleSelect(item.savedId);
@@ -224,36 +221,8 @@ export default function ProjectsScreen() {
               projectTitle: item.title,
             });
           }
-        }}>
-        <S.SavedCardLeft>
-          {isEditMode && (
-            <S.SelectCircle selected={isSelected}>
-              {isSelected && <Icon name="check" size={11} color="#fff" />}
-            </S.SelectCircle>
-          )}
-          {avatarUri ? (
-            <S.OwnerAvatar source={{uri: avatarUri}} />
-          ) : (
-            <S.OwnerAvatarPlaceholder>
-              <Icon name="user" size={14} color="#ccc" />
-            </S.OwnerAvatarPlaceholder>
-          )}
-          <S.SavedCardInfo>
-            <S.OwnerNickname numberOfLines={1}>{item.ownerNickname}</S.OwnerNickname>
-            <S.SavedCardTitle numberOfLines={1} disabled={disabled}>
-              {item.title}
-            </S.SavedCardTitle>
-            {dateLabel && <S.CardDate>{dateLabel}</S.CardDate>}
-          </S.SavedCardInfo>
-        </S.SavedCardLeft>
-        <S.SavedCardRight>
-          {item.thumbnailUrl ? (
-            <S.CardThumbnail source={{uri: item.thumbnailUrl}} />
-          ) : null}
-          {disabled && <Icon name="lock" size={15} color="#ccc" />}
-          <Icon name="chevron-right" size={16} color={disabled ? '#ddd' : '#ccc'} />
-        </S.SavedCardRight>
-      </S.SavedCard>
+        }}
+      />
     );
   };
 

@@ -83,3 +83,31 @@ export const EmptySubText = styled.Text`
   color: #999;
   text-align: center;
 `;
+
+export const TrendingSection = styled.View`
+  padding: 20px;
+`;
+
+export const TrendingTitle = styled.Text`
+  font-size: 16px;
+  font-weight: 700;
+  color: #191919;
+  margin-bottom: 12px;
+`;
+
+export const TrendingTagRow = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+export const TrendingTag = styled.TouchableOpacity`
+  background-color: #f5f5f5;
+  border-radius: 18px;
+  padding: 9px 14px;
+`;
+
+export const TrendingTagText = styled.Text`
+  font-size: 14px;
+  color: #333;
+`;

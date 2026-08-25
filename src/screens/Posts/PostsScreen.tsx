@@ -23,8 +23,16 @@ import Icon from 'react-native-vector-icons/Feather';
 import {PostsStackParamList} from '@/@types/navigation';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import {useAuth} from '@/contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TabType = 'inProgress' | 'completed';
+type SortType = 'createdAt' | 'byProject';
+
+const SORT_STORAGE_KEY = 'postsSortType';
+const SORT_LABELS: Record<SortType, string> = {
+  createdAt: '생성일순',
+  byProject: '프로젝트별',
+};
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const GRID_ITEM_SIZE = SCREEN_WIDTH / 3;
@@ -45,7 +53,12 @@ interface PostListItem {
   created_at: string;
   project_id: string;
   post_images: {id: string; image_url: string; display_order: number}[];
-  projects: {title: string; is_completed: boolean; visibility: string} | null;
+  projects: {
+    title: string;
+    is_completed: boolean;
+    visibility: string;
+    created_at: string;
+  } | null;
 }
 
 const SKELETON_DATA = new Array(0)
@@ -141,9 +154,22 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
   const [nickname, setNickname] = useState<string | null>(null);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
+  const [sortType, setSortType] = useState<SortType>('createdAt');
+  const [showSortSheet, setShowSortSheet] = useState(false);
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
+
+  useEffect(() => {
+    AsyncStorage.getItem(SORT_STORAGE_KEY).then(saved => {
+      if (saved === 'createdAt' || saved === 'byProject') setSortType(saved);
+    });
+  }, []);
+
+  const changeSortType = (type: SortType) => {
+    setSortType(type);
+    AsyncStorage.setItem(SORT_STORAGE_KEY, type);
+  };
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -175,8 +201,8 @@ export default function PostsScreen({route}: PostsScreenProps) {
       const displayUserId = targetUserId || currentUserId;
 
       const projectsJoin = isMyPage
-        ? 'projects ( title, is_completed, visibility )'
-        : 'projects!inner ( title, is_completed, visibility )';
+        ? 'projects ( title, is_completed, visibility, created_at )'
+        : 'projects!inner ( title, is_completed, visibility, created_at )';
 
       let query = supabase
         .from('posts')
@@ -226,9 +252,21 @@ export default function PostsScreen({route}: PostsScreenProps) {
     ? posts
     : posts.filter(p => p.projects?.visibility === 'public');
 
-  const filteredPosts = visiblePosts.filter(post =>
+  const tabPosts = visiblePosts.filter(post =>
     activeTab === 'inProgress' ? !getIsCompleted(post) : getIsCompleted(post),
   );
+
+  const filteredPosts =
+    sortType === 'byProject'
+      ? [...tabPosts].sort((a, b) => {
+          if (a.project_id === b.project_id) {
+            return b.created_at.localeCompare(a.created_at);
+          }
+          const aProjectCreatedAt = a.projects?.created_at ?? '';
+          const bProjectCreatedAt = b.projects?.created_at ?? '';
+          return bProjectCreatedAt.localeCompare(aProjectCreatedAt);
+        })
+      : tabPosts;
 
   const inProgressCount = visiblePosts.filter(p => !getIsCompleted(p)).length;
   const completedCount = visiblePosts.filter(p => getIsCompleted(p)).length;
@@ -325,6 +363,13 @@ export default function PostsScreen({route}: PostsScreenProps) {
         </S.Tab>
       </S.TabContainer>
 
+      <S.SortRow>
+        <S.SortButton onPress={() => setShowSortSheet(true)}>
+          <Icon name="chevron-down" size={14} color="#666" />
+          <S.SortButtonText>{SORT_LABELS[sortType]}</S.SortButtonText>
+        </S.SortButton>
+      </S.SortRow>
+
       <FlatList
         data={filteredPosts}
         renderItem={({item, index}) => (
@@ -367,6 +412,15 @@ export default function PostsScreen({route}: PostsScreenProps) {
       onClose={() => setShowBlockSheet(false)}
       actions={[
         {label: '차단하기', onPress: handleBlock, isDestructive: true},
+      ]}
+    />
+
+    <ActionSheetModal
+      visible={showSortSheet}
+      onClose={() => setShowSortSheet(false)}
+      actions={[
+        {label: SORT_LABELS.createdAt, onPress: () => changeSortType('createdAt')},
+        {label: SORT_LABELS.byProject, onPress: () => changeSortType('byProject')},
       ]}
     />
     </SafeAreaView>

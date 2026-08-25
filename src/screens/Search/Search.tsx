@@ -5,17 +5,34 @@ import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
+import SavedProjectCard from '@/components/common/SavedProjectCard';
 import {Post} from '@/@types/database';
 import * as S from './Search.style';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
+import {profileUrl} from '@/lib/imageTransform';
+import {getProjectDateLabel} from '@/lib/projectDate';
+
+interface MostSavedProject {
+  project_id: string;
+  title: string;
+  thumbnail_url: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  is_completed: boolean;
+  owner_nickname: string;
+  owner_profile_image: string | null;
+}
 
 const Search = () => {
-  const {navigation} = useCommonNavigation();
+  const {navigation} = useCommonNavigation<any>();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
+  const [mostSavedProjects, setMostSavedProjects] = useState<MostSavedProject[]>([]);
   const isFocused = useRef(true);
   const inputRef = useRef<any>(null);
 
@@ -25,6 +42,28 @@ const Search = () => {
       setRefreshing(false);
       setLoading(false);
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchTrendingKeywords = async () => {
+      const {data} = await supabase
+        .from('trending_keywords')
+        .select('keyword')
+        .order('rank', {ascending: true});
+      if (data) setTrendingKeywords(data.map(d => d.keyword));
+    };
+    fetchTrendingKeywords();
+  }, []);
+
+  useEffect(() => {
+    const fetchMostSavedProjects = async () => {
+      const {data} = await supabase
+        .from('most_saved_projects')
+        .select('*')
+        .order('rank', {ascending: true});
+      if (data) setMostSavedProjects(data as MostSavedProject[]);
+    };
+    fetchMostSavedProjects();
   }, []);
 
 
@@ -170,6 +209,63 @@ const Search = () => {
     }
 
     if (!hasSearched) {
+      if (trendingKeywords.length > 0 || mostSavedProjects.length > 0) {
+        return (
+          <>
+            {trendingKeywords.length > 0 && (
+              <S.TrendingSection>
+                <S.TrendingTitle>지금 많이 뜨고있어요</S.TrendingTitle>
+                <S.TrendingTagRow>
+                  {trendingKeywords.map(keyword => (
+                    <S.TrendingTag
+                      key={keyword}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setSearchQuery(keyword);
+                        handleSearch(keyword);
+                      }}>
+                      <S.TrendingTagText>
+                        {keyword.length > 10 ? `${keyword.slice(0, 10)}...` : keyword}
+                      </S.TrendingTagText>
+                    </S.TrendingTag>
+                  ))}
+                </S.TrendingTagRow>
+              </S.TrendingSection>
+            )}
+            {mostSavedProjects.length > 0 && (
+              <>
+                <S.TrendingSection style={{paddingBottom: 4}}>
+                  <S.TrendingTitle style={{marginBottom: 0}}>
+                    뜨개함에 많이 저장됐어요
+                  </S.TrendingTitle>
+                </S.TrendingSection>
+                {mostSavedProjects.map(project => (
+                  <SavedProjectCard
+                    key={project.project_id}
+                    ownerNickname={project.owner_nickname}
+                    ownerAvatarUri={
+                      profileUrl(project.owner_profile_image) ?? project.owner_profile_image
+                    }
+                    title={project.title}
+                    dateLabel={getProjectDateLabel(
+                      project.is_completed,
+                      project.started_at,
+                      project.completed_at,
+                    )}
+                    thumbnailUrl={project.thumbnail_url}
+                    onPress={() =>
+                      navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+                        projectId: project.project_id,
+                        projectTitle: project.title,
+                      })
+                    }
+                  />
+                ))}
+              </>
+            )}
+          </>
+        );
+      }
       return (
         <S.CenterContainer>
           <S.EmptyText>검색어를 입력해주세요</S.EmptyText>
