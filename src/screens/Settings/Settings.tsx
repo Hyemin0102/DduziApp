@@ -1,25 +1,17 @@
 import React, {useState, useEffect} from 'react';
-import {Alert, ActivityIndicator, Linking, Platform} from 'react-native';
-import Clipboard from '@react-native-clipboard/clipboard';
+import {Alert, ActivityIndicator, Linking} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import Icon from 'react-native-vector-icons/Feather';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
-import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Settings.style';
-import {trackEvent} from '@/lib/mixpanel';
 
 const APP_VERSION = DeviceInfo.getVersion();
 const BUNDLE_ID = 'com.dduzi.app';
-const FEEDBACK_EMAIL = 'hyeminjo0102@gmail.com';
 
 const Settings = () => {
   const {provider} = useAuth();
-  const {navigation} = useCommonNavigation<any>();
   const [isDeleting, setIsDeleting] = useState(false);
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
-  const [appStoreId, setAppStoreId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(
@@ -33,7 +25,6 @@ const Settings = () => {
           const storeVersion: string = json.results[0].version;
           //setVersionStatus(storeVersion === APP_VERSION ? 'latest' : 'update');
         setVersionStatus("latest")
-        setAppStoreId(String(json.results[0].trackId));
         } else {
           //setVersionStatus('unknown');
           setVersionStatus("latest")
@@ -54,38 +45,6 @@ const Settings = () => {
         },
       ],
     );
-  };
-
-  const handleNotice = () => {
-    navigation.navigate(MY_PAGE_ROUTES.NOTICE_LIST);
-  };
-
-  const handleAppReview = () => {
-    trackEvent('app_review_tapped');
-    if (Platform.OS === 'ios') {
-      if (!appStoreId) return;
-      Linking.openURL(
-        `itms-apps://itunes.apple.com/app/id${appStoreId}?action=write-review`,
-      );
-    } else {
-      Linking.openURL(`market://details?id=${BUNDLE_ID}`).catch(() =>
-        Linking.openURL(
-          `https://play.google.com/store/apps/details?id=${BUNDLE_ID}`,
-        ),
-      );
-    }
-  };
-
-  const handleContact = () => {
-    trackEvent('feedback_button_tapped');
-    Linking.openURL(
-      `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('[뜨지] 피드백')}`,
-    );
-  };
-
-  const handleCopyEmail = () => {
-    Clipboard.setString(FEEDBACK_EMAIL);
-    Alert.alert('복사 완료', '이메일 주소가 복사되었습니다.');
   };
 
   const handleTermsOfService = () => {
@@ -147,10 +106,6 @@ const Settings = () => {
               )}
             </S.VersionBadge>
           </S.MenuItem>
-          <S.MenuItem onPress={handleNotice}>
-            <S.MenuText>공지사항</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
           <S.MenuItem onPress={handlePrivacyPolicy}>
             <S.MenuText>개인정보 처리방침</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>
@@ -160,28 +115,6 @@ const Settings = () => {
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
         </S.MenuSection>
-
-        <S.SectionLabel>피드백</S.SectionLabel>
-        <S.MenuSection>
-          <S.MenuItem onPress={handleAppReview}>
-            <S.MenuText>앱 리뷰 작성하기</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
-          <S.MenuItem onPress={handleContact}>
-            <S.MenuText>피드백 보내기</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
-          </S.MenuItem>
-        </S.MenuSection>
-
-        <S.FeedbackSection>
-          <S.HintText style={{textAlign: 'center'}}>
-            메일 자동 연결이 안 될 경우 아래 주소로 보내주세요.
-          </S.HintText>
-          <S.FeedbackHintRow onPress={handleCopyEmail}>
-            <S.HintText>{FEEDBACK_EMAIL}</S.HintText>
-            <Icon name="copy" size={13} color="#999" />
-          </S.FeedbackHintRow>
-        </S.FeedbackSection>
 
         <S.DeleteButton onPress={handleDeleteAccount}>
           <S.DeleteButtonText>회원탈퇴</S.DeleteButtonText>

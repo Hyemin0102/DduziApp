@@ -417,13 +417,7 @@ export default function PostDetailScreen() {
                 </S.ImageWrapper>
               ))}
             </S.ImageGallery>
-            {post.images.length > 1 && (
-              <S.DotsRow>
-                {post.images.map((_, i) => (
-                  <S.Dot key={i} active={i === activeImageIndex} />
-                ))}
-              </S.DotsRow>
-            )}
+           
           </>
         )}
 

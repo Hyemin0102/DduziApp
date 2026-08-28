@@ -119,6 +119,23 @@ export const ImageCounterText = styled.Text`
   font-weight: 600;
 `;
 
+export const PrivateBadge = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  padding: 4px 10px;
+  margin-bottom: 12px;
+`;
+
+export const PrivateBadgeText = styled.Text`
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+`;
+
 export const DotsRow = styled.View`
   flex-direction: row;
   justify-content: center;
@@ -210,12 +227,11 @@ export const SaveToastText = styled.Text`
 export const SaveToastAction = styled.Text`
   color: #fff;
   font-size: 14px;
-  
 `;
 
 // 콘텐츠 섹션
 export const ContentSection = styled.View`
-  padding: 20px 20px 30px 20px;
+  padding: 16px 20px 30px 20px;
 `;
 
 export const Title = styled.Text`
@@ -230,23 +246,6 @@ export const Content = styled.Text`
   font-size: 16px;
   color: #333;
   line-height: 24px;
-`;
-
-export const PrivateBadge = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  background-color: #f5f5f5;
-  border-radius: 10px;
-  padding: 4px 10px;
-  margin-bottom: 12px;
-`;
-
-export const PrivateBadgeText = styled.Text`
-  font-size: 12px;
-  color: #888;
-  font-weight: 600;
 `;
 
 export const Divider = styled.View`

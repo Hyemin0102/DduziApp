@@ -45,32 +45,6 @@ export const MenuValue = styled.Text`
   color: #999;
 `;
 
-export const HintText = styled.Text`
-  font-size: 12px;
-  color: #999;
-  margin-top: 2px;
-`;
-
-export const CopyRow = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  padding: 4px 0;
-`;
-
-export const FeedbackSection = styled.View`
-  margin: 8px 16px 0;
-`;
-
-export const FeedbackHintRow = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
- // margin-top: 10px;
-`;
-
 export const DeleteButton = styled.TouchableOpacity`
   align-items: center;
   padding: 20px;

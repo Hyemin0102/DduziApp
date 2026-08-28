@@ -98,6 +98,10 @@ export const Body = styled.Text`
   line-height: 22px;
 `;
 
+export const ProjectDate = styled.View`
+ padding-top: 32px;
+`;
+
 export const Link = styled.Text`
   font-size: 15px;
   color: #191919;
@@ -358,7 +362,8 @@ export const SubmitText = styled.Text`
 // ─── SNS 스타일 상단 영역 ─────────────────────────────────
 
 export const PostArea = styled.View`
-  padding: 20px 20px 16px;
+  
+padding: 20px 20px 16px;
   border-bottom-width: 6px;
   border-bottom-color: #f5f5f5;
   position: relative;
@@ -391,10 +396,9 @@ export const DescriptionInput = styled.TextInput`
 // `;
 
 export const ActionSheetTrigger = styled.TouchableOpacity`
-  position: absolute;
-  top: 18px;
-  right: 16px;
+  flex-shrink: 0;
   padding: 4px;
+  margin-top: 2px;
 `;
 
 // ─── 상태 설정 섹션 (B 방식: 행 + 토글) ──────────────────

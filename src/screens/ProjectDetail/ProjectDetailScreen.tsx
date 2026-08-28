@@ -42,11 +42,12 @@ import {
   MAX_PDF_SIZE_BYTES,
 } from '@/lib/uploadPdf';
 import {thumbnailUrl as toThumbnailUrl} from '@/lib/imageTransform';
-import {uploadImage} from '@/lib/uploadImage';
+import {uploadImage, removeProjectThumbnail} from '@/lib/uploadImage';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import {trackEvent} from '@/lib/mixpanel';
 import {getProjectDateLabel} from '@/lib/projectDate';
+import { Text } from 'react-native';
 
 type RouteProps = RouteProp<
   {
@@ -651,6 +652,12 @@ export default function ProjectDetailScreen() {
         removePdf(previousPatternUrl);
       }
 
+      // 기존에 저장돼있던 대표이미지가 교체/제거됐으면 버킷에 남은 이전 파일 삭제
+      const previousThumbnailUrl = originalRef.current?.thumbnailUrl;
+      if (previousThumbnailUrl && previousThumbnailUrl !== finalThumbnailUrl) {
+        removeProjectThumbnail(previousThumbnailUrl);
+      }
+
       if (isCreateMode) {
         Alert.alert('성공', '프로젝트가 작성되었습니다!', [
           {
@@ -837,6 +844,12 @@ export default function ProjectDetailScreen() {
     updateDirty({thumbnailUrl: imageUrl});
   };
 
+  const handleRemoveThumbnail = () => {
+    setShowThumbnailSheet(false);
+    setPendingThumbnail(null);
+    setField('thumbnailUrl', '');
+  };
+
   // ── 캘린더 핸들러
   const openCalendar = (target: 'started' | 'completed') => {
     setCalendarTarget(target);
@@ -945,6 +958,12 @@ export default function ProjectDetailScreen() {
                 <S.TitleFlex>{project!.title}</S.TitleFlex>
               )}
             </View>
+
+            {isMyProject && (
+              <S.ActionSheetTrigger onPress={() => setShowActionSheet(true)}>
+                <Icon name="more-horizontal" size={20} color="#bbb" />
+              </S.ActionSheetTrigger>
+            )}
           </S.TitleWithThumbnailRow>
 
           <S.PostAreaDivider />
@@ -959,8 +978,20 @@ export default function ProjectDetailScreen() {
               placeholderTextColor="#bbb"
               maxLength={2000}
             />
-          ) : project?.content ? (
-            <S.Body>{project.content}</S.Body>
+          ) : project ? (
+            <>
+              {project.content ? <S.Body>{project.content}</S.Body> : null}
+              {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at) && (
+                <S.ProjectDate>
+                  <S.DateChip activeOpacity={1} disabled>
+                    <Icon name="calendar" size={12} color="#888" />
+                    <S.DateChipText>
+                      {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
+                    </S.DateChipText>
+                  </S.DateChip>
+                </S.ProjectDate>
+              )}
+            </>
           ) : null}
 
           {/* {!isCreateMode && project && (
@@ -970,12 +1001,6 @@ export default function ProjectDetailScreen() {
               </S.Date>
             </S.MetaRow>
           )} */}
-
-          {isMyProject && (
-            <S.ActionSheetTrigger onPress={() => setShowActionSheet(true)}>
-              <Icon name="more-horizontal" size={20} color="#bbb" />
-            </S.ActionSheetTrigger>
-          )}
         </S.PostArea>
 
         {/* ══ 상태 설정 (내 프로젝트) ══════════════════════ */}
@@ -1065,14 +1090,7 @@ export default function ProjectDetailScreen() {
                   </S.StatusText>
                 </S.StatusBadge>
               </S.BadgeRow>
-              {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at) && (
-                <S.DateChip activeOpacity={1} disabled>
-                  <Icon name="calendar" size={12} color="#888" />
-                  <S.DateChipText>
-                    {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
-                  </S.DateChipText>
-                </S.DateChip>
-              )}
+             
             </S.MetaRow>
           </S.MetaSection>
         )}
@@ -1544,6 +1562,12 @@ export default function ProjectDetailScreen() {
               setTimeout(() => setShowPostImagePicker(true), 300);
             },
             disabled: allPostImages.length === 0,
+          },
+          {
+            label: '대표 이미지 삭제',
+            onPress: handleRemoveThumbnail,
+            isDestructive: true,
+            disabled: !thumbnailUrl && !pendingThumbnail,
           },
         ]}>
         <View style={{paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4}}>

@@ -25,7 +25,7 @@ import {
   STORE_URLS,
 } from './src/lib/appVersion';
 
-const BUNDLE_ID = 'com.dduzi.app';
+const ANDROID_PACKAGE_ID = 'com.dduziapp';
 
 // 카메라 촬영, 사진 선택, OAuth 로그인 등은 앱을 잠깐 background로 보냈다가
 // 곧바로 돌아오는데, 이런 짧은 왕복은 "진짜 재방문"이 아니므로 카운트에서 제외
@@ -85,8 +85,8 @@ function App(): React.JSX.Element {
       const appStoreId = await fetchIosAppStoreId();
       if (appStoreId) Linking.openURL(STORE_URLS.ios(appStoreId));
     } else {
-      Linking.openURL(STORE_URLS.android(BUNDLE_ID)).catch(() =>
-        Linking.openURL(STORE_URLS.androidWeb(BUNDLE_ID)),
+      Linking.openURL(STORE_URLS.android(ANDROID_PACKAGE_ID)).catch(() =>
+        Linking.openURL(STORE_URLS.androidWeb(ANDROID_PACKAGE_ID)),
       );
     }
   };

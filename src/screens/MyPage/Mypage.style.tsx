@@ -10,6 +10,12 @@ export const ScrollView = styled.ScrollView`
   flex: 1;
 `;
 
+export const SectionLabel = styled.Text`
+  font-size: 13px;
+  color: #999;
+  padding: 16px 16px 8px;
+`;
+
 export const MenuSection = styled.View`
   background-color: #fff;
   border-radius: 12px;
@@ -53,6 +59,19 @@ export const MenuArrow = styled.Text`
 export const MenuValue = styled.Text`
   font-size: 14px;
   color: #999;
+`;
+
+export const HintText = styled.Text`
+  font-size: 12px;
+  color: #999;
+`;
+
+export const FeedbackHintRow = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 16px 4px;
 `;
 
 export const LogoutMenuItem = styled.TouchableOpacity`

@@ -1,15 +1,33 @@
-import React from 'react';
-import {Alert} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {Alert, Linking, Platform} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import Icon from 'react-native-vector-icons/Feather';
 import {useAuth} from '../../contexts/AuthContext';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {MY_PAGE_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Mypage.style';
 import {profileUrl} from '@/lib/imageTransform';
+import {trackEvent} from '@/lib/mixpanel';
+
+const IOS_BUNDLE_ID = 'com.dduzi.app';
+const ANDROID_PACKAGE_ID = 'com.dduziapp';
+const FEEDBACK_EMAIL = 'hyeminjo0102@gmail.com';
 
 const Mypage = () => {
   const {user, logout} = useAuth();
   const {navigation} = useCommonNavigation();
+  const [appStoreId, setAppStoreId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`https://itunes.apple.com/lookup?bundleId=${IOS_BUNDLE_ID}&country=kr`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.resultCount > 0) {
+          setAppStoreId(String(json.results[0].trackId));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleProfile = () => {
     navigation.navigate(MY_PAGE_ROUTES.PROFILE_EDIT);
@@ -17,6 +35,38 @@ const Mypage = () => {
 
   const handleSettings = () => {
     navigation.navigate(MY_PAGE_ROUTES.SETTINGS);
+  };
+
+  const handleNotice = () => {
+    navigation.navigate(MY_PAGE_ROUTES.NOTICE_LIST);
+  };
+
+  const handleContact = () => {
+    trackEvent('feedback_button_tapped');
+    Linking.openURL(
+      `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('[뜨지] 피드백')}`,
+    );
+  };
+
+  const handleAppReview = () => {
+    trackEvent('app_review_tapped');
+    if (Platform.OS === 'ios') {
+      if (!appStoreId) return;
+      Linking.openURL(
+        `itms-apps://itunes.apple.com/app/id${appStoreId}?action=write-review`,
+      );
+    } else {
+      Linking.openURL(`market://details?id=${ANDROID_PACKAGE_ID}`).catch(() =>
+        Linking.openURL(
+          `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE_ID}`,
+        ),
+      );
+    }
+  };
+
+  const handleCopyEmail = () => {
+    Clipboard.setString(FEEDBACK_EMAIL);
+    Alert.alert('복사 완료', '이메일 주소가 복사되었습니다.');
   };
 
   const handleLogout = async () => {
@@ -78,6 +128,26 @@ const Mypage = () => {
             <S.AccountValue>{user.email || '-'}</S.AccountValue>
           </S.AccountItem>
         </S.AccountSection>
+
+        <S.SectionLabel>고객센터</S.SectionLabel>
+        <S.MenuSection style={{marginTop: 4}}>
+          <S.MenuItem onPress={handleNotice}>
+            <S.MenuText>공지사항</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+          <S.MenuItem onPress={handleContact}>
+            <S.MenuText>피드백 보내기</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+          <S.MenuItem onPress={handleAppReview}>
+            <S.MenuText>앱 리뷰 작성하기</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+        </S.MenuSection>
+        <S.FeedbackHintRow onPress={handleCopyEmail}>
+          <S.HintText>메일 연결이 안 될 경우 {FEEDBACK_EMAIL} 로 보내주세요</S.HintText>
+          <Icon name="copy" size={12} color="#999" />
+        </S.FeedbackHintRow>
 
         <S.MenuSection>
           <S.MenuItem onPress={handleSettings}>

@@ -86,3 +86,22 @@ export const uploadMultipleImages = async (
 // ): Promise<string | null> => {
 //   return uploadImage(uri, 'profile', userId);
 // };
+
+const POST_IMAGES_BUCKET = 'post-images';
+const PUBLIC_URL_PREFIX = `/storage/v1/object/public/${POST_IMAGES_BUCKET}/`;
+
+/**
+ * 프로젝트 대표이미지 삭제 (project-thumbnails/ 경로인 경우에만 실제 파일 삭제)
+ * 게시물에서 재사용된 이미지는 게시물 쪽 파일이므로 삭제하지 않음
+ */
+export const removeProjectThumbnail = async (url: string): Promise<void> => {
+  try {
+    const idx = url.indexOf(PUBLIC_URL_PREFIX);
+    if (idx < 0) return;
+    const path = url.slice(idx + PUBLIC_URL_PREFIX.length);
+    if (!path.startsWith('project-thumbnails/')) return;
+    await supabase.storage.from(POST_IMAGES_BUCKET).remove([path]);
+  } catch (error) {
+    console.error('썸네일 삭제 실패:', error);
+  }
+};
