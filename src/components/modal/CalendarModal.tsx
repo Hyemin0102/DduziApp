@@ -61,6 +61,82 @@ function buildRangeMarked(start: string, end: string) {
   return marked;
 }
 
+// ─── 커스텀 날짜 셀: 시작일/종료일을 완전한 원으로, 중간 날짜는 연결된 바 배경으로 ───
+
+function DayCell({date, state, marking, onPress}: any) {
+  if (!date) return <View style={dayCell.cell} />;
+
+  const m: any = marking || {};
+  const isStart = !!m.startingDay;
+  const isEnd = !!m.endingDay;
+  const isRangeEndpoint = isStart || isEnd;
+  const isSingleSelected = !!m.selected;
+  const showCircle = isRangeEndpoint || isSingleSelected;
+  const circleColor = isSingleSelected ? m.selectedColor || '#191919' : '#191919';
+  const hasBar = m.color !== undefined && !(isStart && isEnd);
+  const isDisabled = state === 'disabled' || state === 'inactive';
+  const isToday = state === 'today';
+
+  const textStyle = showCircle
+    ? dayCell.textOnCircle
+    : hasBar
+      ? {color: m.textColor ?? '#191919'}
+      : isDisabled
+        ? dayCell.textDisabled
+        : isToday
+          ? dayCell.textToday
+          : dayCell.textDefault;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={() => onPress?.(date)}
+      style={dayCell.cell}>
+      {hasBar && (
+        <View
+          style={[
+            dayCell.bar,
+            {
+              backgroundColor: m.color,
+              left: isStart ? '50%' : 0,
+              right: isEnd ? '50%' : 0,
+            },
+          ]}
+        />
+      )}
+      <View style={[dayCell.circle, showCircle && {backgroundColor: circleColor}]}>
+        <Text style={[dayCell.text, textStyle]}>{date.day}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const dayCell = StyleSheet.create({
+  cell: {
+    width: '100%',
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bar: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+  },
+  circle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {fontSize: 15},
+  textDefault: {color: '#2d4150'},
+  textDisabled: {color: '#d9e1e8'},
+  textToday: {color: '#555'},
+  textOnCircle: {color: '#fff'},
+});
+
 // ─── 휠 피커 컬럼 ────────────────────────────────────────────
 
 const ITEM_H = 48;
@@ -259,6 +335,7 @@ export default function CalendarModal({
               onDayPress={handleDayPress}
               markedDates={markedDates}
               markingType={mode === 'range' ? 'period' : 'dot'}
+              dayComponent={DayCell}
               maxDate={maxDate}
               renderHeader={(date: any) => {
                 const d = new Date(date);
