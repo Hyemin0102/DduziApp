@@ -4,6 +4,7 @@ import TabNavigator from './TabNavigator';
 import AuthStack from './stacks/AuthStack';
 import {useAuth} from '../../contexts/AuthContext';
 import ProfileScreen from '../Profile/Profile';
+import TermsAgreementScreen from '../Auth/TermsAgreementScreen';
 import OnboardingScreen from '../Onboarding/OnboardingScreen';
 import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
@@ -14,7 +15,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 //루트 네비게이터
 const Navigator = () => {
-  const {isLoggedIn, needsProfileSetup} = useAuth();
+  const {isLoggedIn, needsProfileSetup, needsTermsAgreement} = useAuth();
   const navigationRef = useRef<any>(null);
   const currentScreenNameRef = useRef<string | undefined>(undefined);
 
@@ -38,6 +39,12 @@ const Navigator = () => {
             />
             <RootStack.Screen name={ROOT_ROUTES.AUTH} component={AuthStack} />
           </>
+        ) : needsTermsAgreement ? (
+          // 약관 미동의 — 재설치해도 계정 기준으로 판단하므로 이미 동의한 유저는 안 걸림
+          <RootStack.Screen
+            name={ROOT_ROUTES.TERMS_AGREEMENT}
+            component={TermsAgreementScreen}
+          />
         ) : needsProfileSetup ? (
           // 최초 로그인
           <RootStack.Screen

@@ -14,6 +14,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [provider, setProvider] = useState<string>('');
   const [needsProfileSetup, setNeedsProfileSetup] = useState<boolean>(false);
+  const [needsTermsAgreement, setNeedsTermsAgreement] = useState<boolean>(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(false);
   //supabase 테이블 + users 테이블
   const fetchUserWithProfile = async (session: any): Promise<UserProfile> => {
@@ -56,6 +57,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       bio: dbUser?.bio || null,
       profile_image: dbUser?.profile_image || null,
       provider: provider,
+      terms_agreed_at: dbUser?.terms_agreed_at ?? null,
+      profile_completed_at: dbUser?.profile_completed_at ?? null,
       rawProfile: rawProfile as any,
     };
   };
@@ -71,6 +74,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           setUser(null);
           setProvider('');
           setNeedsProfileSetup(false);
+          setNeedsTermsAgreement(false);
 
           await AsyncStorage.multiRemove(['user', 'provider', 'needsProfileSetup']);
           resetUser();
@@ -119,13 +123,15 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         await AsyncStorage.setItem('user', JSON.stringify(userData));
         await AsyncStorage.setItem('provider', sessionProvider);
 
-        const needsSetup = await AsyncStorage.getItem('needsProfileSetup');
-        setNeedsProfileSetup(needsSetup === 'true');
+        // 계정 기준으로 판단 — 재설치해도 이미 완료했으면 다시 안 물어봄
+        setNeedsProfileSetup(!userData.profile_completed_at);
+        setNeedsTermsAgreement(!userData.terms_agreed_at);
       } else {
         setIsLoggedIn(false);
         setUser(null);
         setProvider('');
         setNeedsProfileSetup(false);
+        setNeedsTermsAgreement(false);
       }
     } catch (error) {
       console.error('checkAuthStatus error:', error);
@@ -133,6 +139,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       setUser(null);
       setProvider('');
       setNeedsProfileSetup(false);
+      setNeedsTermsAgreement(false);
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +151,10 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     setIsLoggedIn(true);
     setUser(userData);
     setProvider(provider);
+
+    // 계정 기준으로 판단 — 재설치해도 이미 완료했으면 다시 안 물어봄
+    setNeedsProfileSetup(!userData.profile_completed_at);
+    setNeedsTermsAgreement(!userData.terms_agreed_at);
 
     identifyUser(userData.id, {nickname: userData.nickname, provider});
     trackEvent('login_completed', {provider});
@@ -194,6 +205,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       setUser(null);
       setProvider('');
       setNeedsProfileSetup(false);
+      setNeedsTermsAgreement(false);
 
       try {
         await supabase.auth.signOut();
@@ -209,6 +221,27 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     }
   };
 
+  // 약관 동의 완료 처리 — 계정(DB)에 기록해서 재설치해도 유지되게 함
+  const completeTermsAgreement = async () => {
+    if (!user) return;
+    const agreedAt = new Date().toISOString();
+
+    const {error} = await supabase
+      .from('users')
+      .update({terms_agreed_at: agreedAt})
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('❌ 약관 동의 기록 실패:', error);
+      throw error;
+    }
+
+    const updatedUser = {...user, terms_agreed_at: agreedAt};
+    setUser(updatedUser);
+    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    setNeedsTermsAgreement(false);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -220,10 +253,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         checkAuthStatus,
         provider,
         needsProfileSetup,
+        needsTermsAgreement,
         hasSeenOnboarding,
         completeOnboarding,
         updateUserProfile,
         setNeedsProfileSetup,
+        completeTermsAgreement,
       }}>
       {children}
     </AuthContext.Provider>

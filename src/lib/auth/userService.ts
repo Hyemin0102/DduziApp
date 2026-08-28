@@ -137,6 +137,8 @@ export const createUserProfile = ({
     nickname: dbUser.nickname || '', // DB에 저장된 닉네임
     bio: dbUser.bio || null,
     provider,
+    terms_agreed_at: dbUser.terms_agreed_at ?? null,
+    profile_completed_at: dbUser.profile_completed_at ?? null,
   };
 
   if (provider === 'kakao') {

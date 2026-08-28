@@ -2,6 +2,7 @@
 export const ROOT_ROUTES = {
   ONBOARDING: 'Onboarding',
   AUTH: 'Auth',
+  TERMS_AGREEMENT: 'TermsAgreement',
   PROFILE: 'Profile',
   TAB_NAVIGATOR: 'TabNavigator',
 } as const;

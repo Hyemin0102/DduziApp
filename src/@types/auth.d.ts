@@ -20,6 +20,10 @@ export interface UserProfile {
   profile_image?: string;
   nickname?: string;  // 사용자 표시 이름 (DB users.nickname과 매핑)
   bio?: string;
+  // 약관 동의 시각 (계정 기준, null이면 미동의) — DB users.terms_agreed_at과 매핑
+  terms_agreed_at?: string | null;
+  // 프로필 설정 완료 시각 (계정 기준, null이면 미완료) — DB users.profile_completed_at과 매핑
+  profile_completed_at?: string | null;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | GoogleUserProfile | AppleUserProfile;
@@ -36,6 +40,8 @@ export interface AuthContextType {
   provider: string;
   //신규 유저 확인
   needsProfileSetup: boolean;
+  //약관 동의 필요 여부 (계정 기준 — 재설치해도 이미 동의했으면 다시 안 뜸)
+  needsTermsAgreement: boolean;
   //온보딩 완료 여부
   hasSeenOnboarding: boolean;
   login: (
@@ -52,6 +58,8 @@ export interface AuthContextType {
   setNeedsProfileSetup: (needs: boolean) => void;
   //온보딩 완료 처리
   completeOnboarding: () => Promise<void>;
+  //약관 동의 완료 처리 (DB에 기록 + 상태 갱신)
+  completeTermsAgreement: () => Promise<void>;
 }
 
 // Auth Provider Props

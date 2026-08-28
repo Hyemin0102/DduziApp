@@ -2,7 +2,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Alert, ActivityIndicator} from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../../contexts/AuthContext';
 import {supabase} from '../../lib/supabase';
 import {useRoute} from '@react-navigation/native';
@@ -130,9 +129,18 @@ const ProfileScreen = () => {
         }
       }
 
+      const profileCompletedAt = isInitialSetup
+        ? new Date().toISOString()
+        : undefined;
+
       const {error} = await supabase
         .from('users')
-        .update({nickname, bio, profile_image: profileImageUrl})
+        .update({
+          nickname,
+          bio,
+          profile_image: profileImageUrl,
+          ...(profileCompletedAt ? {profile_completed_at: profileCompletedAt} : {}),
+        })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -141,12 +149,12 @@ const ProfileScreen = () => {
         nickname,
         bio,
         profile_image: profileImageUrl,
+        ...(profileCompletedAt ? {profile_completed_at: profileCompletedAt} : {}),
       });
 
       trackEvent('profile_updated', {is_initial_setup: isInitialSetup});
 
       if (isInitialSetup) {
-        await AsyncStorage.removeItem('needsProfileSetup');
         setNeedsProfileSetup(false);
       } else {
         navigation.goBack();
