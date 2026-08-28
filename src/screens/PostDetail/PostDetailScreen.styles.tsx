@@ -139,7 +139,7 @@ export const ProjectBanner = styled.TouchableOpacity`
   align-items: center;
   justify-content: space-between;
   margin: 0 16px 16px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   background-color: #f1f1ef;
   border-radius: 12px;
   border-width: 1px;
@@ -179,6 +179,32 @@ export const ProjectBannerRight = styled.View`
 export const ProjectBannerChevron = styled.Text`
   font-size: 16px;
   color: #555;
+`;
+
+export const SaveToast = styled.TouchableOpacity`
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 24px;
+  background-color: rgba(25, 25, 25, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const SaveToastText = styled.Text`
+  flex: 1;
+  color: #fff;
+  font-size: 14px;
+  margin-right: 12px;
+`;
+
+export const SaveToastAction = styled.Text`
+  color: #fff;
+  font-size: 14px;
+  
 `;
 
 // 콘텐츠 섹션

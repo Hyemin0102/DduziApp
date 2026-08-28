@@ -16,9 +16,20 @@ import CompletePostModal from '@/components/modal/CompletePostModal';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from '@/components/common/PinchZoomImage';
-import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import {
+  PROJECTS_ROUTES,
+  POST_ROUTES,
+  ROOT_ROUTES,
+  TAB_ROUTES,
+} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
 import {trackEvent} from '@/lib/mixpanel';
+import SaveIcon from '@/assets/icons/save.svg';
+import SavedIcon from '@/assets/icons/saved.svg';
+
+// 토스트에서 "내 뜨개함에 담았어요." 문구는 절대 안 잘리게, 프로젝트명만 줄여서 "..." 처리
+const truncateForToast = (title: string, maxLen = 8) =>
+  title.length > maxLen ? `${title.slice(0, maxLen)}...` : title;
 
 type RouteParams = {
   PostDetail: {
@@ -28,7 +39,7 @@ type RouteParams = {
 
 export default function PostDetailScreen() {
   const route = useRoute<RouteProp<RouteParams, 'PostDetail'>>();
-  const {navigation} = useCommonNavigation();
+  const {navigation, rootNavigation} = useCommonNavigation<any>();
   const {user} = useAuth();
   const {postId} = route.params;
 
@@ -43,8 +54,16 @@ export default function PostDetailScreen() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaveLoading, setIsSaveLoading] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
   const hasFetchedRef = useRef(false);
   const viewTrackedRef = useRef(false);
+  const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+    };
+  }, []);
 
   const isMyPost = post && user && post.user_id === user.id;
 
@@ -171,6 +190,10 @@ export default function PostDetailScreen() {
           .insert({user_id: user.id, project_id: post.project_id});
         setIsSaved(true);
         trackEvent('project_saved', {project_id: post.project_id});
+
+        setShowSaveToast(true);
+        if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+        saveToastTimerRef.current = setTimeout(() => setShowSaveToast(false), 3000);
       }
     } catch (error) {
       console.error('❌ 뜨개함 저장 실패:', error);
@@ -185,6 +208,18 @@ export default function PostDetailScreen() {
     navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
       projectId: post.project_id,
       projectTitle: post.title,
+    });
+  };
+
+  const handleGoToSavedProjects = () => {
+    setShowSaveToast(false);
+    if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+    rootNavigation.navigate(ROOT_ROUTES.TAB_NAVIGATOR, {
+      screen: TAB_ROUTES.PROJECTS_TAB,
+      params: {
+        screen: PROJECTS_ROUTES.PROJECTS_MAIN,
+        params: {initialTab: 'saved'},
+      },
     });
   };
 
@@ -407,16 +442,9 @@ export default function PostDetailScreen() {
         {post.project_id && (
           <S.ProjectBanner onPress={handleGoToProject} activeOpacity={0.8}>
             <S.ProjectBannerLeft>
-              <Icon name="folder" size={18} color="#555" />
-              <S.ProjectBannerTextGroup>
-                <S.ProjectBannerLabel>연결된 프로젝트</S.ProjectBannerLabel>
-                <S.ProjectBannerTitle numberOfLines={1}>
-                  {post.title || '프로젝트 보기'}
-                </S.ProjectBannerTitle>
-              </S.ProjectBannerTextGroup>
-            </S.ProjectBannerLeft>
-            <S.ProjectBannerRight>
-              {!isMyPost && (
+              {isMyPost ? (
+                <Icon name="folder" size={18} color="#555" />
+              ) : (
                 <TouchableOpacity
                   onPress={e => {
                     e.stopPropagation?.();
@@ -424,18 +452,37 @@ export default function PostDetailScreen() {
                   }}
                   hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
                   disabled={isSaveLoading}>
-                  <Icon
-                    name="bookmark"
-                    size={18}
-                    color={isSaved ? 'red' : '#bbb'}
-                  />
+                  {isSaved ? (
+                    <SavedIcon width={32} height={32} />
+                  ) : (
+                    <SaveIcon width={32} height={32} />
+                  )}
                 </TouchableOpacity>
               )}
+              <S.ProjectBannerTextGroup>
+                <S.ProjectBannerLabel>내 뜨개함 담기</S.ProjectBannerLabel>
+                <S.ProjectBannerTitle numberOfLines={1}>
+                  {post.title || '프로젝트 보기'}
+                </S.ProjectBannerTitle>
+              </S.ProjectBannerTextGroup>
+            </S.ProjectBannerLeft>
+            <S.ProjectBannerRight>
               <S.ProjectBannerChevron>›</S.ProjectBannerChevron>
             </S.ProjectBannerRight>
           </S.ProjectBanner>
         )}
       </ScrollView>
+
+      {/* 뜨개함 저장 토스트 */}
+      {showSaveToast && (
+        <S.SaveToast onPress={handleGoToSavedProjects} activeOpacity={0.85}>
+          <S.SaveToastText>
+          내 뜨개함에 담았어요.
+            {/* {post.title ? `${truncateForToast(post.title)}를 ` : ''}내 뜨개함에 담았어요. */}
+          </S.SaveToastText>
+          <S.SaveToastAction>바로가기</S.SaveToastAction>
+        </S.SaveToast>
+      )}
 
       {/* 액션시트 */}
       <ActionSheetModal

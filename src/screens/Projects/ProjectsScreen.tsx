@@ -1,6 +1,6 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {FlatList, ScrollView, ActivityIndicator, RefreshControl, Alert} from 'react-native';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useRoute} from '@react-navigation/native';
 import * as S from './ProjectsScreen.styles';
 import {supabase} from '@/lib/supabase';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -30,7 +30,14 @@ interface SavedProject {
 
 export default function ProjectsScreen() {
   const {navigation} = useCommonNavigation<any>();
+  const route = useRoute<any>();
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
+
+  useEffect(() => {
+    if (route.params?.initialTab) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route.params?.initialTab]);
   const [myProjects, setMyProjects] = useState<ProjectItem[]>([]);
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [loading, setLoading] = useState(true);

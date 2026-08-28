@@ -44,7 +44,9 @@ export type TabParamList = {
 
 // Projects Stack
 export type ProjectsStackParamList = {
-  [PROJECTS_ROUTES.PROJECTS_MAIN]: undefined;
+  [PROJECTS_ROUTES.PROJECTS_MAIN]:
+    | {initialTab?: 'inProgress' | 'completed' | 'saved'}
+    | undefined;
   [PROJECTS_ROUTES.PROJECT_DETAIL]: {
     projectId?: string;
     projectTitle?: string;

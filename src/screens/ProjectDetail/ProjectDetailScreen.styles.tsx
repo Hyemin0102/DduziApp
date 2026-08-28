@@ -716,16 +716,11 @@ export const DateChip = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   gap: 5px;
-  padding-horizontal: 10px;
   padding-vertical: 5px;
-  border-radius: 8px;
-  border-width: 1px;
-  border-color: #e8e8e8;
-  background-color: #fafafa;
 `;
 
 export const DateChipText = styled.Text`
-  font-size: 12px;
+  font-size: 13px;
   color: #555;
 `;
 
