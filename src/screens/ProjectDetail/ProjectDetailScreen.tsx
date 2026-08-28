@@ -46,6 +46,7 @@ import {uploadImage} from '@/lib/uploadImage';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import {trackEvent} from '@/lib/mixpanel';
+import {getProjectDateLabel} from '@/lib/projectDate';
 
 type RouteProps = RouteProp<
   {
@@ -1048,30 +1049,30 @@ export default function ProjectDetailScreen() {
           </S.MetaSection>
         )}
 
-        {/* 조회 전용 배지 (타인 프로젝트) */}
+        {/* 조회 전용 상태 (타인 프로젝트) — 기존 뱃지 디자인 유지 */}
         {!canEdit && project && (
           <S.MetaSection>
-            <S.MetaRow style={{borderBottomWidth: 0}}>
+            <S.MetaRow style={{borderBottomWidth: 0, flexDirection: 'column', alignItems: 'flex-start', gap: 8}}>
               <S.BadgeRow>
-                <S.StatusBadge
-                  variant={project.is_completed ? 'completed' : 'progress'}>
-                  <S.StatusText
-                    variant={project.is_completed ? 'completed' : 'progress'}>
+                <S.StatusBadge variant={project.is_completed ? 'completed' : 'progress'}>
+                  <S.StatusText variant={project.is_completed ? 'completed' : 'progress'}>
                     {project.is_completed ? '✅ 완료' : '🧶 진행 중'}
                   </S.StatusText>
                 </S.StatusBadge>
-                <S.StatusBadge
-                  variant={
-                    project.visibility === 'public' ? 'public' : 'private'
-                  }>
-                  <S.StatusText
-                    variant={
-                      project.visibility === 'public' ? 'public' : 'private'
-                    }>
+                <S.StatusBadge variant={project.visibility === 'public' ? 'public' : 'private'}>
+                  <S.StatusText variant={project.visibility === 'public' ? 'public' : 'private'}>
                     {project.visibility === 'public' ? '🌐 공개' : '🔒 비공개'}
                   </S.StatusText>
                 </S.StatusBadge>
               </S.BadgeRow>
+              {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at) && (
+                <S.DateChip activeOpacity={1} disabled>
+                  <Icon name="calendar" size={12} color="#888" />
+                  <S.DateChipText>
+                    {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
+                  </S.DateChipText>
+                </S.DateChip>
+              )}
             </S.MetaRow>
           </S.MetaSection>
         )}

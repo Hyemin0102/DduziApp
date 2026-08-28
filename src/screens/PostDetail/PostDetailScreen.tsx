@@ -155,8 +155,8 @@ export default function PostDetailScreen() {
         });
       }
 
-      // 저장 여부 조회 (본인 프로젝트 제외)
-      if (user && project?.id && user.id !== (postData as any).user_id) {
+      // 저장 여부 조회 (본인 프로젝트도 뜨개함에 보관 가능)
+      if (user && project?.id) {
         const {data: savedData} = await supabase
           .from('saved_projects')
           .select('id')
@@ -442,25 +442,22 @@ export default function PostDetailScreen() {
         {post.project_id && (
           <S.ProjectBanner onPress={handleGoToProject} activeOpacity={0.8}>
             <S.ProjectBannerLeft>
-              {isMyPost ? (
-                <Icon name="folder" size={18} color="#555" />
-              ) : (
-                <TouchableOpacity
-                  onPress={e => {
-                    e.stopPropagation?.();
-                    handleToggleSave();
-                  }}
-                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                  disabled={isSaveLoading}>
-                  {isSaved ? (
-                    <SavedIcon width={32} height={32} />
-                  ) : (
-                    <SaveIcon width={32} height={32} />
-                  )}
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                onPress={e => {
+                  e.stopPropagation?.();
+                  handleToggleSave();
+                }}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                disabled={isSaveLoading}>
+                {isSaved ? (
+                  <SavedIcon width={32} height={32} />
+                ) : (
+                  <SaveIcon width={32} height={32} />
+                )}
+              </TouchableOpacity>
+              <S.ProjectBannerDivider />
               <S.ProjectBannerTextGroup>
-                <S.ProjectBannerLabel>내 뜨개함 담기</S.ProjectBannerLabel>
+                <S.ProjectBannerLabel>연결된 프로젝트</S.ProjectBannerLabel>
                 <S.ProjectBannerTitle numberOfLines={1}>
                   {post.title || '프로젝트 보기'}
                 </S.ProjectBannerTitle>

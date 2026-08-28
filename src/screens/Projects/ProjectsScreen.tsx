@@ -1,5 +1,5 @@
 import React, {useState, useCallback, useEffect} from 'react';
-import {FlatList, ScrollView, ActivityIndicator, RefreshControl, Alert} from 'react-native';
+import {FlatList, ScrollView, ActivityIndicator, RefreshControl, Alert, Modal} from 'react-native';
 import {useFocusEffect, useRoute} from '@react-navigation/native';
 import * as S from './ProjectsScreen.styles';
 import {supabase} from '@/lib/supabase';
@@ -44,6 +44,7 @@ export default function ProjectsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -135,30 +136,26 @@ export default function ProjectsScreen() {
     );
   };
 
-  const handleDeleteSelected = () => {
-    Alert.alert(
-      '뜨개함에서 삭제',
-      `선택한 ${selectedIds.length}개를 뜨개함에서 삭제할까요?`,
-      [
-        {text: '취소', style: 'cancel'},
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await supabase.from('saved_projects').delete().in('id', selectedIds);
-              setSavedProjects(prev =>
-                prev.filter(p => !selectedIds.includes(p.savedId)),
-              );
-              setSelectedIds([]);
-              setIsEditMode(false);
-            } catch {
-              Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
-            }
-          },
-        },
-      ],
-    );
+  const handleSelectAll = () => {
+    setSelectedIds(savedProjects.map(p => p.savedId));
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setSelectedIds([]);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await supabase.from('saved_projects').delete().in('id', selectedIds);
+      setSavedProjects(prev => prev.filter(p => !selectedIds.includes(p.savedId)));
+      setShowDeleteConfirm(false);
+      setSelectedIds([]);
+      setIsEditMode(false);
+    } catch {
+      setShowDeleteConfirm(false);
+      Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
+    }
   };
 
   const inProgressProjects = myProjects.filter(p => !p.is_completed);
@@ -275,7 +272,7 @@ export default function ProjectsScreen() {
       {/* 뜨개함 탭 */}
       {activeTab === 'saved' ? (
         <ScrollView
-          contentContainerStyle={{flexGrow: 1}}
+          contentContainerStyle={{flexGrow: 1, paddingBottom: isEditMode ? 88 : 0}}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }>
@@ -290,28 +287,21 @@ export default function ProjectsScreen() {
             </S.Empty>
           ) : (
             <>
-              <S.EditRow>
-                {isEditMode ? (
-                  <>
-                    <S.EditButton
-                      onPress={() => {
-                        setIsEditMode(false);
-                        setSelectedIds([]);
-                      }}>
-                      <S.EditButtonText>취소</S.EditButtonText>
-                    </S.EditButton>
-                    {selectedIds.length > 0 && (
-                      <S.EditButton onPress={handleDeleteSelected}>
-                        <S.DeleteText>삭제 ({selectedIds.length})</S.DeleteText>
-                      </S.EditButton>
-                    )}
-                  </>
-                ) : (
-                  <S.EditButton onPress={() => setIsEditMode(true)}>
-                    <S.EditButtonText>편집</S.EditButtonText>
-                  </S.EditButton>
-                )}
-              </S.EditRow>
+              <S.SavedHeaderRow>
+                <S.SavedHeaderTitle>저장한 프로젝트</S.SavedHeaderTitle>
+                <S.SavedHeaderAction
+                  onPress={() => {
+                    if (isEditMode) {
+                      handleSelectAll();
+                    } else {
+                      setIsEditMode(true);
+                    }
+                  }}>
+                  <S.SavedHeaderActionText>
+                    {isEditMode ? '모두선택' : '관리'}
+                  </S.SavedHeaderActionText>
+                </S.SavedHeaderAction>
+              </S.SavedHeaderRow>
               {activeSaved.map(item => renderSavedProject(item))}
               {privateSaved.length > 0 && (
                 <>
@@ -360,6 +350,42 @@ export default function ProjectsScreen() {
           <Icon name="plus" size={15} color="#fff" />
         </S.AddButton>
       )}
+
+      {activeTab === 'saved' && isEditMode && (
+        <S.FloatingBar>
+          <S.FloatingCancelButton onPress={handleCancelEdit}>
+            <S.FloatingCancelText>취소</S.FloatingCancelText>
+          </S.FloatingCancelButton>
+          <S.FloatingDeleteButton
+            disabled={selectedIds.length === 0}
+            onPress={() => {
+              if (selectedIds.length > 0) setShowDeleteConfirm(true);
+            }}>
+            <S.FloatingDeleteText>
+              프로젝트 삭제 ({selectedIds.length})
+            </S.FloatingDeleteText>
+          </S.FloatingDeleteButton>
+        </S.FloatingBar>
+      )}
+
+      <Modal visible={showDeleteConfirm} transparent animationType="fade">
+        <S.ConfirmOverlay>
+          <S.ConfirmModalContainer>
+            <S.ConfirmTitle>프로젝트를 삭제할까요?</S.ConfirmTitle>
+            <S.ConfirmDescription>
+              프로젝트를 삭제하면 뜨개함에서 더는 확인할 수 없어요.
+            </S.ConfirmDescription>
+            <S.ConfirmButtonRow>
+              <S.ConfirmCancelButton onPress={() => setShowDeleteConfirm(false)}>
+                <S.ConfirmCancelText>취소</S.ConfirmCancelText>
+              </S.ConfirmCancelButton>
+              <S.ConfirmDeleteButton onPress={handleConfirmDelete}>
+                <S.ConfirmDeleteText>프로젝트 삭제</S.ConfirmDeleteText>
+              </S.ConfirmDeleteButton>
+            </S.ConfirmButtonRow>
+          </S.ConfirmModalContainer>
+        </S.ConfirmOverlay>
+      </Modal>
     </S.Container>
   );
 }

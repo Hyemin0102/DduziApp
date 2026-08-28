@@ -140,7 +140,7 @@ export const ProjectBanner = styled.TouchableOpacity`
   justify-content: space-between;
   margin: 0 16px 16px;
   padding: 10px 16px;
-  background-color: #f1f1ef;
+  background-color: #F8F8F7;
   border-radius: 12px;
   border-width: 1px;
   border-color: #e9e9e7;
@@ -150,6 +150,13 @@ export const ProjectBannerLeft = styled.View`
   flex-direction: row;
   align-items: center;
   flex: 1;
+`;
+
+export const ProjectBannerDivider = styled.View`
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 12px;
+  background-color: #e9e9e7;
 `;
 
 export const ProjectBannerLabel = styled.Text`
@@ -167,7 +174,6 @@ export const ProjectBannerTitle = styled.Text`
 
 export const ProjectBannerTextGroup = styled.View`
   flex: 1;
-  margin-left: 10px;
 `;
 
 export const ProjectBannerRight = styled.View`
