@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Pdf from 'react-native-pdf';
+import RNFS from 'react-native-fs';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ProjectsStackParamList} from '@/@types/navigation';
@@ -31,9 +32,21 @@ export default function PdfViewerScreen() {
 
   const loadSignedUrl = () => {
     if (!pdfPath) return;
-    getSignedPdfUrl(pdfPath).then(url => {
-      if (url) setResolvedUrl(url);
-      else setError(true);
+    getSignedPdfUrl(pdfPath).then(async url => {
+      if (!url) {
+        setError(true);
+        return;
+      }
+      // react-native-pdf가 원격 https URL을 받으면 Android에서 react-native-blob-util의
+      // 다운로드 완료 판정 버그로 "Download interrupted"가 나서, 직접 로컬로 받아 file:// 경로로 넘김
+      try {
+        const localPath = `${RNFS.CachesDirectoryPath}/pattern_${Date.now()}.pdf`;
+        await RNFS.downloadFile({fromUrl: url, toFile: localPath}).promise;
+        setResolvedUrl(`file://${localPath}`);
+      } catch (e) {
+        console.error('PDF 다운로드 실패:', e);
+        setError(true);
+      }
     });
   };
 
@@ -72,9 +85,13 @@ export default function PdfViewerScreen() {
         <Pdf
           source={source}
           style={styles.pdf}
+          trustAllCerts={false}
           onLoadComplete={pages => setTotalPages(pages)}
           onPageChanged={page => setCurrentPage(page)}
-          onError={() => setError(true)}
+          onError={e => {
+            console.error('PDF 로드 에러:', e);
+            setError(true);
+          }}
           renderActivityIndicator={() => (
             <ActivityIndicator size="large" color="#191919" />
           )}
