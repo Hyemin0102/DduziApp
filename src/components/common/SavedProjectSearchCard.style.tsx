@@ -53,6 +53,7 @@ export const Title = styled.Text`
   font-weight: 600;
   color: #111;
   margin-bottom: 6px;
+  flex-shrink: 1;
 `;
 
 export const Date = styled.Text`

@@ -5,11 +5,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 //
 // 규칙 1) 정확 일치: 공백/기호/이모지만 다른 제목은 같은 작품으로 취급
 //   예) "프롬후드 가디건" / "프롬 후드 가디건" / "프롬후드가디건" → 전부 동일
-// 규칙 2) 접두어 클러스터링: 정규화된 제목끼리 앞부분 3글자 이상이 겹치면 같은 그룹으로 묶고,
+// 규칙 2) 접두어 클러스터링: 정규화된 제목끼리 앞부분 4글자 이상이 겹치면 같은 그룹으로 묶고,
 //   겹치는 접두어를 키워드로 사용
 //   예) "스파이더맨" / "스파이더맨인형" / "스파이더맨키링" → "스파이더맨"
+//   (3글자로는 "스파이더맨"과 무관한 "스파이 패밀리" 같은 제목까지 "스파이"로 묶여버림)
 
-const MIN_PREFIX_LEN = 3
+const MIN_PREFIX_LEN = 4
 const TOP_N = 5
 
 function isStrippedChar(ch: string): boolean {
@@ -159,41 +160,10 @@ Deno.serve(async req => {
       if (insertError) throw insertError
     }
 
-    // "뜨개함에 많이 저장됐어요" 캐시도 같은 배치에서 함께 갱신
-    // (get_most_saved_projects는 SECURITY INVOKER라 일반 유저가 직접 호출하면
-    //  saved_projects RLS 때문에 본인이 저장한 것만 카운트됨 — service_role로 미리 계산해둠)
-    const {data: mostSaved, error: mostSavedError} = await supabaseAdmin.rpc(
-      'get_most_saved_projects',
-      {limit_count: 5},
-    )
-    if (mostSavedError) throw mostSavedError
+    // "뜨개함에 많이 저장됐어요"는 get_most_saved_projects가 SECURITY DEFINER로 바뀌면서
+    // 클라이언트가 실시간으로 직접 호출하므로, 이 배치에서 더 이상 캐시할 필요 없음
 
-    const {error: deleteSavedError} = await supabaseAdmin
-      .from('most_saved_projects')
-      .delete()
-      .gt('rank', 0)
-    if (deleteSavedError) throw deleteSavedError
-
-    if (mostSaved && mostSaved.length > 0) {
-      const savedRows = mostSaved.map((p: any, i: number) => ({
-        rank: i + 1,
-        project_id: p.project_id,
-        title: p.title,
-        thumbnail_url: p.thumbnail_url,
-        started_at: p.started_at,
-        completed_at: p.completed_at,
-        is_completed: p.is_completed,
-        owner_nickname: p.owner_nickname,
-        owner_profile_image: p.owner_profile_image,
-        save_count: p.save_count,
-      }))
-      const {error: insertSavedError} = await supabaseAdmin
-        .from('most_saved_projects')
-        .insert(savedRows)
-      if (insertSavedError) throw insertSavedError
-    }
-
-    return new Response(JSON.stringify({success: true, top, mostSaved}), {status: 200})
+    return new Response(JSON.stringify({success: true, top}), {status: 200})
   } catch (e: any) {
     return new Response(
       JSON.stringify({error: e?.message || '알 수 없는 오류가 발생했습니다.'}),

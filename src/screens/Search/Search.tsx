@@ -58,10 +58,9 @@ const Search = () => {
 
   useEffect(() => {
     const fetchMostSavedProjects = async () => {
-      const {data} = await supabase
-        .from('most_saved_projects')
-        .select('*')
-        .order('rank', {ascending: true});
+      const {data} = await supabase.rpc('get_most_saved_projects', {
+        limit_count: 5,
+      });
       if (!data) return;
 
       const projects = data as MostSavedProject[];

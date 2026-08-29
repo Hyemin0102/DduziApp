@@ -1045,7 +1045,7 @@ export default function ProjectDetailScreen() {
                   onChangeText={v => setField('title', v)}
                   placeholderTextColor="#ccc"
                   multiline
-                  maxLength={20}
+                  maxLength={50}
                 />
               ) : (
                 <S.TitleFlex>{project!.title}</S.TitleFlex>

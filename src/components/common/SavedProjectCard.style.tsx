@@ -40,6 +40,7 @@ export const SavedCardTitle = styled.Text<{disabled?: boolean}>`
   font-size: 15px;
   font-weight: 600;
   color: ${({disabled}) => (disabled ? '#bbb' : '#111')};
+  flex-shrink: 1;
 `;
 
 export const CardDate = styled.Text`

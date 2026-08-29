@@ -127,6 +127,7 @@ export const CardTitle = styled.Text`
   font-size: 15px;
   font-weight: 600;
   color: #111;
+  flex-shrink: 1;
 `;
 
 export const CardDate = styled.Text`
