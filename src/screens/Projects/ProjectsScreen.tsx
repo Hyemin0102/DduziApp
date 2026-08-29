@@ -88,10 +88,11 @@ export default function ProjectsScreen() {
       ]);
 
       if (projectsRes.error) throw projectsRes.error;
-      setMyProjects((projectsRes.data as ProjectItem[]) || []);
+      let myProjectsData = (projectsRes.data as ProjectItem[]) || [];
 
+      let savedData: SavedProject[] = [];
       if (!savedRes.error && savedRes.data) {
-        const saved: SavedProject[] = (savedRes.data as any[]).map(item => ({
+        savedData = (savedRes.data as any[]).map(item => ({
           savedId: item.id,
           savedAt: item.created_at,
           projectId: item.project_id,
@@ -104,8 +105,48 @@ export default function ProjectsScreen() {
           startedAt: item.projects.started_at,
           completedAt: item.projects.completed_at,
         }));
-        setSavedProjects(saved);
       }
+
+      // 대표이미지가 없는 프로젝트는 가장 먼저 올린 게시물의 첫 사진으로 대체
+      const missingThumbnailIds = Array.from(
+        new Set([
+          ...myProjectsData.filter(p => !p.thumbnail_url).map(p => p.id),
+          ...savedData.filter(p => !p.thumbnailUrl).map(p => p.projectId),
+        ]),
+      );
+
+      if (missingThumbnailIds.length > 0) {
+        const {data: postsData} = await supabase
+          .from('posts')
+          .select('project_id, created_at, post_images ( image_url, display_order )')
+          .in('project_id', missingThumbnailIds)
+          .order('created_at', {ascending: true});
+
+        const fallbackThumbnails: Record<string, string> = {};
+        postsData?.forEach((post: any) => {
+          if (fallbackThumbnails[post.project_id]) return;
+          const firstImage = (post.post_images || [])
+            .slice()
+            .sort((a: any, b: any) => a.display_order - b.display_order)[0];
+          if (firstImage?.image_url) {
+            fallbackThumbnails[post.project_id] = firstImage.image_url;
+          }
+        });
+
+        myProjectsData = myProjectsData.map(p =>
+          p.thumbnail_url || !fallbackThumbnails[p.id]
+            ? p
+            : {...p, thumbnail_url: fallbackThumbnails[p.id]},
+        );
+        savedData = savedData.map(p =>
+          p.thumbnailUrl || !fallbackThumbnails[p.projectId]
+            ? p
+            : {...p, thumbnailUrl: fallbackThumbnails[p.projectId]},
+        );
+      }
+
+      setMyProjects(myProjectsData);
+      setSavedProjects(savedData);
     } catch (error) {
       console.error('프로젝트 목록 조회 실패:', error);
     } finally {
@@ -335,7 +376,7 @@ export default function ProjectsScreen() {
               </S.EmptyText>
               <S.EmptySubText>
                 {activeTab === 'inProgress'
-                  ? '첫 프로젝트를 시작해보세요!'
+                  ? '프로젝트를 시작해보세요!'
                   : '프로젝트를 완료해보세요!'}
               </S.EmptySubText>
             </S.Empty>

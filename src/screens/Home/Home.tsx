@@ -172,6 +172,10 @@ const Home = () => {
         </HS.LogoRow>
         <HS.SearchButton
           onPress={() => navigation.navigate(HOME_ROUTES.SEARCH)}>
+          <HS.SearchBubble>
+            <HS.SearchBubbleText>다들 뭐 뜨지?</HS.SearchBubbleText>
+            <HS.SearchBubbleTail />
+          </HS.SearchBubble>
           <Icon name="search" size={24} color="#333" />
         </HS.SearchButton>
       </HS.HeaderContainer>

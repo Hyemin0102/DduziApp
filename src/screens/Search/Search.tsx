@@ -5,7 +5,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
-import SavedProjectCard from '@/components/common/SavedProjectCard';
+import SavedProjectSearchCard from '@/components/common/SavedProjectSearchCard';
 import {Post} from '@/@types/database';
 import * as S from './Search.style';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -62,7 +62,43 @@ const Search = () => {
         .from('most_saved_projects')
         .select('*')
         .order('rank', {ascending: true});
-      if (data) setMostSavedProjects(data as MostSavedProject[]);
+      if (!data) return;
+
+      const projects = data as MostSavedProject[];
+      const missingThumbnailIds = projects
+        .filter(p => !p.thumbnail_url)
+        .map(p => p.project_id);
+
+      if (missingThumbnailIds.length === 0) {
+        setMostSavedProjects(projects);
+        return;
+      }
+
+      // 대표이미지가 없는 프로젝트는 가장 먼저 올린 게시물의 첫 사진으로 대체
+      const {data: postsData} = await supabase
+        .from('posts')
+        .select('project_id, created_at, post_images ( image_url, display_order )')
+        .in('project_id', missingThumbnailIds)
+        .order('created_at', {ascending: true});
+
+      const fallbackThumbnails: Record<string, string> = {};
+      postsData?.forEach((post: any) => {
+        if (fallbackThumbnails[post.project_id]) return;
+        const firstImage = (post.post_images || [])
+          .slice()
+          .sort((a: any, b: any) => a.display_order - b.display_order)[0];
+        if (firstImage?.image_url) {
+          fallbackThumbnails[post.project_id] = firstImage.image_url;
+        }
+      });
+
+      setMostSavedProjects(
+        projects.map(p =>
+          p.thumbnail_url || !fallbackThumbnails[p.project_id]
+            ? p
+            : {...p, thumbnail_url: fallbackThumbnails[p.project_id]},
+        ),
+      );
     };
     fetchMostSavedProjects();
   }, []);
@@ -236,14 +272,14 @@ const Search = () => {
               </S.TrendingSection>
             )}
             {mostSavedProjects.length > 0 && (
-              <>
+              <S.TrendingProjects>
                 <S.TrendingSection style={{paddingBottom: 4}}>
-                  <S.TrendingTitle style={{marginBottom: 0}}>
+                  <S.TrendingTitle style={{marginBottom: 8}}>
                     뜨개함에 많이 저장됐어요
                   </S.TrendingTitle>
                 </S.TrendingSection>
                 {mostSavedProjects.map(project => (
-                  <SavedProjectCard
+                  <SavedProjectSearchCard
                     key={project.project_id}
                     ownerNickname={project.owner_nickname}
                     ownerAvatarUri={
@@ -267,7 +303,7 @@ const Search = () => {
                     }}
                   />
                 ))}
-              </>
+              </S.TrendingProjects>
             )}
           </>
         );

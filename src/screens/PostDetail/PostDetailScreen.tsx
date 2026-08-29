@@ -444,9 +444,9 @@ export default function PostDetailScreen() {
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
                 disabled={isSaveLoading}>
                 {isSaved ? (
-                  <SavedIcon width={32} height={32} />
+                  <SavedIcon width={32} height={32}  color="#000000"/>
                 ) : (
-                  <SaveIcon width={32} height={32} />
+                  <SaveIcon width={32} height={32} color="#000000"/>
                 )}
               </TouchableOpacity>
               <S.ProjectBannerDivider />

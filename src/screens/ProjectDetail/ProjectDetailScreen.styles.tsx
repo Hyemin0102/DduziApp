@@ -99,7 +99,26 @@ export const Body = styled.Text`
 `;
 
 export const ProjectDate = styled.View`
- padding-top: 32px;
+  padding-top: 32px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const SaveBadge = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  background-color: #f7f7f7;
+  border-width: 1px;
+  border-color: #dbdbdb;
+  border-radius: 8px;
+  padding: 4px 10px 4px 6px;
+`;
+
+export const SaveBadgeText = styled.Text`
+  font-size: 11px;
+  color: #666666;
 `;
 
 export const Link = styled.Text`
@@ -399,6 +418,31 @@ export const ActionSheetTrigger = styled.TouchableOpacity`
   flex-shrink: 0;
   padding: 4px;
   margin-top: 2px;
+`;
+
+export const SaveToast = styled.TouchableOpacity`
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 24px;
+  background-color: rgba(25, 25, 25, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const SaveToastText = styled.Text`
+  flex: 1;
+  color: #fff;
+  font-size: 14px;
+  margin-right: 12px;
+`;
+
+export const SaveToastAction = styled.Text`
+  color: #fff;
+  font-size: 14px;
 `;
 
 // ─── 상태 설정 섹션 (B 방식: 행 + 토글) ──────────────────

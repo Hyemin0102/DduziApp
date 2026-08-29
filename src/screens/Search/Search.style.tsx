@@ -84,6 +84,11 @@ export const EmptySubText = styled.Text`
   text-align: center;
 `;
 
+export const TrendingProjects = styled.View`
+background-color: #fafafa;
+flex: 1;
+`
+
 export const TrendingSection = styled.View`
   padding: 20px;
 `;

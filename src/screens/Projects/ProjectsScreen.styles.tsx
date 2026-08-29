@@ -168,11 +168,15 @@ export const SavedHeaderTitle = styled.Text`
   color: #191919;
 `;
 
-export const SavedHeaderAction = styled.TouchableOpacity``;
+export const SavedHeaderAction = styled.TouchableOpacity`
+  padding: 12px;
+  margin: -12px;
+`;
 
 export const SavedHeaderActionText = styled.Text`
   font-size: 14px;
   color: #555;
+
 `;
 
 /* ─── 하단 플로팅 바 ─── */

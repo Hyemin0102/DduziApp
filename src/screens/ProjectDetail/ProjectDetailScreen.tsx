@@ -26,7 +26,12 @@ const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
 import {supabase} from '@/lib/supabase';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
+import {
+  POST_ROUTES,
+  PROJECTS_ROUTES,
+  ROOT_ROUTES,
+  TAB_ROUTES,
+} from '@/constants/navigation.constant';
 import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
 import CompletePostModal from '@/components/modal/CompletePostModal';
@@ -48,6 +53,9 @@ import FastImage from 'react-native-fast-image';
 import {trackEvent} from '@/lib/mixpanel';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import { Text } from 'react-native';
+import SaveIcon from '@/assets/icons/save.svg';
+import SavedIcon from '@/assets/icons/saved.svg';
+import SavedCheckIcon from '@/assets/icons/saved_check.svg';
 
 type RouteProps = RouteProp<
   {
@@ -153,13 +161,17 @@ function renderTextWithLinks(text: string) {
 
 export default function ProjectDetailScreen() {
   const route = useRoute<RouteProps>();
-  const {navigation} = useCommonNavigation<any>();
+  const {navigation, rootNavigation} = useCommonNavigation<any>();
   const projectId = route.params?.projectId;
   const isCreateMode = route.params?.mode === 'create' || !projectId;
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [posts, setPosts] = useState<SimplePost[]>([]);
   const [loading, setLoading] = useState(!isCreateMode);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaveLoading, setIsSaveLoading] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
+  const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [completeModalVisible, setCompleteModalVisible] = useState(false);
   const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
@@ -193,7 +205,6 @@ export default function ProjectDetailScreen() {
   );
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [startedAt, setStartedAt] = useState('');
-  console.log('시작일',startedAt);
   
   const [completedAt, setCompletedAt] = useState('');
   const [pendingThumbnail, setPendingThumbnail] = useState<string | null>(null);
@@ -213,6 +224,12 @@ export default function ProjectDetailScreen() {
   const [existingReadOnlyLogs, setExistingReadOnlyLogs] = useState<
     Array<{id: string; content: string; created_at: string}>
   >([]);
+
+  useEffect(() => {
+    return () => {
+      if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+    };
+  }, []);
 
   // ── dirty 감지
   const originalRef = useRef<OriginalValues | null>(null);
@@ -446,25 +463,6 @@ export default function ProjectDetailScreen() {
 
   // ── 헤더
   const handleSaveRef = useRef<() => void>(() => {});
-
-  useLayoutEffect(() => {
-    if (isDirty) {
-      navigation.setOptions({
-        headerRight: () => (
-          <TouchableOpacity
-            onPress={() => handleSaveRef.current()}
-            disabled={isSubmitting}
-            style={{paddingHorizontal: 4}}>
-            <S.SubmitText>{isSubmitting ? '저장 중...' : '완료'}</S.SubmitText>
-          </TouchableOpacity>
-        ),
-      });
-    } else {
-      navigation.setOptions({
-        headerRight: undefined,
-      });
-    }
-  }, [isDirty, isSubmitting, isCreateMode, project?.title, navigation]);
 
   // ── 현재 로그인 유저 id (생성/수정 모드 공통)
   useEffect(() => {
@@ -788,6 +786,99 @@ export default function ProjectDetailScreen() {
   //내 프로젝트거나 생성 모드일때
   const canEdit = isCreateMode || isMyProject;
 
+  // 대표이미지가 없으면 가장 먼저 올린 게시물의 첫 사진으로 대체
+  const fallbackThumbnailUrl = (() => {
+    if (posts.length === 0) return null;
+    const firstPost = [...posts].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    )[0];
+    const firstImage = [...(firstPost.post_images || [])].sort(
+      (a, b) => a.display_order - b.display_order,
+    )[0];
+    return firstImage?.image_url ?? null;
+  })();
+
+  // ── 뜨개함 저장 여부 (조회 모드)
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!currentUserId || !project?.id) {
+        setIsSaved(false);
+        return;
+      }
+      const {data} = await supabase
+        .from('saved_projects')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .eq('project_id', project.id)
+        .maybeSingle();
+      setIsSaved(!!data);
+    };
+    checkSaved();
+  }, [currentUserId, project?.id]);
+
+  const handleToggleSave = async () => {
+    if (!currentUserId || !project?.id || isSaveLoading) return;
+    setIsSaveLoading(true);
+    try {
+      if (isSaved) {
+        await supabase
+          .from('saved_projects')
+          .delete()
+          .eq('user_id', currentUserId)
+          .eq('project_id', project.id);
+        setIsSaved(false);
+        trackEvent('project_unsaved', {project_id: project.id});
+      } else {
+        await supabase
+          .from('saved_projects')
+          .insert({user_id: currentUserId, project_id: project.id});
+        setIsSaved(true);
+        trackEvent('project_saved', {project_id: project.id});
+
+        setShowSaveToast(true);
+        if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+        saveToastTimerRef.current = setTimeout(() => setShowSaveToast(false), 3000);
+      }
+    } catch (error) {
+      console.error('❌ 뜨개함 저장 실패:', error);
+      Alert.alert('오류', '뜨개함 저장 중 문제가 발생했습니다.');
+    } finally {
+      setIsSaveLoading(false);
+    }
+  };
+
+  const handleGoToSavedProjects = () => {
+    setShowSaveToast(false);
+    if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+    rootNavigation.navigate(ROOT_ROUTES.TAB_NAVIGATOR, {
+      screen: TAB_ROUTES.PROJECTS_TAB,
+      params: {
+        screen: PROJECTS_ROUTES.PROJECTS_MAIN,
+        params: {initialTab: 'saved'},
+      },
+    });
+  };
+
+  // ── 헤더 우측 버튼 (편집중엔 완료)
+  useLayoutEffect(() => {
+    if (isDirty) {
+      navigation.setOptions({
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => handleSaveRef.current()}
+            disabled={isSubmitting}
+            style={{paddingHorizontal: 4}}>
+            <S.SubmitText>{isSubmitting ? '저장 중...' : '완료'}</S.SubmitText>
+          </TouchableOpacity>
+        ),
+      });
+    } else {
+      navigation.setOptions({
+        headerRight: undefined,
+      });
+    }
+  }, [isDirty, isSubmitting, isCreateMode, project, navigation]);
+
   const handlePickPdf = async () => {
     try {
       const result = await DocumentPicker.pickSingle({
@@ -923,7 +1014,7 @@ export default function ProjectDetailScreen() {
         {/* ══ SNS 스타일: 제목 + 설명 ══════════════════════ */}
         <S.PostArea>
           <S.TitleWithThumbnailRow>
-            {(canEdit || thumbnailUrl || pendingThumbnail) && (
+            {(canEdit || thumbnailUrl || pendingThumbnail || fallbackThumbnailUrl) && (
               <S.ThumbnailWrapper
                 onPress={canEdit ? () => setShowThumbnailSheet(true) : undefined}
                 activeOpacity={canEdit ? 0.7 : 1}
@@ -932,12 +1023,14 @@ export default function ProjectDetailScreen() {
                   <S.ThumbnailImage source={{uri: pendingThumbnail}} />
                 ) : thumbnailUrl ? (
                   <S.ThumbnailImage source={{uri: thumbnailUrl}} />
+                ) : fallbackThumbnailUrl ? (
+                  <S.ThumbnailImage source={{uri: fallbackThumbnailUrl}} />
                 ) : (
                   <S.ThumbnailPlaceholder>
                     <Icon name="camera" size={20} color="#ccc" />
                   </S.ThumbnailPlaceholder>
                 )}
-                {canEdit && (thumbnailUrl || pendingThumbnail) && (
+                {canEdit && (thumbnailUrl || pendingThumbnail || fallbackThumbnailUrl) && (
                   <S.ThumbnailEditBadge>
                     <Icon name="camera" size={10} color="#fff" />
                   </S.ThumbnailEditBadge>
@@ -989,6 +1082,18 @@ export default function ProjectDetailScreen() {
                       {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
                     </S.DateChipText>
                   </S.DateChip>
+
+                  <S.SaveBadge
+                    onPress={handleToggleSave}
+                    disabled={isSaveLoading}
+                    activeOpacity={0.7}>
+                    {isSaved ? (
+                      <SavedCheckIcon width={16} height={16} color="#666666" />
+                    ) : (
+                      <SaveIcon width={16} height={16} color="#454545" />
+                    )}
+                    <S.SaveBadgeText>{isSaved ? "뜨개함 보관 중" :"뜨개함 담기"} </S.SaveBadgeText>
+                  </S.SaveBadge>
                 </S.ProjectDate>
               )}
             </>
@@ -1493,6 +1598,14 @@ export default function ProjectDetailScreen() {
         <View style={{height: 40}} />
       </KeyboardAvoid>
 
+      {/* 뜨개함 저장 토스트 */}
+      {showSaveToast && (
+        <S.SaveToast onPress={handleGoToSavedProjects} activeOpacity={0.85}>
+          <S.SaveToastText>내 뜨개함에 담았어요.</S.SaveToastText>
+          <S.SaveToastAction>바로가기</S.SaveToastAction>
+        </S.SaveToast>
+      )}
+
       {!isCreateMode && (
         <ActionSheetModal
           visible={showActionSheet}
@@ -1564,15 +1677,18 @@ export default function ProjectDetailScreen() {
             disabled: allPostImages.length === 0,
           },
           {
-            label: '대표 이미지 삭제',
+            label: '대표 이미지 초기화',
             onPress: handleRemoveThumbnail,
             isDestructive: true,
-            disabled: !thumbnailUrl && !pendingThumbnail,
+            disabled: !thumbnailUrl && !pendingThumbnail && !fallbackThumbnailUrl,
           },
         ]}>
         <View style={{paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4}}>
           <S.InfoLabel style={{fontSize: 13, color: '#999'}}>
-            언제든 다시 등록/수정할 수 있어요.
+            초기 이미지는 첫번째 게시물입니다.
+          </S.InfoLabel>
+          <S.InfoLabel style={{fontSize: 13, color: '#999'}}>
+            언제든 등록/수정할 수 있어요.
           </S.InfoLabel>
         </View>
       </ActionSheetModal>
