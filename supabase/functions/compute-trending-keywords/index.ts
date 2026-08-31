@@ -39,7 +39,13 @@ function extractPrettyPrefix(original: string, targetNormalizedLen: number): str
     if (!isStrippedChar(chars[i])) {
       normalizedCount++
       if (normalizedCount === targetNormalizedLen) {
-        return chars.slice(0, i + 1).join('').trim()
+        // 자르는 지점 바로 뒤에 붙는 기호(닫는 괄호 등)는 정규화 시 무시돼서 글자 수에
+        // 안 잡히지만, 시각적으로는 접두어에 속하는 게 자연스러우므로 함께 포함
+        let end = i + 1
+        while (end < chars.length && isStrippedChar(chars[end])) {
+          end++
+        }
+        return chars.slice(0, end).join('').trim()
       }
     }
   }
@@ -57,6 +63,7 @@ interface ExactGroup {
   normalized: string
   count: number
   label: string
+  titles: string[]
 }
 
 interface Cluster {
@@ -67,7 +74,7 @@ interface Cluster {
 
 export function computeTrendingKeywords(
   titles: string[],
-): {keyword: string; count: number}[] {
+): {keyword: string; count: number; titles: string[]}[] {
   // 1) 정규화 후 정확 일치 그룹핑
   const groups = new Map<string, {count: number; labelCounts: Map<string, number>}>()
   for (const raw of titles) {
@@ -91,7 +98,7 @@ export function computeTrendingKeywords(
           label = l
         }
       }
-      return {normalized, count: g.count, label}
+      return {normalized, count: g.count, label, titles: Array.from(g.labelCounts.keys())}
     })
     .sort((a, b) => (a.normalized < b.normalized ? -1 : a.normalized > b.normalized ? 1 : 0))
 
@@ -114,12 +121,13 @@ export function computeTrendingKeywords(
   // 3) 대표 키워드 라벨 결정 (서비스 초기엔 데이터가 적어 최소 등장 횟수 필터를 두지 않음)
   return clusters
     .map(c => {
+      const titles = c.members.flatMap(m => m.titles)
       if (c.members.length === 1) {
-        return {keyword: c.members[0].label, count: c.count}
+        return {keyword: c.members[0].label, count: c.count, titles}
       }
       const representative = c.members[0].label
       const keyword = extractPrettyPrefix(representative, c.lcp.length)
-      return {keyword, count: c.count}
+      return {keyword, count: c.count, titles}
     })
     .sort((a, b) => b.count - a.count)
     .slice(0, TOP_N)
@@ -147,7 +155,12 @@ Deno.serve(async req => {
     const titles = (data ?? []).map((p: {title: string}) => p.title)
     const top = computeTrendingKeywords(titles)
 
-    const {error: deleteError} = await supabaseAdmin.from('trending_keywords').delete().gt('rank', 0)
+    // 관리자 검토 전에는 화면(public.trending_keywords)에 바로 반영되지 않도록,
+    // 배치 결과는 pending 테이블에만 씀 — 승인은 관리자가 SQL로 수동 반영
+    const {error: deleteError} = await supabaseAdmin
+      .from('trending_keywords_pending')
+      .delete()
+      .gt('rank', 0)
     if (deleteError) throw deleteError
 
     if (top.length > 0) {
@@ -156,7 +169,9 @@ Deno.serve(async req => {
         keyword: k.keyword,
         project_count: k.count,
       }))
-      const {error: insertError} = await supabaseAdmin.from('trending_keywords').insert(rows)
+      const {error: insertError} = await supabaseAdmin
+        .from('trending_keywords_pending')
+        .insert(rows)
       if (insertError) throw insertError
     }
 

@@ -807,15 +807,13 @@ export const PostImagePickerTitle = styled.Text`
   color: #111;
 `;
 
+
 export const PostImageGrid = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
   padding: 12px;
   gap: 4px;
 `;
 
 export const PostImageThumb = styled.TouchableOpacity`
-  width: 30%;
   aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;

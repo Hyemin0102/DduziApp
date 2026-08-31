@@ -68,6 +68,8 @@ export type ProjectsStackParamList = {
   [PROJECTS_ROUTES.PROJECT_POSTS_ALL]: {projectId: string; projectTitle?: string};
   [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl?: string; pdfPath?: string; title?: string};
   [POST_ROUTES.POST_DETAIL]: {postId: string};
+  [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
+  [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
 };
 
 // Home Stack

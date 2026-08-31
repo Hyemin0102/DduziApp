@@ -21,6 +21,11 @@ import {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+const POST_IMAGE_GRID_PADDING = 12;
+const POST_IMAGE_GRID_GAP = 4;
+const POST_IMAGE_THUMB_SIZE =
+  (SCREEN_WIDTH - POST_IMAGE_GRID_PADDING * 2 - POST_IMAGE_GRID_GAP * 2) / 3;
+
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 
 import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
@@ -982,6 +987,12 @@ export default function ProjectDetailScreen() {
   const allPostImages = posts.flatMap(p =>
     p.post_images.map(img => img.image_url),
   );
+  // 3개씩 행으로 나눠서, 꽉 찬 행은 가운데 정렬(잔여 오차 상쇄)하고
+  // 마지막에 3개가 안 채워진 행은 왼쪽 정렬되도록 함
+  const postImageRows: string[][] = [];
+  for (let i = 0; i < allPostImages.length; i += 3) {
+    postImageRows.push(allPostImages.slice(i, i + 3));
+  }
 
   if (loading) {
     return (
@@ -1088,7 +1099,7 @@ export default function ProjectDetailScreen() {
                     disabled={isSaveLoading}
                     activeOpacity={0.7}>
                     {isSaved ? (
-                      <SavedCheckIcon width={16} height={16} color="#666666" />
+                      <SavedCheckIcon width={12} height={12} color="#666666" />
                     ) : (
                       <SaveIcon width={16} height={16} color="#454545" />
                     )}
@@ -1709,16 +1720,27 @@ export default function ProjectDetailScreen() {
             </S.PostImagePickerHeader>
             <ScrollView>
               <S.PostImageGrid>
-                {allPostImages.map((uri, idx) => (
-                  <S.PostImageThumb
-                    key={idx}
-                    onPress={() => handlePickThumbnailFromPost(uri)}>
-                    <FastImage
-                      source={{uri}}
-                      style={{width: '100%', height: '100%'}}
-                      resizeMode={FastImage.resizeMode.cover}
-                    />
-                  </S.PostImageThumb>
+                {postImageRows.map((row, rowIdx) => (
+                  <View
+                    key={rowIdx}
+                    style={{
+                      flexDirection: 'row',
+                      gap: POST_IMAGE_GRID_GAP,
+                      justifyContent: row.length === 3 ? 'center' : 'flex-start',
+                    }}>
+                    {row.map((uri, idx) => (
+                      <S.PostImageThumb
+                        key={idx}
+                        style={{width: POST_IMAGE_THUMB_SIZE}}
+                        onPress={() => handlePickThumbnailFromPost(uri)}>
+                        <FastImage
+                          source={{uri}}
+                          style={{width: '100%', height: '100%'}}
+                          resizeMode={FastImage.resizeMode.cover}
+                        />
+                      </S.PostImageThumb>
+                    ))}
+                  </View>
                 ))}
               </S.PostImageGrid>
             </ScrollView>

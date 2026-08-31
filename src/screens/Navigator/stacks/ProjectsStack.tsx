@@ -6,9 +6,15 @@ import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
 import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PostDetailScreen from '@/screens/PostDetail/PostDetailScreen';
+import PostsScreen from '@/screens/Posts/PostsScreen';
+import ProfileScreen from '@/screens/Profile/Profile';
 import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import {ProjectsStackParamList} from '@/@types/navigation';
-import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
+import {
+  PROJECTS_ROUTES,
+  POST_ROUTES,
+  MY_PAGE_ROUTES,
+} from '@/constants/navigation.constant';
 import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<ProjectsStackParamList>();
@@ -52,6 +58,16 @@ const ProjectsStack = () => {
         name={POST_ROUTES.POST_DETAIL}
         component={PostDetailScreen}
         options={{title: '게시물'}}
+      />
+      <Stack.Screen
+        name={POST_ROUTES.POSTS_MAIN}
+        component={PostsScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.PROFILE_EDIT}
+        component={ProfileScreen}
+        options={{title: '프로필 수정'}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_LOGS_ALL}
