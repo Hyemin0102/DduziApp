@@ -1,12 +1,18 @@
 import React, {useState, useEffect} from 'react';
-import {Alert, ActivityIndicator, Linking} from 'react-native';
+import {Alert, ActivityIndicator, Linking, Platform, View} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
+import {
+  fetchAppVersionConfig,
+  fetchIosAppStoreId,
+  compareVersions,
+  STORE_URLS,
+} from '@/lib/appVersion';
 import * as S from './Settings.style';
 
 const APP_VERSION = DeviceInfo.getVersion();
-const BUNDLE_ID = 'com.dduzi.app';
+const ANDROID_PACKAGE_ID = 'com.dduziapp';
 
 const Settings = () => {
   const {provider} = useAuth();
@@ -14,24 +20,28 @@ const Settings = () => {
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
 
   useEffect(() => {
-    fetch(
-      `https://itunes.apple.com/lookup?bundleId=${BUNDLE_ID}&country=kr`,
-    )
-      .then(res => res.json())
-      .then(json => {
-
-
-        if (json.resultCount > 0) {
-          const storeVersion: string = json.results[0].version;
-          //setVersionStatus(storeVersion === APP_VERSION ? 'latest' : 'update');
-        setVersionStatus("latest")
-        } else {
-          //setVersionStatus('unknown');
-          setVersionStatus("latest")
-        }
-      })
-      .catch(() => setVersionStatus('unknown'));
+    fetchAppVersionConfig().then(config => {
+      if (!config) {
+        setVersionStatus('unknown');
+        return;
+      }
+      setVersionStatus(
+        compareVersions(APP_VERSION, config.latest_version) < 0 ? 'update' : 'latest',
+      );
+    });
   }, []);
+
+  const handleUpdatePress = async () => {
+    if (versionStatus !== 'update') return;
+    if (Platform.OS === 'ios') {
+      const appStoreId = await fetchIosAppStoreId();
+      if (appStoreId) Linking.openURL(STORE_URLS.ios(appStoreId));
+    } else {
+      Linking.openURL(STORE_URLS.android(ANDROID_PACKAGE_ID)).catch(() =>
+        Linking.openURL(STORE_URLS.androidWeb(ANDROID_PACKAGE_ID)),
+      );
+    }
+  };
   const handleDeleteAccount = () => {
     Alert.alert(
       '회원탈퇴',
@@ -90,21 +100,26 @@ const Settings = () => {
       <S.ScrollView contentContainerStyle={{paddingVertical: 16, gap: 8}}>
 <S.SectionLabel>정보</S.SectionLabel>
         <S.MenuSection>
-          <S.MenuItem activeOpacity={1}>
+          <S.MenuItem
+            onPress={versionStatus === 'update' ? handleUpdatePress : undefined}
+            activeOpacity={versionStatus === 'update' ? 0.7 : 1}>
             <S.MenuText>앱 버전</S.MenuText>
-            <S.VersionBadge isLatest={versionStatus === 'latest'}>
-              <S.VersionText>{APP_VERSION}</S.VersionText>
-              {versionStatus === 'latest' && (
-                <S.LatestBadge>
-                  <S.LatestBadgeText>최신</S.LatestBadgeText>
-                </S.LatestBadge>
-              )}
-              {versionStatus === 'update' && (
-                <S.UpdateBadge>
-                  <S.UpdateBadgeText>업데이트 있음</S.UpdateBadgeText>
-                </S.UpdateBadge>
-              )}
-            </S.VersionBadge>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <S.VersionBadge isLatest={versionStatus === 'latest'}>
+                <S.VersionText>{APP_VERSION}</S.VersionText>
+                {versionStatus === 'latest' && (
+                  <S.LatestBadge>
+                    <S.LatestBadgeText>최신</S.LatestBadgeText>
+                  </S.LatestBadge>
+                )}
+                {versionStatus === 'update' && (
+                  <S.UpdateBadge>
+                    <S.UpdateBadgeText>업데이트 있음</S.UpdateBadgeText>
+                  </S.UpdateBadge>
+                )}
+              </S.VersionBadge>
+              {versionStatus === 'update' && <S.MenuArrow>›</S.MenuArrow>}
+            </View>
           </S.MenuItem>
           <S.MenuItem onPress={handlePrivacyPolicy}>
             <S.MenuText>개인정보 처리방침</S.MenuText>
