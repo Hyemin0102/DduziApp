@@ -11,8 +11,6 @@ import {
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
 import {PostDetail} from '@/@types/database';
-import {completePost} from '@/lib/post/postUtils';
-import CompletePostModal from '@/components/modal/CompletePostModal';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from '@/components/common/PinchZoomImage';
@@ -50,7 +48,6 @@ export default function PostDetailScreen() {
   const [showReportReasonSheet, setShowReportReasonSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaveLoading, setIsSaveLoading] = useState(false);
@@ -302,31 +299,6 @@ export default function PostDetailScreen() {
     }
   };
 
-  const handleConfirmComplete = async (visibility: 'public' | 'private') => {
-    if (!post) return;
-    setLoading(true);
-    try {
-      const result = await completePost(post.id, visibility);
-      if (result.success) {
-        setPost({...post, is_completed: true, visibility});
-        setModalVisible(false);
-        Alert.alert(
-          '완료',
-          visibility === 'public'
-            ? '프로젝트가 공개로 완료되었습니다.'
-            : '프로젝트가 비공개로 완료되었습니다.',
-          [{text: '확인', onPress: () => navigation.goBack()}],
-        );
-      } else {
-        Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
-      }
-    } catch (error) {
-      Alert.alert('오류', '프로젝트 완료 처리에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <S.LoadingContainer>
@@ -505,13 +477,6 @@ export default function PostDetailScreen() {
           {label: '저작권 침해', onPress: () => handleReport('저작권 침해'), isDestructive: true},
           {label: '기타', onPress: () => handleReport('기타')},
         ]}
-      />
-
-<CompletePostModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onConfirm={handleConfirmComplete}
-        loading={loading}
       />
     </S.Container>
   );

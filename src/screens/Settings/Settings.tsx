@@ -3,6 +3,7 @@ import {Alert, ActivityIndicator, Linking, Platform, View} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
+import {trackEvent} from '@/lib/mixpanel';
 import {
   fetchAppVersionConfig,
   fetchIosAppStoreId,
@@ -73,6 +74,7 @@ const Settings = () => {
     setIsDeleting(true);
     try {
       await deleteAccount(provider);
+      trackEvent('account_deleted', {provider});
     } catch (error) {
       console.error('회원탈퇴 에러:', error);
       const message =

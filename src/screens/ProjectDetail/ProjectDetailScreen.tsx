@@ -39,7 +39,6 @@ import {
 } from '@/constants/navigation.constant';
 import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
-import CompletePostModal from '@/components/modal/CompletePostModal';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import CalendarModal from '@/components/modal/CalendarModal';
 import * as S from './ProjectDetailScreen.styles';
@@ -178,7 +177,6 @@ export default function ProjectDetailScreen() {
   const [showSaveToast, setShowSaveToast] = useState(false);
   const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showActionSheet, setShowActionSheet] = useState(false);
-  const [completeModalVisible, setCompleteModalVisible] = useState(false);
   const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -238,6 +236,8 @@ export default function ProjectDetailScreen() {
 
   // ── dirty 감지
   const originalRef = useRef<OriginalValues | null>(null);
+  // 폼을 채운 시점의 updated_at — 저장 시 그 사이 다른 곳에서 먼저 저장했는지 확인하는 용도
+  const lastKnownUpdatedAtRef = useRef<string | null>(null);
   const [isDirty, setIsDirty] = useState(isCreateMode);
   const isDirtyRef = useRef(isDirty);
   useEffect(() => {
@@ -422,6 +422,7 @@ export default function ProjectDetailScreen() {
       completedAt: p.completed_at || '',
     };
     originalRef.current = values;
+    lastKnownUpdatedAtRef.current = p.updated_at;
     setTitle(values.title);
     setContent(values.content);
     setYarnInfo(values.yarnInfo);
@@ -620,6 +621,8 @@ export default function ProjectDetailScreen() {
         currentProjectId = newProject.id;
         trackEvent('project_created', {project_id: currentProjectId});
       } else {
+        // 폼을 채운 시점(updated_at) 이후로 다른 곳에서 먼저 저장했으면 0행이 반영되고
+        // .single()이 에러(PGRST116)를 던짐 — 낡은 값으로 덮어쓰는 걸 방지
         const {error} = await supabase
           .from('projects')
           .update({
@@ -637,8 +640,14 @@ export default function ProjectDetailScreen() {
             completed_at: finalCompletedAt,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', projectId!);
-        if (error) throw new Error('프로젝트 수정에 실패했습니다.');
+          .eq('id', projectId!)
+          .eq('updated_at', lastKnownUpdatedAtRef.current)
+          .select('id')
+          .single();
+        if (error) {
+          if (error.code === 'PGRST116') throw new Error('CONFLICT');
+          throw new Error('프로젝트 수정에 실패했습니다.');
+        }
         currentProjectId = projectId!;
         if (!project?.is_completed && formIsCompleted) {
           trackEvent('project_completed', {project_id: currentProjectId});
@@ -679,6 +688,16 @@ export default function ProjectDetailScreen() {
         ]);
       }
     } catch (error) {
+      if (error instanceof Error && error.message === 'CONFLICT') {
+        isDirtyRef.current = false;
+        setIsDirty(false);
+        await fetchData();
+        Alert.alert(
+          '알림',
+          '다른 곳에서 먼저 저장되어 내용이 변경됐어요. 최신 내용으로 새로고침했어요.',
+        );
+        return;
+      }
       console.error('프로젝트 저장 실패:', error);
       Alert.alert('오류', '저장에 실패했습니다.');
     } finally {
@@ -751,39 +770,6 @@ export default function ProjectDetailScreen() {
         },
       ],
     );
-  };
-
-  // ── 완료 처리
-  const handleConfirmComplete = async (visibility: 'public' | 'private') => {
-    if (!project) return;
-    try {
-      const {error} = await supabase
-        .from('projects')
-        .update({is_completed: true, visibility})
-        .eq('id', projectId!);
-      if (error) throw error;
-      setProject({...project, is_completed: true, visibility});
-      if (originalRef.current) {
-        originalRef.current = {
-          ...originalRef.current,
-          formIsCompleted: true,
-          formVisibility: visibility,
-        };
-      }
-      setFormIsCompleted(true);
-      setFormVisibility(visibility);
-      setIsDirty(false);
-      setCompleteModalVisible(false);
-      Alert.alert(
-        '완료',
-        visibility === 'public'
-          ? '프로젝트가 공개로 완료되었습니다.'
-          : '프로젝트가 비공개로 완료되었습니다.',
-        [{text: '확인', onPress: () => navigation.goBack()}],
-      );
-    } catch {
-      Alert.alert('오류', '완료 처리에 실패했습니다.');
-    }
   };
 
   const isMyProject = project?.user_id === currentUserId;
@@ -1650,15 +1636,6 @@ export default function ProjectDetailScreen() {
           </S.InfoValue>
         </View>
       </ActionSheetModal>
-
-      {!isCreateMode && (
-        <CompletePostModal
-          visible={completeModalVisible}
-          onClose={() => setCompleteModalVisible(false)}
-          onConfirm={handleConfirmComplete}
-          initialVisibility={project?.visibility || 'private'}
-        />
-      )}
 
       {/* 캘린더 모달 */}
       <CalendarModal
