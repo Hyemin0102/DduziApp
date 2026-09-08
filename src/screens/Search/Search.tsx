@@ -1,11 +1,13 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
 import {ActivityIndicator, FlatList, Keyboard, InteractionManager} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
+import NativeAdCard from '@/components/common/NativeAdCard';
 import SavedProjectSearchCard from '@/components/common/SavedProjectSearchCard';
+import NativeAdCardRounded from '@/components/common/NativeAdCardRounded';
 import {Post} from '@/@types/database';
 import * as S from './Search.style';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -24,6 +26,32 @@ interface MostSavedProject {
   owner_nickname: string;
   owner_profile_image: string | null;
 }
+
+// 검색 결과는 홈 피드보다 스크롤이 짧고 목적성이 강한 화면이라, 광고 빈도를
+// 홈(5~8개)보다 낮게(8~10개) 잡음 — 결정론적 패턴이라 결과가 갱신돼도
+// 순서상 앞부분 광고 위치는 안 바뀜
+const SEARCH_AD_GAP_SEQUENCE = [8, 10, 9, 10, 8, 9];
+
+type SearchFeedItem =
+  | {type: 'post'; key: string; post: Post}
+  | {type: 'ad'; key: string};
+
+const buildSearchFeedItems = (posts: Post[]): SearchFeedItem[] => {
+  const items: SearchFeedItem[] = [];
+  let nextAdAt = SEARCH_AD_GAP_SEQUENCE[0];
+  let adSeq = 0;
+
+  posts.forEach((post, index) => {
+    items.push({type: 'post', key: post.id.toString(), post});
+    if (index + 1 === nextAdAt) {
+      items.push({type: 'ad', key: `ad-${adSeq}`});
+      adSeq += 1;
+      nextAdAt += SEARCH_AD_GAP_SEQUENCE[adSeq % SEARCH_AD_GAP_SEQUENCE.length];
+    }
+  });
+
+  return items;
+};
 
 const Search = () => {
   const {navigation} = useCommonNavigation<any>();
@@ -59,7 +87,7 @@ const Search = () => {
   useEffect(() => {
     const fetchMostSavedProjects = async () => {
       const {data} = await supabase.rpc('get_most_saved_projects', {
-        limit_count: 5,
+        limit_count: 4,
       });
       if (!data) return;
 
@@ -225,7 +253,36 @@ const Search = () => {
     await handleSearch(searchQuery);
   };
 
-  const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
+  const feedItems = useMemo(() => buildSearchFeedItems(searchResults), [searchResults]);
+
+  const renderItem = ({item}: {item: SearchFeedItem}) =>
+    item.type === 'ad' ? <NativeAdCard /> : <PostCard post={item.post} />;
+
+  const renderSavedProjectCard = (project: MostSavedProject) => (
+    <SavedProjectSearchCard
+      key={project.project_id}
+      ownerNickname={project.owner_nickname}
+      ownerAvatarUri={
+        profileUrl(project.owner_profile_image) ?? project.owner_profile_image
+      }
+      title={project.title}
+      dateLabel={getProjectDateLabel(
+        project.is_completed,
+        project.started_at,
+        project.completed_at,
+      )}
+      thumbnailUrl={project.thumbnail_url}
+      onPress={() => {
+        trackEvent('most_saved_project_tapped', {
+          project_id: project.project_id,
+        });
+        navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+          projectId: project.project_id,
+          projectTitle: project.title,
+        });
+      }}
+    />
+  );
 
   const renderEmptyComponent = () => {
     if (loading) {
@@ -277,31 +334,9 @@ const Search = () => {
                     뜨개함에 많이 저장됐어요
                   </S.TrendingTitle>
                 </S.TrendingSection>
-                {mostSavedProjects.map(project => (
-                  <SavedProjectSearchCard
-                    key={project.project_id}
-                    ownerNickname={project.owner_nickname}
-                    ownerAvatarUri={
-                      profileUrl(project.owner_profile_image) ?? project.owner_profile_image
-                    }
-                    title={project.title}
-                    dateLabel={getProjectDateLabel(
-                      project.is_completed,
-                      project.started_at,
-                      project.completed_at,
-                    )}
-                    thumbnailUrl={project.thumbnail_url}
-                    onPress={() => {
-                      trackEvent('most_saved_project_tapped', {
-                        project_id: project.project_id,
-                      });
-                      navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
-                        projectId: project.project_id,
-                        projectTitle: project.title,
-                      });
-                    }}
-                  />
-                ))}
+                {mostSavedProjects.map(renderSavedProjectCard)}
+               <NativeAdCardRounded />
+               {/* <NativeAdCard /> */}
               </S.TrendingProjects>
             )}
           </>
@@ -353,8 +388,8 @@ const Search = () => {
       </S.SearchHeader>
 
       <FlatList
-        data={ !loading ? searchResults : []}
-        keyExtractor={item => item.id.toString()}
+        data={!loading ? feedItems : []}
+        keyExtractor={item => item.key}
         renderItem={renderItem}
         ListEmptyComponent={renderEmptyComponent}
         contentContainerStyle={{flexGrow: 1}}

@@ -59,6 +59,7 @@ import {getProjectDateLabel} from '@/lib/projectDate';
 import { Text } from 'react-native';
 import SaveIcon from '@/assets/icons/save.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
+import BottomBannerAd from '@/components/common/BottomBannerAd';
 import SavedCheckIcon from '@/assets/icons/saved_check.svg';
 
 type RouteProps = RouteProp<
@@ -1008,6 +1009,7 @@ export default function ProjectDetailScreen() {
         </S.LoadingOverlay>
       )}
       <KeyboardAvoid>
+
         {/* ══ SNS 스타일: 제목 + 설명 ══════════════════════ */}
         <S.PostArea>
           <S.TitleWithThumbnailRow>
@@ -1196,6 +1198,7 @@ export default function ProjectDetailScreen() {
             </S.MetaRow>
           </S.MetaSection>
         )}
+
 
         {/* ══ 정보 섹션: 실 · 바늘 · 도안 ══════════════════ */}
         <S.InfoSection>
@@ -1594,6 +1597,8 @@ export default function ProjectDetailScreen() {
 
         <View style={{height: 40}} />
       </KeyboardAvoid>
+
+      {!isCreateMode && <BottomBannerAd />}
 
       {/* 뜨개함 저장 토스트 */}
       {showSaveToast && (

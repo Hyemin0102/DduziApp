@@ -1,10 +1,17 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
-import {ActivityIndicator, DeviceEventEmitter, FlatList, View} from 'react-native';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
+import {
+  ActivityIndicator,
+  AppState,
+  DeviceEventEmitter,
+  FlatList,
+  View,
+} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import * as S from './Home.style';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
+import NativeAdCard from '@/components/common/NativeAdCard';
 import PostCardSkeleton from '@/components/skeleton/PostCardSkeleton';
 import {Post} from '@/@types/database';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -12,8 +19,34 @@ import Icon from 'react-native-vector-icons/Feather';
 import {HOME_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import * as HS from '../Navigator/stacks/HomeStack.style';
+import {trackEvent} from '@/lib/mixpanel';
 
 const PAGE_SIZE = 10;
+
+// 게시물 5~8개마다 광고 하나씩 — 매번 같은 순서로 반복해서, 게시물이 더 로드돼도
+// 이미 배치된 광고 위치가 뒤늦게 바뀌지 않도록 함(결정론적 패턴)
+const AD_GAP_SEQUENCE = [5, 7, 6, 8, 5, 8, 6, 7];
+
+type FeedItem =
+  | {type: 'post'; key: string; post: Post}
+  | {type: 'ad'; key: string};
+
+const buildFeedItems = (posts: Post[]): FeedItem[] => {
+  const items: FeedItem[] = [];
+  let nextAdAt = AD_GAP_SEQUENCE[0];
+  let adSeq = 0;
+
+  posts.forEach((post, index) => {
+    items.push({type: 'post', key: post.id.toString(), post});
+    if (index + 1 === nextAdAt) {
+      items.push({type: 'ad', key: `ad-${adSeq}`});
+      adSeq += 1;
+      nextAdAt += AD_GAP_SEQUENCE[adSeq % AD_GAP_SEQUENCE.length];
+    }
+  });
+
+  return items;
+};
 
 const Home = () => {
   const {navigation} = useCommonNavigation();
@@ -25,6 +58,7 @@ const Home = () => {
   const pageRef = useRef(0);
   const blockedIdsRef = useRef<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const maxViewedIndexRef = useRef(0);
 
   const fetchBlockedIds = async (): Promise<string[]> => {
     const {data: {user}} = await supabase.auth.getUser();
@@ -125,6 +159,53 @@ const Home = () => {
     }, [posts.length]),
   );
 
+  // 홈 피드 스크롤 깊이 트래킹 — 화면에 보인 게시물 중 가장 마지막 인덱스를
+  // 계속 갱신해두고, 화면을 벗어날 때 한 번만 요약 이벤트로 남김
+  const onViewableItemsChanged = useRef(
+    ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
+      const indices = viewableItems
+        .map(v => v.index)
+        .filter((i): i is number => i !== null);
+      if (indices.length === 0) return;
+      maxViewedIndexRef.current = Math.max(
+        maxViewedIndexRef.current,
+        ...indices,
+      );
+    },
+  ).current;
+  const viewabilityConfig = useRef({viewAreaCoveragePercentThreshold: 50}).current;
+
+  // 지금까지 기록된 스크롤 깊이를 이벤트로 보내고 카운터 리셋 — 화면 이탈
+  // (다른 화면으로 이동)과 앱 백그라운드 전환 양쪽에서 공용으로 씀
+  const flushScrollDepth = useCallback(() => {
+    if (maxViewedIndexRef.current >= 0) {
+      trackEvent('home_feed_scroll_depth', {
+        posts_viewed: maxViewedIndexRef.current + 1,
+      });
+    }
+    maxViewedIndexRef.current = -1;
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      maxViewedIndexRef.current = -1;
+      return () => {
+        flushScrollDepth();
+      };
+    }, [flushScrollDepth]),
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') {
+        flushScrollDepth();
+      } else if (nextState === 'active') {
+        maxViewedIndexRef.current = -1;
+      }
+    });
+    return () => subscription.remove();
+  }, [flushScrollDepth]);
+
   useEffect(() => {
     const homeTabSub = DeviceEventEmitter.addListener('homeTabRepress', () => {
       flatListRef.current?.scrollToOffset({offset: 0, animated: true});
@@ -150,7 +231,10 @@ const Home = () => {
     };
   }, []);
 
-  const renderItem = ({item}: {item: Post}) => <PostCard post={item} />;
+  const feedItems = useMemo(() => buildFeedItems(posts), [posts]);
+
+  const renderItem = ({item}: {item: FeedItem}) =>
+    item.type === 'ad' ? <NativeAdCard /> : <PostCard post={item.post} />;
 
   const renderFooter = () => {
     if (!loadingMore) return null;
@@ -193,8 +277,8 @@ const Home = () => {
         ) : (
           <FlatList
             ref={flatListRef}
-            data={posts}
-            keyExtractor={item => item.id.toString()}
+            data={feedItems}
+            keyExtractor={item => item.key}
             renderItem={renderItem}
             contentContainerStyle={{flexGrow: 1}}
             refreshControl={
@@ -209,6 +293,8 @@ const Home = () => {
             windowSize={5}
             maxToRenderPerBatch={5}
             removeClippedSubviews={true}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
             ListFooterComponent={renderFooter}
             ListEmptyComponent={
               <S.EmptyContainer>

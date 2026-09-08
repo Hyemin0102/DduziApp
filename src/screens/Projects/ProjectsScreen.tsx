@@ -11,6 +11,7 @@ import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import SavedProjectCard from '@/components/common/SavedProjectCard';
 import {trackEvent} from '@/lib/mixpanel';
+import ProjectDetailBannerAd from '@/components/common/ProjectDetailBannerAd';
 
 type TabType = 'inProgress' | 'completed' | 'saved';
 

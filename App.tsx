@@ -11,6 +11,7 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {StatusBar, AppState, Platform, Linking} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
+import mobileAds from 'react-native-google-mobile-ads';
 import DeviceInfo from 'react-native-device-info';
 import Navigator from './src/screens/Navigator/Navigator';
 import AuthProvider from './src/contexts/AuthContext';
@@ -40,7 +41,11 @@ type hide = (config?: {fade?: boolean}) => Promise<void>;
 function App(): React.JSX.Element {
   useEffect(() => {
     const init = async () => {
-      // …do multiple sync or async tasks
+      try {
+        await mobileAds().initialize();
+      } catch (error) {
+        console.error('AdMob 초기화 실패:', error);
+      }
     };
 
     init().finally(async () => {

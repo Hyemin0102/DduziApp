@@ -328,7 +328,7 @@ export default function PostDetailScreen() {
 
   return (
     <S.Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
         {/* 작성자 정보 */}
         <S.AuthorSection
           onPress={() =>
@@ -437,6 +437,7 @@ export default function PostDetailScreen() {
             </S.ProjectBannerRight>
           </S.ProjectBanner>
         )}
+
       </ScrollView>
 
       {/* 뜨개함 저장 토스트 */}
