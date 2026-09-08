@@ -199,3 +199,101 @@ export const TextArea = styled.TextInput`
   color: #333;
   min-height: 200px;
 `;
+
+export const ModalOverlay = styled.SafeAreaView`
+  flex: 1;
+  background-color: #000;
+`;
+
+export const ModalHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  flex-shrink: 0;
+`;
+
+export const ModalCloseButton = styled.TouchableOpacity`
+  padding: 4px;
+`;
+
+export const ModalMainImageWrapper = styled.View`
+  flex: 1;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const ModalPreviewFrame = styled.View`
+  width: 100%;
+  overflow: hidden;
+  background-color: #111;
+  position: relative;
+`;
+
+export const PreviewRatioHint = styled.Text`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin-top: 8px;
+`;
+
+export const RevertButton = styled.TouchableOpacity`
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: rgba(0, 0, 0, 0.55);
+  align-items: center;
+  justify-content: center;
+`;
+
+export const ModalMainImage = styled.Image`
+  width: 100%;
+  height: 100%;
+`;
+
+
+export const FilmStripWrapper = styled.View`
+  height: 88px;
+  flex-shrink: 0;
+  flex-grow: 0;
+`;
+
+export const FilmStripThumb = styled.TouchableOpacity<{active?: boolean}>`
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 8px;
+  border-width: 2px;
+  border-color: ${({active}) => (active ? '#fff' : 'transparent')};
+`;
+
+export const FilmStripImage = styled(FastImage)`
+  width: 100%;
+  height: 100%;
+`;
+
+export const ModalActionBar = styled.View`
+  flex-direction: row;
+  padding: 16px;
+  gap: 10px;
+  flex-shrink: 0;
+`;
+
+export const ModalActionButton = styled.TouchableOpacity<{primary?: boolean}>`
+  flex: 1;
+  padding-vertical: 14px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({primary}) => (primary ? '#fff' : 'rgba(255,255,255,0.15)')};
+`;
+
+export const ModalActionButtonText = styled.Text<{primary?: boolean}>`
+  font-size: 15px;
+  font-weight: 600;
+  color: ${({primary}) => (primary ? '#000' : '#fff')};
+`;

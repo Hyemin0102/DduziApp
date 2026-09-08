@@ -105,3 +105,29 @@ export const removeProjectThumbnail = async (url: string): Promise<void> => {
     console.error('썸네일 삭제 실패:', error);
   }
 };
+
+/**
+ * 게시물 이미지 삭제(교체/제거)로 더 이상 post_images에서 참조되지 않는 파일을
+ * Storage에서 정리. 단, 어떤 프로젝트의 thumbnail_url로 재사용 중이면 건드리지 않음
+ */
+export const deletePostImageFileIfUnused = async (url: string): Promise<void> => {
+  try {
+    const idx = url.indexOf(PUBLIC_URL_PREFIX);
+    if (idx < 0) return;
+    const path = url.slice(idx + PUBLIC_URL_PREFIX.length);
+
+    const {data: referencingProjects, error: refError} = await supabase
+      .from('projects')
+      .select('id')
+      .eq('thumbnail_url', url)
+      .limit(1);
+    if (refError) throw refError;
+    if (referencingProjects && referencingProjects.length > 0) {
+      return; // 프로젝트 대표이미지로 재사용 중 — 삭제하지 않음
+    }
+
+    await supabase.storage.from(POST_IMAGES_BUCKET).remove([path]);
+  } catch (error) {
+    console.error('게시물 이미지 파일 삭제 실패:', error);
+  }
+};

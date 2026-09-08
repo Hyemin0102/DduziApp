@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   DeviceEventEmitter,
+  Dimensions,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
@@ -24,10 +25,19 @@ import Icon from 'react-native-vector-icons/Feather';
 import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
+import {POST_IMAGE_ASPECT_RATIO} from '@/constants/postImage.constant';
 
 // 토스트에서 "내 뜨개함에 담았어요." 문구는 절대 안 잘리게, 프로젝트명만 줄여서 "..." 처리
 const truncateForToast = (title: string, maxLen = 8) =>
   title.length > maxLen ? `${title.slice(0, maxLen)}...` : title;
+
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+// 기존(레거시) 게시물과 동일한 정사각형 프레임으로 고정 — 화면 모양은 그대로 두고
+// resizeMode만 cover→contain으로 바꿔서 잘리지 않게 함 (스와이프해도 프레임 높이는 안 바뀜)
+const GALLERY_HEIGHT = Math.min(
+  SCREEN_WIDTH / POST_IMAGE_ASPECT_RATIO,
+  SCREEN_HEIGHT * 0.8,
+);
 
 type RouteParams = {
   PostDetail: {
@@ -48,7 +58,6 @@ export default function PostDetailScreen() {
   const [showReportReasonSheet, setShowReportReasonSheet] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
@@ -76,6 +85,7 @@ export default function PostDetailScreen() {
     hasFetchedRef.current = false;
     viewTrackedRef.current = false;
   }, [postId]);
+
 
   const fetchPostDetail = async () => {
     try {
@@ -363,20 +373,13 @@ export default function PostDetailScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={16}
-              onScroll={e => {
-                const idx = Math.round(
-                  e.nativeEvent.contentOffset.x /
-                    e.nativeEvent.layoutMeasurement.width,
-                );
-                setActiveImageIndex(idx);
-              }}>
+              style={{height: GALLERY_HEIGHT}}>
               {post.images.map((image, index) => (
-                <S.ImageWrapper key={image.id}>
+                <S.ImageWrapper key={image.id} style={{height: GALLERY_HEIGHT}}>
                   <PinchZoomImage uri={image.image_url}>
                     <S.PostImage
                       source={{uri: image.image_url}}
-                      resizeMode="cover"
+                      resizeMode="contain"
                     />
                   </PinchZoomImage>
                   {post.images.length > 1 && (
