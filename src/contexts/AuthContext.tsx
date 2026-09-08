@@ -78,6 +78,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
           await AsyncStorage.multiRemove(['user', 'provider', 'needsProfileSetup']);
           resetUser();
+        } else if (event === 'SIGNED_IN') {
+          // 안전망: Login.tsx의 로그인 핸들러가 createOrUpdateUser 등에서
+          // 실패해서 login()을 못 부르는 경우에도, 실제 세션이 생겼다면
+          // 여기서 다시 상태를 동기화해서 온보딩에 갇히지 않도록 함
+          await checkAuthStatus();
         }
       },
     );

@@ -23,6 +23,7 @@ import {
   createUserProfile,
   handleProviderConflict,
 } from '../../lib/auth/userService';
+import {trackEvent} from '../../lib/mixpanel';
 
 const KAKAO_SDK = Config.KAKAO_SDK || '';
 const GOOGLE_WEB_CLIENT_ID = Config.GOOGLE_WEB_CLIENT_ID || '';
@@ -103,6 +104,10 @@ const Login = () => {
                       '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
                       userError,
                     );
+                    trackEvent('login_profile_sync_failed', {
+                      provider: 'kakao',
+                      message: userError?.message,
+                    });
                   }
                 }
               }
@@ -167,6 +172,10 @@ const Login = () => {
                     '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
                     userError,
                   );
+                  trackEvent('login_profile_sync_failed', {
+                    provider: 'google',
+                    message: userError?.message,
+                  });
                 }
               }
             }
@@ -289,6 +298,10 @@ const Login = () => {
                     '⚠️ 사용자 정보 저장 실패 (로그인은 유지):',
                     userError,
                   );
+                  trackEvent('login_profile_sync_failed', {
+                    provider: 'apple',
+                    message: userError?.message,
+                  });
                 }
               }
             }

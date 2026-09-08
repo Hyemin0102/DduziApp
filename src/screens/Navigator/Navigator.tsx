@@ -1,5 +1,6 @@
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
+import {View, ActivityIndicator} from 'react-native';
 import TabNavigator from './TabNavigator';
 import AuthStack from './stacks/AuthStack';
 import {useAuth} from '../../contexts/AuthContext';
@@ -15,9 +16,27 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 //루트 네비게이터
 const Navigator = () => {
-  const {isLoggedIn, needsProfileSetup, needsTermsAgreement} = useAuth();
+  const {isLoggedIn, needsProfileSetup, needsTermsAgreement, isLoading} =
+    useAuth();
   const navigationRef = useRef<any>(null);
   const currentScreenNameRef = useRef<string | undefined>(undefined);
+
+  // 초기 인증 상태 확인이 끝나기 전에는 온보딩/홈 분기를 그리지 않음 —
+  // 카카오 로그인 중 안드로이드가 액티비티를 재생성해서 AuthContext가 다시
+  // 초기화되는 경우에도, 이 화면이 순간적으로 온보딩으로 보이는 걸 방지
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#fff',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <ActivityIndicator size="large" color="#191919" />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer

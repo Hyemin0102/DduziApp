@@ -227,7 +227,7 @@ export const ModalMainImageWrapper = styled.View`
 export const ModalPreviewFrame = styled.View`
   width: 100%;
   overflow: hidden;
-  background-color: #111;
+  background-color: #1c1c1c;
   position: relative;
 `;
 

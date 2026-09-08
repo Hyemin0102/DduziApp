@@ -7,6 +7,7 @@ import {
   FlatList,
   Dimensions,
   Platform,
+  BackHandler,
 } from 'react-native';
 
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
@@ -168,6 +169,13 @@ export default function PostCreateForProjectScreen() {
   const editImageUri = async ( 
     uri: string,
   ): Promise<{uri: string; width: number; height: number} | null> => {
+    // 안드로이드에서 크롭 화면(별도 액티비티)을 저장/취소로 닫을 때, 그 뒤로가기
+    // 신호가 React Navigation에도 전달돼서 현재 화면이 통째로 pop되는(→ 홈으로
+    // 이동) 문제가 있어 크롭 화면이 떠 있는 동안은 뒤로가기를 흡수해 무시함
+    const backHandlerSub =
+      Platform.OS === 'android'
+        ? BackHandler.addEventListener('hardwareBackPress', () => true)
+        : null;
     try {
       const localUri = await ensureLocalUri(uri);
       const result = await ImageCropPicker.openCropper({
@@ -182,6 +190,8 @@ export default function PostCreateForProjectScreen() {
       return {uri: result.path, width: result.width, height: result.height};
     } catch {
       return null;
+    } finally {
+      backHandlerSub?.remove();
     }
   };
 
