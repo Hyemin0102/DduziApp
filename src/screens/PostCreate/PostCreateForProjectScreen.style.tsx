@@ -151,6 +151,7 @@ export const ImagePreview = styled.TouchableOpacity`
   height: 88px;
   border-radius: 8px;
   overflow: hidden;
+  background-color: #f1f1ef;
 `;
 
 export const PreviewImage = styled(FastImage)`

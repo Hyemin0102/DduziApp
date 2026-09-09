@@ -87,7 +87,7 @@ const Search = () => {
   useEffect(() => {
     const fetchMostSavedProjects = async () => {
       const {data} = await supabase.rpc('get_most_saved_projects', {
-        limit_count: 4,
+        limit_count: 5,
       });
       if (!data) return;
 
@@ -335,8 +335,7 @@ const Search = () => {
                   </S.TrendingTitle>
                 </S.TrendingSection>
                 {mostSavedProjects.map(renderSavedProjectCard)}
-               <NativeAdCardRounded />
-               {/* <NativeAdCard /> */}
+               {/* <NativeAdCardRounded /> */}
               </S.TrendingProjects>
             )}
           </>

@@ -409,7 +409,7 @@ export default function PostCreateForProjectScreen() {
         style={{marginRight: 10, opacity: isActive ? 0.8 : 1}}
         onPress={() => handleOpenViewer(item.key)}
         onLongPress={drag}>
-        <S.PreviewImage source={{uri: item.uri}} />
+        <S.PreviewImage source={{uri: item.uri}} resizeMode="contain" />
         <S.ImageRemoveButton onPress={() => handleRemoveImage(item.key)}>
           <Icon name="x" size={14} color="#fff" />
         </S.ImageRemoveButton>

@@ -11,13 +11,13 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {StatusBar, AppState, Platform, Linking} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
-import mobileAds from 'react-native-google-mobile-ads';
 import DeviceInfo from 'react-native-device-info';
 import Navigator from './src/screens/Navigator/Navigator';
 import AuthProvider from './src/contexts/AuthContext';
 import {ZoomOverlayProvider} from './src/components/common/ZoomOverlay';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import {trackAppOpened} from './src/lib/mixpanel';
+import {initAds} from './src/lib/adsInit';
 import UpdateModal from './src/components/modal/UpdateModal';
 import {
   compareVersions,
@@ -40,15 +40,7 @@ type hide = (config?: {fade?: boolean}) => Promise<void>;
 
 function App(): React.JSX.Element {
   useEffect(() => {
-    const init = async () => {
-      try {
-        await mobileAds().initialize();
-      } catch (error) {
-        console.error('AdMob 초기화 실패:', error);
-      }
-    };
-
-    init().finally(async () => {
+    initAds().finally(async () => {
       await BootSplash.hide({fade: true});
     });
   }, []);

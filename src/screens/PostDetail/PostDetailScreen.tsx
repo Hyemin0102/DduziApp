@@ -26,6 +26,7 @@ import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
 import {POST_IMAGE_ASPECT_RATIO} from '@/constants/postImage.constant';
+import BottomBannerAd from '@/components/common/BottomBannerAd';
 
 // 토스트에서 "내 뜨개함에 담았어요." 문구는 절대 안 잘리게, 프로젝트명만 줄여서 "..." 처리
 const truncateForToast = (title: string, maxLen = 8) =>
@@ -450,6 +451,8 @@ export default function PostDetailScreen() {
           <S.SaveToastAction>바로가기</S.SaveToastAction>
         </S.SaveToast>
       )}
+
+      <BottomBannerAd />
 
       {/* 액션시트 */}
       <ActionSheetModal
