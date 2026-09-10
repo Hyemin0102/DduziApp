@@ -1,17 +1,19 @@
 import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
-import {ActivityIndicator, FlatList, Keyboard, InteractionManager} from 'react-native';
+import {ActivityIndicator, FlatList, Keyboard, InteractionManager, ScrollView, View} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
 import NativeAdCard from '@/components/common/NativeAdCard';
 import SavedProjectSearchCard from '@/components/common/SavedProjectSearchCard';
 import NativeAdCardRounded from '@/components/common/NativeAdCardRounded';
+import WeeklyTopPosterCard from '@/components/common/WeeklyTopPosterCard';
 import {Post} from '@/@types/database';
 import * as S from './Search.style';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {PROJECTS_ROUTES} from '@/constants/navigation.constant';
+import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import {trackEvent} from '@/lib/mixpanel';
@@ -25,6 +27,13 @@ interface MostSavedProject {
   is_completed: boolean;
   owner_nickname: string;
   owner_profile_image: string | null;
+}
+
+interface WeeklyTopPoster {
+  user_id: string;
+  nickname: string;
+  profile_image: string | null;
+  post_count: number;
 }
 
 // 검색 결과는 홈 피드보다 스크롤이 짧고 목적성이 강한 화면이라, 광고 빈도를
@@ -62,6 +71,7 @@ const Search = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
   const [mostSavedProjects, setMostSavedProjects] = useState<MostSavedProject[]>([]);
+  const [weeklyTopPosters, setWeeklyTopPosters] = useState<WeeklyTopPoster[]>([]);
   const isFocused = useRef(true);
   const inputRef = useRef<any>(null);
 
@@ -82,6 +92,16 @@ const Search = () => {
       if (data) setTrendingKeywords(data.map(d => d.keyword));
     };
     fetchTrendingKeywords();
+  }, []);
+
+  useEffect(() => {
+    const fetchWeeklyTopPosters = async () => {
+      const {data} = await supabase.rpc('get_weekly_top_posters', {
+        limit_count: 5,
+      });
+      if (data) setWeeklyTopPosters(data as WeeklyTopPoster[]);
+    };
+    fetchWeeklyTopPosters();
   }, []);
 
   useEffect(() => {
@@ -303,7 +323,11 @@ const Search = () => {
     }
 
     if (!hasSearched) {
-      if (trendingKeywords.length > 0 || mostSavedProjects.length > 0) {
+      if (
+        trendingKeywords.length > 0 ||
+        weeklyTopPosters.length > 0 ||
+        mostSavedProjects.length > 0
+      ) {
         return (
           <>
             {trendingKeywords.length > 0 && (
@@ -326,6 +350,37 @@ const Search = () => {
                   ))}
                 </S.TrendingTagRow>
               </S.TrendingSection>
+            )}
+
+            {weeklyTopPosters.length > 0 && (
+              <>
+                <S.TrendingSection style={{paddingBottom: 0}}>
+                    
+                    <S.TrendingTitle>위클리 뜨개왕</S.TrendingTitle>
+                </S.TrendingSection>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {weeklyTopPosters.map((poster, index) => (
+                    <WeeklyTopPosterCard
+                      key={poster.user_id}
+                      rank={index + 1}
+                      nickname={poster.nickname}
+                      profileImage={
+                        profileUrl(poster.profile_image) ?? poster.profile_image
+                      }
+                      postCount={poster.post_count}
+                      onPress={() => {
+                        trackEvent('weekly_top_poster_tapped', {
+                          user_id: poster.user_id,
+                          rank: index + 1,
+                        });
+                        navigation.navigate(POST_ROUTES.POSTS_MAIN, {
+                          userId: poster.user_id,
+                        });
+                      }}
+                    />
+                  ))}
+                </ScrollView>
+              </>
             )}
             {mostSavedProjects.length > 0 && (
               <S.TrendingProjects>
