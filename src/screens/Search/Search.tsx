@@ -1,9 +1,8 @@
 import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
-import {ActivityIndicator, FlatList, Keyboard, InteractionManager, ScrollView, View} from 'react-native';
+import {ActivityIndicator, FlatList, Keyboard, InteractionManager, ScrollView} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
 import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
 import NativeAdCard from '@/components/common/NativeAdCard';
@@ -353,12 +352,14 @@ const Search = () => {
             )}
 
             {weeklyTopPosters.length > 0 && (
-              <>
+              <S.TrendingProjects>
                 <S.TrendingSection style={{paddingBottom: 0}}>
-                    
-                    <S.TrendingTitle>위클리 뜨개왕</S.TrendingTitle>
+                  <S.TrendingTitle>위클리 뜨개왕 ✨</S.TrendingTitle>
                 </S.TrendingSection>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{paddingTop: 8, paddingLeft: 20, paddingBottom: 0}}>
                   {weeklyTopPosters.map((poster, index) => (
                     <WeeklyTopPosterCard
                       key={poster.user_id}
@@ -380,7 +381,7 @@ const Search = () => {
                     />
                   ))}
                 </ScrollView>
-              </>
+              </S.TrendingProjects>
             )}
             {mostSavedProjects.length > 0 && (
               <S.TrendingProjects>

@@ -2,7 +2,6 @@ import React, {useEffect, useRef} from 'react';
 import {Animated, Easing} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import MyPostsIcon from '@/assets/icons/tab_MyPosts.svg';
 import * as S from './WeeklyTopPosterCard.style';
 
 interface WeeklyTopPosterCardProps {
@@ -13,9 +12,10 @@ interface WeeklyTopPosterCardProps {
   onPress?: () => void;
 }
 
-// const RANK_ICON_NAME = 'star-shooting';
+const RANK_ICON_NAME = 'star-shooting';
 
-const RANK_ICON_NAME = 'creation';
+//star-shooting
+
 // 뱃지 위에 대각선 반짝임이 좌→우로 훑고 지나가는 애니메이션 — 5개 카드가
 // 전부 동시에 반짝이면 부담스러워서 순위별로 살짝 시차를 둠(rank * 220ms)
 const BadgeShineEffect = ({rank}: {rank: number}) => {
@@ -62,33 +62,26 @@ const WeeklyTopPosterCard = ({
 }: WeeklyTopPosterCardProps) => {
   return (
     <S.Card rank={rank} activeOpacity={0.85} onPress={onPress}>
-      <S.AvatarBadgeWrapper>
-        <S.AvatarWrapper rank={rank}>
-          {profileImage ? (
-            <S.Avatar source={{uri: profileImage}} />
-          ) : (
-            <S.AvatarPlaceholder>
-              <Icon name="user" size={22} color="#ccc" />
-            </S.AvatarPlaceholder>
-          )}
-        </S.AvatarWrapper>
+      <S.RankBadge rank={rank}>
+        <BadgeShineEffect rank={rank} />
+        <MaterialCommunityIcon name={RANK_ICON_NAME} size={18} color="#fff" />
+      </S.RankBadge>
 
-        <S.RankBadge rank={rank}>
-          <BadgeShineEffect rank={rank} />
-          <MaterialCommunityIcon
-            name={RANK_ICON_NAME}
-            size={14}
-            color="#fff"
-          />
-        </S.RankBadge>
-      </S.AvatarBadgeWrapper>
+      <S.AvatarWrapper rank={rank}>
+        {profileImage ? (
+          <S.Avatar source={{uri: profileImage}} />
+        ) : (
+          <S.AvatarPlaceholder>
+            <Icon name="user" size={22} color="#ccc" />
+          </S.AvatarPlaceholder>
+        )}
+      </S.AvatarWrapper>
 
       <S.Nickname numberOfLines={1}>{nickname}</S.Nickname>
-      {/* <S.Nickname numberOfLines={1}>닉네임이길어지면최대20글자</S.Nickname> */}
-      <S.CountBadge>
-        <MyPostsIcon width={12} height={12} />
-        <S.CountBadgeText> {postCount}건</S.CountBadgeText>
-      </S.CountBadge>
+      <S.CountRow>
+        <S.CountText>{postCount}건</S.CountText>
+        <Icon name="chevron-right" size={12} color="#999" />
+      </S.CountRow>
     </S.Card>
   );
 };

@@ -5,27 +5,26 @@ interface RankProps {
   rank: number;
 }
 
-
 export const Card = styled.TouchableOpacity<RankProps>`
   width: 100px;
-  padding-bottom: 20px;
-  border-radius: 10px;
+  padding: 16px 10px 14px 10px;
+  border-radius: 14px;
   align-items: center;
-`;
-
-export const AvatarBadgeWrapper = styled.View`
+  background-color: #fff;
+  border-width: 1px;
+  border-color: #eeeeee;
   position: relative;
-  margin-top: 6px;
+  margin-right: 10px;
 `;
 
 export const RankBadge = styled.View<RankProps>`
   position: absolute;
-  top: -6px;
-  right: -8px;
+  top: -10px;
+  right: -10px;
   z-index: 2;
-  width: 26px;
-  height: 26px;
-  border-radius:999px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
   align-items: center;
   justify-content: center;
   background-color: #191919;
@@ -48,8 +47,8 @@ export const BadgeShine = styled.View`
 `;
 
 export const AvatarWrapper = styled.View<RankProps>`
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 1000px;
   align-items: center;
   justify-content: center;
@@ -69,30 +68,26 @@ export const AvatarPlaceholder = styled.View`
   height: 100%;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
+  background-color: #f5f5f5;
 `;
 
 export const Nickname = styled.Text`
   margin-top: 10px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  color: #000;
-  max-width: 80px;
+  color: #191919;
+  max-width: 84px;
 `;
 
-export const CountBadge = styled.View`
-  margin-top: 12px;
+export const CountRow = styled.View`
+  margin-top: 4px;
   flex-direction: row;
   align-items: center;
-   background-color: #f7f7f7;
-  border-width: 1px;
-   border-color: #dbdbdb;
-  border-radius: 8px;
-  padding: 4px 10px 4px 6px;
+  gap: 2px;
 `;
 
-export const CountBadgeText = styled.Text`
-  font-size: 10px;
-  //font-weight: 700;
-  color: #444;
+export const CountText = styled.Text`
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
 `;
