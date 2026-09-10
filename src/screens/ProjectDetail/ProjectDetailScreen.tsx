@@ -1598,8 +1598,6 @@ export default function ProjectDetailScreen() {
         <View style={{height: 40}} />
       </KeyboardAvoid>
 
-      {!isCreateMode && <BottomBannerAd />}
-
       {/* 뜨개함 저장 토스트 */}
       {showSaveToast && (
         <S.SaveToast onPress={handleGoToSavedProjects} activeOpacity={0.85}>

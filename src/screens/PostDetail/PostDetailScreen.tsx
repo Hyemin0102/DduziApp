@@ -452,7 +452,6 @@ export default function PostDetailScreen() {
         </S.SaveToast>
       )}
 
-      <BottomBannerAd />
 
       {/* 액션시트 */}
       <ActionSheetModal
