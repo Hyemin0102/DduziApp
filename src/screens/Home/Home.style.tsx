@@ -3,7 +3,7 @@ import {Dimensions} from 'react-native';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
-export const Container = styled.SafeAreaView`
+export const Container = styled.View`
   flex: 1;
   background-color: #fff;
 `;

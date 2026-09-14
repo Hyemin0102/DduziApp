@@ -287,7 +287,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   return (
     <SafeAreaView
       style={{flex: 1, backgroundColor: '#fff'}}
-      edges={['bottom']}>
+      edges={[]}>
       <AppHeader
         showBack={!!targetUserId}
         title={targetUserId ? (nickname ?? '') : '내 뜨개'}

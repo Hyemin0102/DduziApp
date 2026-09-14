@@ -351,7 +351,7 @@ const Search = () => {
               </S.TrendingSection>
             )}
 
-            {weeklyTopPosters.length > 0 && (
+            {/* {weeklyTopPosters.length > 0 && (
               <S.TrendingProjects>
                 <S.TrendingSection style={{paddingBottom: 0}}>
                   <S.TrendingTitle>위클리 뜨개왕 ✨</S.TrendingTitle>
@@ -382,7 +382,7 @@ const Search = () => {
                   ))}
                 </ScrollView>
               </S.TrendingProjects>
-            )}
+            )} */}
             {mostSavedProjects.length > 0 && (
               <S.TrendingProjects>
                 <S.TrendingSection style={{paddingBottom: 4}}>

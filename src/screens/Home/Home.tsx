@@ -246,7 +246,7 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView edges={['top']} style={{flex: 1, backgroundColor: '#fff'}}>
       <HS.HeaderContainer>
         <HS.LogoRow>
           <HS.Logo
