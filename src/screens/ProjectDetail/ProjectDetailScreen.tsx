@@ -76,6 +76,8 @@ type RouteProps = RouteProp<
 // 저장 전 임시 로그
 interface PendingLog {
   id: string;
+  // 렌더링용 고정 key — id가 임시ID→실제 UUID로 바뀌어도 절대 변하지 않음 (안 그러면 입력창이 리마운트되며 포커스가 끊김)
+  key: string;
   content: string;
   created_at?: string;
   isExisting: boolean;
@@ -317,7 +319,7 @@ export default function ProjectDetailScreen() {
   const addPendingLog = useCallback(() => {
     const tempId = Date.now().toString();
     setPendingLogs(prev => [
-      {id: tempId, content: '', isExisting: false, isEditable: true},
+      {id: tempId, key: tempId, content: '', isExisting: false, isEditable: true},
       ...prev,
     ]);
     trackEvent('knitting_log_added', {project_id: projectId});
@@ -455,6 +457,7 @@ export default function ProjectDetailScreen() {
         const isToday = d.getTime() === today.getTime();
         return {
           id: l.id,
+          key: l.id,
           content: l.content,
           created_at: l.created_at,
           isExisting: true,
@@ -1414,7 +1417,7 @@ export default function ProjectDetailScreen() {
                   index === Math.min(pendingLogs.length, MAX_LENGTH_LOG) - 1 &&
                   pendingLogs.length <= MAX_LENGTH_LOG;
                 return (
-                  <S.LogTimelineRow key={log.id}>
+                  <S.LogTimelineRow key={log.key}>
                     <S.LogTimelineDotCol>
                       <S.LogTimelineDot active={log.isEditable} />
                       {!isLast && <S.LogTimelineLine />}
@@ -1444,14 +1447,14 @@ export default function ProjectDetailScreen() {
                         )}
                       </S.LogTimelineDateRow>
                       {log.isEditable && isMyProject ? (
-                        <S.LogInputWrapper isFocused={focusedLogId === log.id}>
+                        <S.LogInputWrapper isFocused={focusedLogId === log.key}>
                           <S.LogInput
                             placeholder="오늘 뜬 내용을 기록해보세요"
                             value={log.content}
                             onChangeText={text =>
                               updatePendingLog(log.id, text)
                             }
-                            onFocus={() => setFocusedLogId(log.id)}
+                            onFocus={() => setFocusedLogId(log.key)}
                             onBlur={() => setFocusedLogId(null)}
                             placeholderTextColor="#ccc"
                             multiline
