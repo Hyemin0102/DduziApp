@@ -1,5 +1,13 @@
 import React, {useState, useCallback, useEffect} from 'react';
-import {FlatList, ScrollView, ActivityIndicator, RefreshControl, Alert, Modal} from 'react-native';
+import {
+  FlatList,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+  Modal,
+  DeviceEventEmitter,
+} from 'react-native';
 import {useFocusEffect, useRoute} from '@react-navigation/native';
 import * as S from './ProjectsScreen.styles';
 import {supabase} from '@/lib/supabase';
@@ -51,6 +59,13 @@ export default function ProjectsScreen() {
       fetchAll();
     }, []),
   );
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('projectCreated', () => {
+      fetchAll();
+    });
+    return () => subscription.remove();
+  }, []);
 
   const fetchAll = async () => {
     try {

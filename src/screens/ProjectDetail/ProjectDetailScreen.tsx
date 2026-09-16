@@ -17,6 +17,7 @@ import {
   Linking,
   Switch,
   Modal,
+  DeviceEventEmitter,
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -48,10 +49,15 @@ import {
   uploadPdf,
   getPdfNameFromUrl,
   removePdf,
+  copyPdf,
   MAX_PDF_SIZE_BYTES,
 } from '@/lib/uploadPdf';
 import {thumbnailUrl as toThumbnailUrl} from '@/lib/imageTransform';
-import {uploadImage, removeProjectThumbnail} from '@/lib/uploadImage';
+import {
+  uploadImage,
+  removeProjectThumbnail,
+  deletePostImageFiles,
+} from '@/lib/uploadImage';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import {trackEvent} from '@/lib/mixpanel';
@@ -82,6 +88,23 @@ interface PendingLog {
   created_at?: string;
   isExisting: boolean;
   isEditable: boolean;
+}
+
+// 제목 입력창의 maxLength(1131행)와 동일한 값 — 복사본 제목도 이 길이를 넘지 않게 함
+const MAX_TITLE_LENGTH = 50;
+
+// 복사를 반복해도 "_복사_복사_복사..."처럼 계속 늘어나지 않도록,
+// 이미 "_복사" 패턴으로 끝나면 숫자만 올리고 아니면 처음으로 "_복사"를 붙임.
+// 붙인 결과가 MAX_TITLE_LENGTH를 넘으면 원본 부분을 잘라서 항상 제한 이내로 맞춤
+function getCopyTitle(title: string): string {
+  const match = title.match(/^(.*)_복사(\d*)$/);
+  const base = match ? match[1] : title;
+  const suffix = match ? `_복사${match[2] ? parseInt(match[2], 10) + 1 : 2}` : '_복사';
+  const truncatedBase =
+    base.length + suffix.length > MAX_TITLE_LENGTH
+      ? base.slice(0, MAX_TITLE_LENGTH - suffix.length)
+      : base;
+  return `${truncatedBase}${suffix}`;
 }
 
 function checkDirty(
@@ -182,6 +205,7 @@ export default function ProjectDetailScreen() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingPdf, setPendingPdf] = useState<{
     uri: string;
@@ -731,6 +755,54 @@ export default function ProjectDetailScreen() {
 
   handleSaveRef.current = handleSave;
 
+  // ── 복사 (뜨개 정보만 유지, 나머지는 초기화된 새 프로젝트 생성)
+  const handleCopyProject = async () => {
+    if (!project || !currentUserId) return;
+    setShowActionSheet(false);
+    setIsCopying(true);
+    try {
+      let copiedPatternUrl: string | null = null;
+      if (project.pattern_url) {
+        copiedPatternUrl = await copyPdf(project.pattern_url, currentUserId);
+        if (!copiedPatternUrl) throw new Error('패턴 PDF 복사에 실패했습니다.');
+      }
+
+      const {data: newProject, error} = await supabase
+        .from('projects')
+        .insert({
+          user_id: currentUserId,
+          title: getCopyTitle(project.title),
+          yarn_info: project.yarn_info ?? null,
+          needle_info: project.needle_info ?? null,
+          pattern_info: project.pattern_info ?? null,
+          pattern_url: copiedPatternUrl,
+          pattern_pdf_name: copiedPatternUrl ? project.pattern_pdf_name ?? null : null,
+          content: null,
+          thumbnail_url: null,
+          is_completed: false,
+          visibility: 'private',
+        })
+        .select('id, title')
+        .single();
+      if (error) throw error;
+
+      trackEvent('project_copied', {
+        project_id: projectId,
+        new_project_id: newProject.id,
+      });
+      DeviceEventEmitter.emit('projectCreated', {projectId: newProject.id});
+      navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+        projectId: newProject.id,
+        projectTitle: newProject.title,
+      });
+    } catch (error) {
+      console.error('❌ 프로젝트 복사 실패:', error);
+      Alert.alert('오류', '프로젝트 복사에 실패했습니다.');
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
   // ── 삭제
   const handleDeleteProject = () => {
     setShowActionSheet(false);
@@ -745,7 +817,16 @@ export default function ProjectDetailScreen() {
           onPress: async () => {
             try {
               setIsDeleting(true);
+              const postImageUrls = posts.flatMap(p =>
+                p.post_images.map(img => img.image_url),
+              );
               const postIds = posts.map(p => p.id);
+
+              // 게시물 이미지의 Storage DELETE 정책이 posts.user_id 서브쿼리로
+              // 소유권을 확인하므로, posts 행을 지우기 전에 먼저 정리해야 함
+              // (다른 프로젝트가 이 파일을 재사용할 순 없는 구조라 재사용 체크는 불필요)
+              await deletePostImageFiles(postImageUrls);
+
               if (postIds.length > 0) {
                 await supabase
                   .from('post_images')
@@ -762,6 +843,13 @@ export default function ProjectDetailScreen() {
                 .delete()
                 .eq('id', projectId!);
               if (error) throw error;
+
+              // 대표이미지/PDF는 project 행 삭제 후 정리 — project-thumbnails/pattern-pdfs
+              // 정책은 auth.uid() 직접 비교라 posts와 무관하지만, 대표이미지가 자기 게시물
+              // 이미지를 재사용 중이었다면 위에서 이미 postImageUrls에 포함되어 지워졌으므로 무해함
+              if (project?.thumbnail_url) removeProjectThumbnail(project.thumbnail_url);
+              if (project?.pattern_url) removePdf(project.pattern_url);
+
               Alert.alert('삭제 완료', '프로젝트가 삭제되었습니다.', [
                 {text: '확인', onPress: () => navigation.goBack()},
               ]);
@@ -1006,7 +1094,7 @@ export default function ProjectDetailScreen() {
 
   return (
     <S.Container>
-      {isSubmitting && (
+      {(isSubmitting || isCopying) && (
         <S.LoadingOverlay>
           <ActivityIndicator size="large" color="#ffffff" />
         </S.LoadingOverlay>
@@ -1615,8 +1703,11 @@ export default function ProjectDetailScreen() {
           onClose={() => setShowActionSheet(false)}
           actions={[
             {
+              label: isCopying ? '복사 중...' : '복사하기',
+              onPress: handleCopyProject,
+            },
+            {
               label: isDeleting ? '삭제 중...' : '삭제하기',
-              icon: '🗑️',
               onPress: handleDeleteProject,
               isDestructive: true,
             },

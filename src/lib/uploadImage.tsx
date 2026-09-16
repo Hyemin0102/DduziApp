@@ -107,6 +107,28 @@ export const removeProjectThumbnail = async (url: string): Promise<void> => {
 };
 
 /**
+ * 프로젝트 전체 삭제 시 게시물 이미지를 무조건 정리 (재사용 여부 체크 없음)
+ * — 프로젝트 자신의 게시물 이미지는 다른 프로젝트가 재사용할 수 없는 구조라
+ *   deletePostImageFileIfUnused의 조회가 불필요하고, posts 행이 이미 지워진 뒤
+ *   호출되면 그 조회 자체가 무의미해짐. 여러 경로를 한 번의 storage 호출로 정리.
+ */
+export const deletePostImageFiles = async (urls: string[]): Promise<void> => {
+  const paths = urls
+    .map(url => {
+      const idx = url.indexOf(PUBLIC_URL_PREFIX);
+      return idx >= 0 ? url.slice(idx + PUBLIC_URL_PREFIX.length) : null;
+    })
+    .filter((p): p is string => p !== null);
+  if (paths.length === 0) return;
+
+  try {
+    await supabase.storage.from(POST_IMAGES_BUCKET).remove(paths);
+  } catch (error) {
+    console.error('게시물 이미지 파일 일괄 삭제 실패:', error);
+  }
+};
+
+/**
  * 게시물 이미지 삭제(교체/제거)로 더 이상 post_images에서 참조되지 않는 파일을
  * Storage에서 정리. 단, 어떤 프로젝트의 thumbnail_url로 재사용 중이면 건드리지 않음
  */

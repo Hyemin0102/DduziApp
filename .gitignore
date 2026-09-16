@@ -2,6 +2,9 @@
 #
 .DS_Store
 
+# Storage 고아 파일 스캔 결과 (find-orphaned-storage-files.js 출력)
+orphaned-storage-files.json
+
 # Xcode
 #
 build/

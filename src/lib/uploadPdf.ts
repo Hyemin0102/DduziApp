@@ -49,6 +49,38 @@ export const getSignedPdfUrl = async (
 };
 
 /**
+ * 기존 PDF를 다른 프로젝트용 경로로 복사 (프로젝트 복사 기능에서 사용)
+ * — 참조만 공유하면 원본 쪽에서 교체/삭제 시 removePdf로 같이 지워지므로 실제 파일을 복제해야 함
+ * @param pathOrUrl - 원본 storage path (또는 과거 저장된 풀 URL)
+ * @param folderPath - 복사본을 저장할 폴더 경로
+ * @returns 복사된 PDF의 storage path
+ */
+export const copyPdf = async (
+  pathOrUrl: string,
+  folderPath: string,
+): Promise<string | null> => {
+  try {
+    const fromPath = toStoragePath(pathOrUrl);
+    const ext = fromPath.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? '.pdf';
+    const toPath = `${folderPath}/${Date.now()}${ext}`;
+
+    const {error} = await supabase.storage
+      .from(PATTERN_PDFS_BUCKET)
+      .copy(fromPath, toPath);
+
+    if (error) {
+      console.error('PDF 복사 에러:', error);
+      return null;
+    }
+
+    return toPath;
+  } catch (error) {
+    console.error('PDF 복사 실패:', error);
+    return null;
+  }
+};
+
+/**
  * 기존 PDF 삭제 (교체/제거 시 이전 파일이 버킷에 남지 않도록 정리)
  * @param pathOrUrl - 삭제할 storage path (또는 과거 저장된 풀 URL)
  */

@@ -21,6 +21,7 @@ import {
   ROOT_ROUTES,
   TAB_ROUTES,
 } from '@/constants/navigation.constant';
+import {deletePostImageFileIfUnused} from '@/lib/uploadImage';
 import Icon from 'react-native-vector-icons/Feather';
 import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save.svg';
@@ -253,6 +254,10 @@ export default function PostDetailScreen() {
         onPress: async () => {
           try {
             setIsDeleting(true);
+            const imageUrls = (post?.images ?? []).map(img => img.image_url);
+            // Storage DELETE 정책이 posts.user_id 서브쿼리로 소유권을 확인하므로,
+            // posts 행을 지우기 전에 먼저 스토리지 파일을 정리해야 함
+            await Promise.all(imageUrls.map(url => deletePostImageFileIfUnused(url)));
             await supabase.from('post_images').delete().eq('post_id', postId);
             await supabase.from('posts').delete().eq('id', postId);
             DeviceEventEmitter.emit('postDeleted', {postId});
@@ -458,8 +463,8 @@ export default function PostDetailScreen() {
         visible={showActionSheet}
         onClose={() => setShowActionSheet(false)}
         actions={[
-          {label: '수정하기', icon: '✏️', onPress: handleEdit},
-          {label: isDeleting ? '삭제 중...' : '삭제하기', icon: '🗑️', onPress: handleDelete, isDestructive: true},
+          {label: '수정하기',  onPress: handleEdit},
+          {label: isDeleting ? '삭제 중...' : '삭제하기', onPress: handleDelete, isDestructive: true},
         ]}
       />
 
