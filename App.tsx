@@ -16,7 +16,7 @@ import Navigator from './src/screens/Navigator/Navigator';
 import AuthProvider from './src/contexts/AuthContext';
 import {ZoomOverlayProvider} from './src/components/common/ZoomOverlay';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import {trackAppOpened} from './src/lib/mixpanel';
+import {trackAppOpened, trackEvent} from './src/lib/mixpanel';
 import {initAds} from './src/lib/adsInit';
 import UpdateModal from './src/components/modal/UpdateModal';
 import {
@@ -72,12 +72,14 @@ function App(): React.JSX.Element {
         forced: isBelowMin,
         releaseNotes: config.release_notes,
       });
+      trackEvent('update_modal_shown', {forced: isBelowMin});
     };
 
     checkForUpdate();
   }, []);
 
   const handleUpdatePress = async () => {
+    trackEvent('update_modal_update_clicked', {forced: updateState?.forced});
     if (Platform.OS === 'ios') {
       const appStoreId = await fetchIosAppStoreId();
       if (appStoreId) Linking.openURL(STORE_URLS.ios(appStoreId));
@@ -89,6 +91,7 @@ function App(): React.JSX.Element {
   };
 
   const handleUpdateModalClose = () => {
+    trackEvent('update_modal_dismissed', {forced: updateState?.forced});
     setUpdateState(prev => (prev ? {...prev, visible: false} : prev));
   };
 

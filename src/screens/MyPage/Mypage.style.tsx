@@ -61,19 +61,6 @@ export const MenuValue = styled.Text`
   color: #999;
 `;
 
-export const HintText = styled.Text`
-  font-size: 12px;
-  color: #999;
-`;
-
-export const FeedbackHintRow = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 10px 16px 4px;
-`;
-
 export const LogoutMenuItem = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: space-between;

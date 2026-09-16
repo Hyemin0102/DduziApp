@@ -52,4 +52,5 @@ export const MY_PAGE_ROUTES = {
   PRIVACY_POLICY: 'PrivacyPolicy',
   NOTICE_LIST: 'NoticeList',
   NOTICE_DETAIL: 'NoticeDetail',
+  FEEDBACK: 'Feedback',
 } as const;

@@ -34,6 +34,7 @@ const Settings = () => {
 
   const handleUpdatePress = async () => {
     if (versionStatus !== 'update') return;
+    trackEvent('settings_update_clicked');
     if (Platform.OS === 'ios') {
       const appStoreId = await fetchIosAppStoreId();
       if (appStoreId) Linking.openURL(STORE_URLS.ios(appStoreId));

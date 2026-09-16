@@ -137,6 +137,7 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.PRIVACY_POLICY]: undefined;
   [MY_PAGE_ROUTES.NOTICE_LIST]: undefined;
   [MY_PAGE_ROUTES.NOTICE_DETAIL]: {noticeId: string; title?: string};
+  [MY_PAGE_ROUTES.FEEDBACK]: undefined;
 };
 
 // ============= Navigation Props =============

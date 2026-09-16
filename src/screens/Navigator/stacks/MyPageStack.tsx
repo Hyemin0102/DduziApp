@@ -16,6 +16,7 @@ import TermsOfServiceScreen from '@/screens/TermsOfService/TermsOfServiceScreen'
 import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
 import NoticeListScreen from '@/screens/Notice/NoticeListScreen';
 import NoticeDetailScreen from '@/screens/Notice/NoticeDetailScreen';
+import FeedbackScreen from '@/screens/Feedback/FeedbackScreen';
 import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
@@ -73,6 +74,11 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.NOTICE_DETAIL}
         component={NoticeDetailScreen}
         options={{title: '공지사항'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.FEEDBACK}
+        component={FeedbackScreen}
+        options={{title: '피드백 보내기'}}
       />
     </Stack.Navigator>
   );

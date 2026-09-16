@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Linking, Platform} from 'react-native';
-import Clipboard from '@react-native-clipboard/clipboard';
 import Icon from 'react-native-vector-icons/Feather';
 import {useAuth} from '../../contexts/AuthContext';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -11,7 +10,6 @@ import {trackEvent} from '@/lib/mixpanel';
 
 const IOS_BUNDLE_ID = 'com.dduzi.app';
 const ANDROID_PACKAGE_ID = 'com.dduziapp';
-const FEEDBACK_EMAIL = 'hyeminjo0102@gmail.com';
 
 const Mypage = () => {
   const {user, logout} = useAuth();
@@ -43,9 +41,7 @@ const Mypage = () => {
 
   const handleContact = () => {
     trackEvent('feedback_button_tapped');
-    Linking.openURL(
-      `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('[뜨지] 피드백')}`,
-    );
+    navigation.navigate(MY_PAGE_ROUTES.FEEDBACK);
   };
 
   const handleAppReview = () => {
@@ -62,11 +58,6 @@ const Mypage = () => {
         ),
       );
     }
-  };
-
-  const handleCopyEmail = () => {
-    Clipboard.setString(FEEDBACK_EMAIL);
-    Alert.alert('복사 완료', '이메일 주소가 복사되었습니다.');
   };
 
   const handleLogout = async () => {
@@ -144,10 +135,6 @@ const Mypage = () => {
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
         </S.MenuSection>
-        <S.FeedbackHintRow onPress={handleCopyEmail}>
-          <S.HintText>메일 연결이 안 될 경우 {FEEDBACK_EMAIL} 로 보내주세요</S.HintText>
-          <Icon name="copy" size={12} color="#999" />
-        </S.FeedbackHintRow>
 
         <S.MenuSection>
           <S.MenuItem onPress={handleSettings}>
