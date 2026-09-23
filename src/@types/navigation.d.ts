@@ -12,6 +12,7 @@ import {
   MY_PAGE_ROUTES,
   AUTH_ROUTES,
   PROJECTS_ROUTES,
+  EXPLORE_ROUTES,
 } from '../constants/navigation.constant';
 
 // ============= Stack ParamLists =============
@@ -35,6 +36,7 @@ export type AuthStackParamList = {
 // Tab Navigator
 export type TabParamList = {
   [TAB_ROUTES.HOME_TAB]: NavigatorScreenParams<HomeStackParamList>;
+  [TAB_ROUTES.EXPLORE_TAB]: NavigatorScreenParams<ExploreStackParamList>;
   [TAB_ROUTES.POST_TAB]: NavigatorScreenParams<PostsStackParamList>;
   [TAB_ROUTES.PROJECTS_TAB]: NavigatorScreenParams<ProjectsStackParamList>;
   [TAB_ROUTES.MY_PAGE_TAB]: NavigatorScreenParams<MyPageStackParamList>;
@@ -78,6 +80,7 @@ export type HomeStackParamList = {
   [POST_ROUTES.POST_DETAIL]: {postId: string};
   [POST_ROUTES.POSTS_MAIN]: {userId?: string} | undefined;
   [HOME_ROUTES.SEARCH]: undefined;
+  [HOME_ROUTES.NOTIFICATIONS]: undefined;
   [MY_PAGE_ROUTES.PROFILE_EDIT]: undefined;
   [PROJECTS_ROUTES.PROJECT_DETAIL]: {
     projectId?: string;
@@ -99,6 +102,11 @@ export type HomeStackParamList = {
     }[];
   } | undefined;
   [PROJECTS_ROUTES.PDF_VIEWER]: {pdfUrl?: string; pdfPath?: string; title?: string};
+};
+
+// Explore Stack
+export type ExploreStackParamList = {
+  [EXPLORE_ROUTES.EXPLORE_MAIN]: undefined;
 };
 
 // Posts Stack

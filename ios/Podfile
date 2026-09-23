@@ -8,6 +8,10 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# 프로젝트가 static linkage를 쓰는데 RNFirebase는 기본적으로 SPM으로 Firebase SDK를
+# 가져와서 static linkage랑 충돌함 (중복 심볼 에러). SPM 대신 CocoaPods로 받도록 전환
+$RNFirebaseDisableSPM = true
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
@@ -22,6 +26,13 @@ target 'dduziApp' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+
+  # Firebase의 Swift pod(FirebaseCoreInternal)가 GoogleUtilities에 의존하는데
+  # GoogleUtilities가 모듈을 정의하지 않아서 static 링킹 시 필요.
+  # use_modular_headers!를 전역으로 걸면 React Native 자체 pod(Hermes 등)까지
+  # 영향을 받아 "Could not build module 'UIKit'" 같은 시스템 프레임워크 빌드
+  # 에러가 cascade로 발생하므로, 필요한 pod에만 좁게 적용
+  pod 'GoogleUtilities', :modular_headers => true
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202

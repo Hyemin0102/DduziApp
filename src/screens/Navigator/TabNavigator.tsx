@@ -1,5 +1,6 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeStack from './stacks/HomeStack';
+import ExploreStack from './stacks/ExploreStack';
 import MyPageStack from './stacks/MyPageStack';
 import PostsStack from './stacks/PostsStack';
 
@@ -152,6 +153,38 @@ const TabNavigator = () => {
               }
             },
           })}
+        />
+        <Tab.Screen
+          name="ExploreTab"
+          component={ExploreStack}
+          options={{
+            tabBarIcon: ({focused}) => (
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 4,
+                  width: '100%',
+                  flex: 1,
+                }}>
+                <Icon
+                  name="compass"
+                  size={24}
+                  color={focused ? '#000' : '#82879B'}
+                />
+                <Text
+                  style={{
+                    color: focused ? '#000' : '#82879B',
+                    fontWeight: focused ? 'bold' : 'normal',
+                    fontSize: 10,
+                    marginTop: 4,
+                    textAlign: 'center',
+                  }}>
+                  탐색
+                </Text>
+              </View>
+            ),
+          }}
         />
         <Tab.Screen
           name="PostTab"

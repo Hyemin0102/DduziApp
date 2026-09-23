@@ -5,6 +5,9 @@
 # Storage 고아 파일 스캔 결과 (find-orphaned-storage-files.js 출력)
 orphaned-storage-files.json
 
+# Supabase secrets 등록용 임시 env 파일 (Firebase 서비스 계정 키 등 비밀값 포함)
+supabase/.secrets.env
+
 # Xcode
 #
 build/

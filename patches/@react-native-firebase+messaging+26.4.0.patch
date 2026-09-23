@@ -1,0 +1,19 @@
+diff --git a/node_modules/@react-native-firebase/messaging/android/src/main/java/io/invertase/firebase/messaging/generated/jni/CMakeLists.txt b/node_modules/@react-native-firebase/messaging/android/src/main/java/io/invertase/firebase/messaging/generated/jni/CMakeLists.txt
+index 8ecb8a5..24cbf10 100644
+--- a/node_modules/@react-native-firebase/messaging/android/src/main/java/io/invertase/firebase/messaging/generated/jni/CMakeLists.txt
++++ b/node_modules/@react-native-firebase/messaging/android/src/main/java/io/invertase/firebase/messaging/generated/jni/CMakeLists.txt
+@@ -25,4 +25,13 @@ target_link_libraries(
+   reactnative
+ )
+ 
+-target_compile_reactnative_options(react_codegen_RNFBMessagingTurboModules PRIVATE)
++target_compile_options(react_codegen_RNFBMessagingTurboModules PRIVATE
++  -Wall
++  -Werror
++  -Wno-error=cpp
++  -fexceptions
++  -frtti
++  -std=c++20
++  -DLOG_TAG=\"ReactNative\"
++  -DFOLLY_NO_CONFIG=1
++)

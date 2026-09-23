@@ -1,9 +1,14 @@
 import React, {useState, useEffect} from 'react';
-import {Alert, ActivityIndicator, Linking, Platform, View} from 'react-native';
+import {Alert, ActivityIndicator, Linking, Platform, View, Switch} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
 import {trackEvent} from '@/lib/mixpanel';
+import {supabase} from '@/lib/supabase';
+import {
+  requestNotificationPermission,
+  registerDeviceToken,
+} from '@/lib/notifications';
 import {
   fetchAppVersionConfig,
   fetchIosAppStoreId,
@@ -16,8 +21,9 @@ const APP_VERSION = DeviceInfo.getVersion();
 const ANDROID_PACKAGE_ID = 'com.dduziapp';
 
 const Settings = () => {
-  const {provider} = useAuth();
+  const {user, provider, updateUserProfile} = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
 
   useEffect(() => {
@@ -31,6 +37,42 @@ const Settings = () => {
       );
     });
   }, []);
+
+  const handleToggleNotifications = async (value: boolean) => {
+    if (!user || isUpdatingNotifications) return;
+    setIsUpdatingNotifications(true);
+    try {
+      if (value) {
+        const granted = await requestNotificationPermission();
+        if (!granted) {
+          Alert.alert(
+            '알림 권한 필요',
+            '기기 설정에서 알림 권한을 허용해주세요.',
+            [
+              {text: '취소', style: 'cancel'},
+              {text: '설정으로 이동', onPress: () => Linking.openSettings()},
+            ],
+          );
+          return;
+        }
+        await registerDeviceToken(user.id);
+      }
+
+      const {error} = await supabase
+        .from('users')
+        .update({notifications_enabled: value})
+        .eq('id', user.id);
+      if (error) throw error;
+
+      updateUserProfile({notifications_enabled: value});
+      trackEvent('notifications_toggled', {enabled: value});
+    } catch (error) {
+      console.error('❌ 알림 설정 변경 실패:', error);
+      Alert.alert('오류', '알림 설정 변경에 실패했습니다.');
+    } finally {
+      setIsUpdatingNotifications(false);
+    }
+  };
 
   const handleUpdatePress = async () => {
     if (versionStatus !== 'update') return;
@@ -101,6 +143,19 @@ const Settings = () => {
   return (
     <S.Container>
       <S.ScrollView contentContainerStyle={{paddingVertical: 16, gap: 8}}>
+        <S.SectionLabel>알림</S.SectionLabel>
+        <S.MenuSection>
+          <S.MenuItem activeOpacity={1}>
+            <S.MenuText>알림 받기</S.MenuText>
+            <Switch
+              value={user?.notifications_enabled ?? true}
+              onValueChange={handleToggleNotifications}
+              disabled={isUpdatingNotifications}
+              style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+            />
+          </S.MenuItem>
+        </S.MenuSection>
+
 <S.SectionLabel>정보</S.SectionLabel>
         <S.MenuSection>
           <S.MenuItem

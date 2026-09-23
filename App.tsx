@@ -5,10 +5,12 @@
  * @format
  */
 
+// Firebase 네이티브 앱이 최대한 일찍 초기화/등록되도록 진입점에서 명시적으로 import
+import '@react-native-firebase/app';
 import React, {useEffect, useRef, useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {StatusBar, AppState, Platform, Linking} from 'react-native';
+import {StatusBar, AppState, Platform, Linking, DeviceEventEmitter} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
 import DeviceInfo from 'react-native-device-info';
@@ -19,6 +21,13 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import {trackAppOpened, trackEvent} from './src/lib/mixpanel';
 import {initAds} from './src/lib/adsInit';
 import UpdateModal from './src/components/modal/UpdateModal';
+import {
+  subscribeToNotificationOpenedApp,
+  getInitialNotificationData,
+  subscribeToForegroundMessage,
+} from './src/lib/notifications';
+import {navigateFromNotificationData} from './src/lib/navigationRef';
+import InAppNotificationBanner from './src/components/common/InAppNotificationBanner';
 import {
   compareVersions,
   fetchAppVersionConfig,
@@ -97,6 +106,29 @@ function App(): React.JSX.Element {
 
   const backgroundedAtRef = useRef<number | null>(null);
 
+  // 알림을 탭해서 앱을 열었을 때 관련 화면으로 이동 — 콜드 스타트(완전 종료 상태에서
+  // 탭으로 실행)와 백그라운드 상태에서 탭한 경우 둘 다 처리
+  useEffect(() => {
+    getInitialNotificationData().then(data => {
+      if (data) navigateFromNotificationData(data);
+    });
+
+    const unsubscribe = subscribeToNotificationOpenedApp(data => {
+      navigateFromNotificationData(data);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // 앱이 포그라운드일 때 도착한 알림은 OS가 자동으로 배너를 안 띄워주므로,
+  // 인앱 배너(InAppNotificationBanner)에 전달할 이벤트를 쏴줌
+  useEffect(() => {
+    const unsubscribe = subscribeToForegroundMessage(notification => {
+      DeviceEventEmitter.emit('inAppNotification', notification);
+    });
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     trackAppOpened();
 
@@ -128,6 +160,7 @@ function App(): React.JSX.Element {
             <Navigator />
           </ZoomOverlayProvider>
         </AuthProvider>
+        <InAppNotificationBanner />
       </SafeAreaProvider>
       </KeyboardProvider>
       {updateState && (

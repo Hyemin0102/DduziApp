@@ -55,6 +55,7 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const pageRef = useRef(0);
   const blockedIdsRef = useRef<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
@@ -159,6 +160,33 @@ const Home = () => {
     }, [posts.length]),
   );
 
+  // 알림 뱃지 — 안 읽은 알림 개수를 다시 조회
+  // (알림센터에서 읽음 처리하고 돌아올 때, 백그라운드에서 포그라운드로
+  // 돌아올 때, 포그라운드로 새 알림을 받을 때 모두 이걸 호출해서 갱신함)
+  const refreshUnreadCount = useCallback(async () => {
+    const {data: {user}} = await supabase.auth.getUser();
+    if (!user) return;
+    const {count} = await supabase
+      .from('notifications')
+      .select('id', {count: 'exact', head: true})
+      .eq('user_id', user.id)
+      .eq('is_read', false);
+    setUnreadNotificationCount(count ?? 0);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshUnreadCount();
+    }, [refreshUnreadCount]),
+  );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('inAppNotification', () => {
+      refreshUnreadCount();
+    });
+    return () => sub.remove();
+  }, [refreshUnreadCount]);
+
   // 홈 피드 스크롤 깊이 트래킹 — 화면에 보인 게시물 중 가장 마지막 인덱스를
   // 계속 갱신해두고, 화면을 벗어날 때 한 번만 요약 이벤트로 남김
   const onViewableItemsChanged = useRef(
@@ -201,10 +229,11 @@ const Home = () => {
         flushScrollDepth();
       } else if (nextState === 'active') {
         maxViewedIndexRef.current = -1;
+        refreshUnreadCount();
       }
     });
     return () => subscription.remove();
-  }, [flushScrollDepth]);
+  }, [flushScrollDepth, refreshUnreadCount]);
 
   useEffect(() => {
     const homeTabSub = DeviceEventEmitter.addListener('homeTabRepress', () => {
@@ -254,14 +283,21 @@ const Home = () => {
             resizeMode="contain"
           />
         </HS.LogoRow>
-        <HS.SearchButton
-          onPress={() => navigation.navigate(HOME_ROUTES.SEARCH)}>
-          <HS.SearchBubble>
-            <HS.SearchBubbleText>다들 뭐 뜨지?</HS.SearchBubbleText>
-            <HS.SearchBubbleTail />
-          </HS.SearchBubble>
-          <Icon name="search" size={24} color="#333" />
-        </HS.SearchButton>
+        <HS.RightActions>
+          <HS.SearchButton
+            onPress={() => navigation.navigate(HOME_ROUTES.SEARCH)}>
+            <HS.SearchBubble>
+              <HS.SearchBubbleText>다들 뭐 뜨지?</HS.SearchBubbleText>
+              <HS.SearchBubbleTail />
+            </HS.SearchBubble>
+            <Icon name="search" size={20} color="#333" />
+          </HS.SearchButton>
+          <HS.NotificationButton
+            onPress={() => navigation.navigate(HOME_ROUTES.NOTIFICATIONS)}>
+            <Icon name="bell" size={20} color="#333" />
+            {unreadNotificationCount > 0 && <HS.NotificationBadge />}
+          </HS.NotificationButton>
+        </HS.RightActions>
       </HS.HeaderContainer>
       <S.Container>
         {loading ? (

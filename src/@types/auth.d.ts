@@ -24,6 +24,8 @@ export interface UserProfile {
   terms_agreed_at?: string | null;
   // 프로필 설정 완료 시각 (계정 기준, null이면 미완료) — DB users.profile_completed_at과 매핑
   profile_completed_at?: string | null;
+  // 알림 수신 여부 — DB users.notifications_enabled와 매핑
+  notifications_enabled?: boolean;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | GoogleUserProfile | AppleUserProfile;

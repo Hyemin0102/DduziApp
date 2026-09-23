@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "784636039964",
+    "project_id": "dduzi-b5a5b",
+    "storage_bucket": "dduzi-b5a5b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:784636039964:android:05042e3ba7f5f102a1e0d9",
+        "android_client_info": {
+          "package_name": "com.dduziapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBGtzYhySjQJKIQA2ygdDe1K9f8s5Q4fg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -15,9 +15,15 @@ export const AUTH_ROUTES = {
 // ============= Tab Routes (탭 네비게이터) =============
 export const TAB_ROUTES = {
   HOME_TAB: 'HomeTab',
+  EXPLORE_TAB: 'ExploreTab',
   POST_TAB: 'PostTab',
   PROJECTS_TAB: 'ProjectsTab',
   MY_PAGE_TAB: 'MyPageTab',
+} as const;
+
+// ============= Explore Stack Routes =============
+export const EXPLORE_ROUTES = {
+  EXPLORE_MAIN: 'ExploreMain',
 } as const;
 
 // ============= Projects Stack Routes =============
@@ -33,6 +39,7 @@ export const PROJECTS_ROUTES = {
 export const HOME_ROUTES = {
   HOME_MAIN: 'HomeMain',
   SEARCH: 'Search',
+  NOTIFICATIONS: 'Notifications',
 } as const;
 
 // ============= Posts Stack Routes =============

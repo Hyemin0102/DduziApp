@@ -387,7 +387,7 @@ const Search = () => {
               <S.TrendingProjects>
                 <S.TrendingSection style={{paddingBottom: 4}}>
                   <S.TrendingTitle style={{marginBottom: 8}}>
-                    뜨개함에 많이 저장됐어요
+                    최근 뜨개함에 저장됐어요
                   </S.TrendingTitle>
                 </S.TrendingSection>
                 {mostSavedProjects.map(renderSavedProjectCard)}

@@ -21,10 +21,31 @@ export const LogoRow = styled.View`
   height: auto;
 `;
 
+export const RightActions = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+`;
+
 export const SearchButton = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   gap: 10px;
+`;
+
+export const NotificationButton = styled.TouchableOpacity`
+  position: relative;
+  padding: 4px;
+`;
+
+export const NotificationBadge = styled.View`
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  min-width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: #ff3b30;
 `;
 
 export const SearchBubble = styled.View`

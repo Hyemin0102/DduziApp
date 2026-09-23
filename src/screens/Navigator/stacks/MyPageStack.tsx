@@ -29,6 +29,7 @@ const MyPageStack = () => {
             title={options.title as string}
             titleDirection="left"
             showBack={navigation.canGoBack()}
+            onBack={() => navigation.goBack()}
             right={options.headerRight?.({canGoBack: false})}
           />
         ),

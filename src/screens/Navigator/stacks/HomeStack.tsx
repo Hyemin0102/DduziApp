@@ -13,6 +13,7 @@ import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjec
 import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import AppHeader from '@/components/Header/AppHeader';
 import PostsScreen from '@/screens/Posts/PostsScreen';
+import NotificationListScreen from '@/screens/Notifications/NotificationListScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -25,6 +26,7 @@ const HomeStack = () => {
             title={options.title as string}
             titleDirection="left"
             showBack={navigation.canGoBack()}
+            onBack={() => navigation.goBack()}
             right={options.headerRight?.({canGoBack: false})}
           />
         ),
@@ -55,6 +57,11 @@ const HomeStack = () => {
           title: '',
           headerShown: false,
         }}
+      />
+      <Stack.Screen
+        name={HOME_ROUTES.NOTIFICATIONS}
+        component={NotificationListScreen}
+        options={{title: '알림'}}
       />
       <Stack.Screen
         name={PROJECTS_ROUTES.PROJECT_DETAIL}

@@ -5,6 +5,11 @@ import {supabase} from '../lib/supabase';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {identifyUser, resetUser, trackEvent} from '../lib/mixpanel';
+import {
+  requestNotificationPermission,
+  registerDeviceToken,
+  subscribeToTokenRefresh,
+} from '../lib/notifications';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -59,6 +64,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       provider: provider,
       terms_agreed_at: dbUser?.terms_agreed_at ?? null,
       profile_completed_at: dbUser?.profile_completed_at ?? null,
+      notifications_enabled: dbUser?.notifications_enabled ?? true,
       rawProfile: rawProfile as any,
     };
   };
@@ -91,6 +97,28 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  // 로그인 상태가 되면(신규 로그인이든 앱 재시작 시 세션 복원이든) 알림이 켜져있는
+  // 계정에 한해 권한 요청 + 디바이스 토큰 등록을 자동으로 시도
+  useEffect(() => {
+    if (!user?.id || user.notifications_enabled === false) return;
+    let unsubscribeTokenRefresh: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const granted = await requestNotificationPermission();
+        if (!granted) return;
+        await registerDeviceToken(user.id);
+        unsubscribeTokenRefresh = subscribeToTokenRefresh(user.id);
+      } catch (error) {
+        console.error('❌ 알림 권한 요청/토큰 등록 실패:', error);
+      }
+    })();
+
+    return () => {
+      unsubscribeTokenRefresh?.();
+    };
+  }, [user?.id]);
 
   const completeOnboarding = async () => {
     await AsyncStorage.setItem('onboarding_completed', 'true');

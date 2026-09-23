@@ -11,6 +11,10 @@ import {useRef} from 'react';
 import {RootStackParamList} from '../../@types/navigation';
 import {ROOT_ROUTES} from '../../constants/navigation.constant';
 import {trackScreenView} from '../../lib/mixpanel';
+import {
+  navigationRef,
+  flushPendingNotificationNavigation,
+} from '../../lib/navigationRef';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -18,7 +22,6 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Navigator = () => {
   const {isLoggedIn, needsProfileSetup, needsTermsAgreement, isLoading} =
     useAuth();
-  const navigationRef = useRef<any>(null);
   const currentScreenNameRef = useRef<string | undefined>(undefined);
 
   // 초기 인증 상태 확인이 끝나기 전에는 온보딩/홈 분기를 그리지 않음 —
@@ -41,8 +44,9 @@ const Navigator = () => {
   return (
     <NavigationContainer
       ref={navigationRef}
+      onReady={flushPendingNotificationNavigation}
       onStateChange={() => {
-        const currentRoute = navigationRef.current?.getCurrentRoute();
+        const currentRoute = navigationRef.getCurrentRoute();
         if (currentRoute?.name && currentRoute.name !== currentScreenNameRef.current) {
           currentScreenNameRef.current = currentRoute.name;
           trackScreenView(currentRoute.name);
