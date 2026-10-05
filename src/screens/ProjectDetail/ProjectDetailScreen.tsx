@@ -40,6 +40,7 @@ import {
 } from '@/constants/navigation.constant';
 import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
+import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import CalendarModal from '@/components/modal/CalendarModal';
 import * as S from './ProjectDetailScreen.styles';
@@ -121,6 +122,8 @@ function checkDirty(
     original.patternUrl !== current.patternUrl ||
     original.formIsCompleted !== current.formIsCompleted ||
     original.formVisibility !== current.formVisibility ||
+    original.formLikesEnabled !== current.formLikesEnabled ||
+    original.formCommentsEnabled !== current.formCommentsEnabled ||
     original.thumbnailUrl !== current.thumbnailUrl ||
     original.startedAt !== current.startedAt ||
     original.completedAt !== current.completedAt ||
@@ -137,6 +140,8 @@ interface OriginalValues {
   patternUrl: string;
   formIsCompleted: boolean;
   formVisibility: 'public' | 'private';
+  formLikesEnabled: boolean;
+  formCommentsEnabled: boolean;
   thumbnailUrl: string;
   startedAt: string;
   completedAt: string;
@@ -151,6 +156,8 @@ interface CurrentForm {
   patternUrl: string;
   formIsCompleted: boolean;
   formVisibility: 'public' | 'private';
+  formLikesEnabled: boolean;
+  formCommentsEnabled: boolean;
   thumbnailUrl: string;
   startedAt: string;
   completedAt: string;
@@ -233,6 +240,8 @@ export default function ProjectDetailScreen() {
   const [formVisibility, setFormVisibility] = useState<'public' | 'private'>(
     'private',
   );
+  const [formLikesEnabled, setFormLikesEnabled] = useState(true);
+  const [formCommentsEnabled, setFormCommentsEnabled] = useState(true);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [startedAt, setStartedAt] = useState('');
   
@@ -282,6 +291,8 @@ export default function ProjectDetailScreen() {
         patternUrl,
         formIsCompleted,
         formVisibility,
+        formLikesEnabled,
+        formCommentsEnabled,
         thumbnailUrl,
         startedAt,
         completedAt,
@@ -299,6 +310,8 @@ export default function ProjectDetailScreen() {
       patternUrl,
       formIsCompleted,
       formVisibility,
+      formLikesEnabled,
+      formCommentsEnabled,
       thumbnailUrl,
       startedAt,
       completedAt,
@@ -323,6 +336,8 @@ export default function ProjectDetailScreen() {
         patternUrl: setPatternUrl,
         formIsCompleted: setFormIsCompleted,
         formVisibility: setFormVisibility,
+        formLikesEnabled: setFormLikesEnabled,
+        formCommentsEnabled: setFormCommentsEnabled,
         thumbnailUrl: setThumbnailUrl,
         startedAt: setStartedAt,
         completedAt: setCompletedAt,
@@ -444,6 +459,8 @@ export default function ProjectDetailScreen() {
       patternUrl: p.pattern_url || '',
       formIsCompleted: p.is_completed || false,
       formVisibility: p.visibility || 'private',
+      formLikesEnabled: p.likes_enabled ?? true,
+      formCommentsEnabled: p.comments_enabled ?? true,
       thumbnailUrl: p.thumbnail_url || '',
       startedAt: p.started_at || '',
       completedAt: p.completed_at || '',
@@ -457,6 +474,8 @@ export default function ProjectDetailScreen() {
     setPatternInfo(values.patternInfo);
     setPatternUrl(values.patternUrl);
     setFormIsCompleted(values.formIsCompleted);
+    setFormLikesEnabled(values.formLikesEnabled);
+    setFormCommentsEnabled(values.formCommentsEnabled);
     setFormVisibility(values.formVisibility);
     setThumbnailUrl(values.thumbnailUrl);
     setStartedAt(values.startedAt);
@@ -506,6 +525,38 @@ export default function ProjectDetailScreen() {
   }, []);
 
   // ── fetch
+  // 게시물 목록의 좋아요/댓글 카운트+좋아요 여부를 배치 조회해서 머지
+  // (게시물당 쿼리 날리면 N+1이라 post_id in (...)으로 한 번씩만, Home.tsx와 동일 패턴)
+  const attachLikesAndComments = async (posts: SimplePost[]): Promise<SimplePost[]> => {
+    if (posts.length === 0) return posts;
+    const postIds = posts.map(p => p.id);
+    const {data: {user}} = await supabase.auth.getUser();
+
+    const [{data: likesData}, {data: commentsData}] = await Promise.all([
+      supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
+      supabase.from('comments').select('post_id').in('post_id', postIds),
+    ]);
+
+    const likesCountMap: Record<string, number> = {};
+    const likedPostIds = new Set<string>();
+    (likesData || []).forEach((l: any) => {
+      likesCountMap[l.post_id] = (likesCountMap[l.post_id] || 0) + 1;
+      if (user && l.user_id === user.id) likedPostIds.add(l.post_id);
+    });
+
+    const commentsCountMap: Record<string, number> = {};
+    (commentsData || []).forEach((c: any) => {
+      commentsCountMap[c.post_id] = (commentsCountMap[c.post_id] || 0) + 1;
+    });
+
+    return posts.map(p => ({
+      ...p,
+      likes_count: likesCountMap[p.id] || 0,
+      is_liked: likedPostIds.has(p.id),
+      comments_count: commentsCountMap[p.id] || 0,
+    }));
+  };
+
   const fetchData = useCallback(async () => {
     if (!hasFetchedRef.current) setLoading(true); // 최초만
     try {
@@ -514,6 +565,7 @@ export default function ProjectDetailScreen() {
         .select(
           `id, user_id, title, content, yarn_info, needle_info,
            pattern_info, pattern_url, pattern_pdf_name, is_completed, visibility,
+           likes_enabled, comments_enabled,
            thumbnail_url, started_at, completed_at,
            created_at, updated_at,
            knitting_logs ( id, project_id, content, created_at )`,
@@ -546,7 +598,7 @@ export default function ProjectDetailScreen() {
         .eq('project_id', projectId)
         .order('created_at', {ascending: false});
       if (postsError) throw postsError;
-      setPosts((postsData as SimplePost[]) || []);
+      setPosts(await attachLikesAndComments((postsData as SimplePost[]) || []));
       hasFetchedRef.current = true;
     } catch (error) {
       console.error('프로젝트 상세 조회 실패:', error);
@@ -639,6 +691,8 @@ export default function ProjectDetailScreen() {
             pattern_pdf_name: finalPatternPdfName.trim() || null,
             is_completed: formIsCompleted,
             visibility: formVisibility,
+            likes_enabled: formLikesEnabled,
+            comments_enabled: formCommentsEnabled,
             thumbnail_url: finalThumbnailUrl || null,
             started_at: finalStartedAt,
             completed_at: finalCompletedAt,
@@ -663,6 +717,8 @@ export default function ProjectDetailScreen() {
             pattern_pdf_name: finalPatternPdfName.trim() || null,
             is_completed: formIsCompleted,
             visibility: formVisibility,
+            likes_enabled: formLikesEnabled,
+            comments_enabled: formCommentsEnabled,
             thumbnail_url: finalThumbnailUrl || null,
             started_at: finalStartedAt,
             completed_at: finalCompletedAt,
@@ -747,6 +803,8 @@ export default function ProjectDetailScreen() {
     currentUserId,
     formIsCompleted,
     formVisibility,
+    formLikesEnabled,
+    formCommentsEnabled,
     isCreateMode,
     projectId,
     navigation,
@@ -1198,11 +1256,10 @@ export default function ProjectDetailScreen() {
           )} */}
         </S.PostArea>
 
-        {/* ══ 상태 설정 (내 프로젝트) ══════════════════════ */}
+        {/* ══ 뜨개 상태 – 세그먼트 컨트롤 + 날짜 (내 프로젝트) ══ */}
         {canEdit && (
           <S.MetaSection>
-            {/* 뜨개 상태 – 세그먼트 컨트롤 + 날짜 */}
-            <S.MetaRow style={{alignItems: 'flex-start', paddingBottom: 14}}>
+            <S.MetaRow style={{alignItems: 'flex-start', borderBottomWidth: 0}}>
               <S.MetaRowLeft>
                 <S.MetaRowTitle style={{paddingTop: 6}}>뜨개 상태</S.MetaRowTitle>
               </S.MetaRowLeft>
@@ -1251,21 +1308,6 @@ export default function ProjectDetailScreen() {
                 </View>
               </View>
             </S.MetaRow>
-
-            {/* 게시물 공개 여부 – 토글 스위치 */}
-            <S.MetaRow style={{borderBottomWidth: 0}}>
-              <S.MetaRowLeft>
-                <S.MetaRowTitle>게시물 공개</S.MetaRowTitle>
-                <S.MetaRowSub>이 프로젝트의 게시물 공개 여부</S.MetaRowSub>
-              </S.MetaRowLeft>
-              <Switch
-                value={formVisibility === 'public'}
-                onValueChange={v =>
-                  setField('formVisibility', v ? 'public' : 'private')
-                }
-                style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
-              />
-            </S.MetaRow>
           </S.MetaSection>
         )}
 
@@ -1276,12 +1318,22 @@ export default function ProjectDetailScreen() {
               <S.BadgeRow>
                 <S.StatusBadge variant={project.is_completed ? 'completed' : 'progress'}>
                   <S.StatusText variant={project.is_completed ? 'completed' : 'progress'}>
-                    {project.is_completed ? '✅ 완료' : '🧶 진행 중'}
+                    {project.is_completed ? '완료' : '진행 중'}
                   </S.StatusText>
                 </S.StatusBadge>
                 <S.StatusBadge variant={project.visibility === 'public' ? 'public' : 'private'}>
                   <S.StatusText variant={project.visibility === 'public' ? 'public' : 'private'}>
-                    {project.visibility === 'public' ? '🌐 공개' : '🔒 비공개'}
+                    {project.visibility === 'public' ? '공개' : '비공개'}
+                  </S.StatusText>
+                </S.StatusBadge>
+                <S.StatusBadge variant={project.likes_enabled ? 'on' : 'off'}>
+                  <S.StatusText variant={project.likes_enabled ? 'on' : 'off'}>
+                    {project.likes_enabled ? '좋아요 허용' : '좋아요 비허용'}
+                  </S.StatusText>
+                </S.StatusBadge>
+                <S.StatusBadge variant={project.comments_enabled ? 'on' : 'off'}>
+                  <S.StatusText variant={project.comments_enabled ? 'on' : 'off'}>
+                    {project.comments_enabled ? '댓글 허용' : '댓글 비허용'}
                   </S.StatusText>
                 </S.StatusBadge>
               </S.BadgeRow>
@@ -1468,6 +1520,52 @@ export default function ProjectDetailScreen() {
           )}
         </S.InfoSection>
 
+        {/* ══ 상태 설정 (내 프로젝트) ══════════════════════ */}
+        {canEdit && (
+          <S.MetaSection>
+            {/* 게시물 공개 여부 – 토글 스위치 */}
+            <S.MetaRow>
+              <S.MetaRowLeft>
+                <S.MetaRowTitle>게시물 공개</S.MetaRowTitle>
+                <S.MetaRowSub>이 프로젝트의 게시물 공개 여부</S.MetaRowSub>
+              </S.MetaRowLeft>
+              <Switch
+                value={formVisibility === 'public'}
+                onValueChange={v =>
+                  setField('formVisibility', v ? 'public' : 'private')
+                }
+                style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+              />
+            </S.MetaRow>
+
+            {/* 좋아요 on/off */}
+            <S.MetaRow>
+              <S.MetaRowLeft>
+                <S.MetaRowTitle>좋아요</S.MetaRowTitle>
+                <S.MetaRowSub>이 프로젝트의 게시물에 좋아요 허용</S.MetaRowSub>
+              </S.MetaRowLeft>
+              <Switch
+                value={formLikesEnabled}
+                onValueChange={v => setField('formLikesEnabled', v)}
+                style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+              />
+            </S.MetaRow>
+
+            {/* 댓글 on/off */}
+            <S.MetaRow style={{borderBottomWidth: 0}}>
+              <S.MetaRowLeft>
+                <S.MetaRowTitle>댓글</S.MetaRowTitle>
+                <S.MetaRowSub>이 프로젝트의 게시물에 댓글 허용</S.MetaRowSub>
+              </S.MetaRowLeft>
+              <Switch
+                value={formCommentsEnabled}
+                onValueChange={v => setField('formCommentsEnabled', v)}
+                style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+              />
+            </S.MetaRow>
+          </S.MetaSection>
+        )}
+        
         {/* ══ 뜨개 로그 ════════════════════════════════════ */}
         <S.Section>
           <S.PostHeaderRow>
@@ -1659,6 +1757,31 @@ export default function ProjectDetailScreen() {
                             },
                           )}
                         </S.PostDateText>
+                        {post.likes_count !== undefined && (
+                        <S.PostStatsRow>
+                          {project?.likes_enabled && (
+                            <S.PostStatItem>
+                              <FA5Icon
+                                name="heart"
+                                solid={post.is_liked}
+                                size={12}
+                                color={post.is_liked ? '#FF3B30' : '#666'}
+                              />
+                              {(post.likes_count ?? 0) > 0 && (
+                                <S.PostStatText>{post.likes_count}</S.PostStatText>
+                              )}
+                            </S.PostStatItem>
+                          )}
+                          {project?.comments_enabled && (
+                            <S.PostStatItem>
+                              <FA5Icon name="comment" solid={false} size={12} color="#666" />
+                              {(post.comments_count ?? 0) > 0 && (
+                                <S.PostStatText>{post.comments_count}</S.PostStatText>
+                              )}
+                            </S.PostStatItem>
+                          )}
+                        </S.PostStatsRow>
+                      )}
                       </S.PostDateRow>
                       <PostContentPreview content={post.content ?? ''} />
                     </TouchableOpacity>

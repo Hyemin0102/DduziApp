@@ -134,6 +134,33 @@ export const StatusBadgeText = styled.Text<{completed: boolean}>`
   font-weight: 600;
 `;
 
+// 좋아요/댓글 액션 바 — BadgeRow 맨 오른쪽에 붙음(PostDetailScreen과 동일 톤)
+export const ActionBar = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+`;
+
+export const ActionButton = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+`;
+
+// 하트 버스트 파티클이 겹쳐 뜰 기준 위치(좋아요 아이콘 중심)
+export const LikeIconWrapper = styled.View`
+  align-items: center;
+  justify-content: center;
+`;
+
+export const ActionButtonText = styled.Text`
+  font-size: 12px;
+  color: #000;
+  font-weight: 600;
+`;
+
 export const Content = styled.Text`
   font-size: 14px;
   color: #191919;

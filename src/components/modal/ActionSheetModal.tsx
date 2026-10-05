@@ -24,6 +24,9 @@ interface ActionSheetModalProps {
   actions?: ActionSheetAction[];
   children?: React.ReactNode;
   showCancel?: boolean;
+  // true면 기본 핸들바를 안 그림 — children 내부에 자체 오버레이(InSheetActionSheet 등)가
+  // 덮어야 하는 영역이 핸들바까지 포함될 때, children 쪽에서 직접 핸들을 그리게 하기 위함
+  hideHandle?: boolean;
 }
 
 const ANIMATION_DURATION = 200;
@@ -35,6 +38,7 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
   actions,
   children,
   showCancel = true,
+  hideHandle = false,
 }) => {
   const translateY = useRef(new Animated.Value(SHEET_OFFSET)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -97,7 +101,7 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
       <Animated.View style={[StyleSheet.absoluteFill, styles.root, {opacity}]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <Animated.View style={[styles.sheet, {transform: [{translateY}]}]}>
-          <View style={styles.handle} />
+          {!hideHandle && <View style={styles.handle} />}
 
           {children}
 

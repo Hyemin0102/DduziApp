@@ -1,5 +1,4 @@
 import styled from '@emotion/native';
-import {Platform} from 'react-native';
 
 export const Container = styled.SafeAreaView`
   flex: 1;
@@ -15,14 +14,31 @@ export const SearchRow = styled.View`
   border-bottom-color: #f0f0f0;
 `;
 
-export const SearchInput = styled.TextInput`
+export const SearchInputContainer = styled.View`
   flex: 1;
+  flex-direction: row;
+  align-items: center;
   height: 44px;
   border-radius: 10px;
   background-color: #f5f5f5;
   padding: 0 14px;
+`;
+
+export const SearchInput = styled.TextInput`
+  flex: 1;
   font-size: 15px;
   color: #191919;
+  padding: 0;
+`;
+
+export const ClearButton = styled.TouchableOpacity`
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background-color: #ccc;
+  justify-content: center;
+  align-items: center;
+  margin-left: 4px;
 `;
 
 export const SearchButton = styled.TouchableOpacity`
@@ -38,6 +54,34 @@ export const SearchButtonText = styled.Text`
   color: #fff;
   font-size: 14px;
   font-weight: 600;
+`;
+
+export const FilterRow = styled.View`
+  padding: 10px 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+`;
+
+export const FilterButton = styled.TouchableOpacity<{active?: boolean}>`
+  flex-direction: row;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 16px;
+  background-color: ${({active}) => (active ? '#191919' : '#f5f5f5')};
+`;
+
+export const Chip = styled.TouchableOpacity<{active?: boolean}>`
+  padding: 7px 14px;
+  border-radius: 16px;
+  background-color: ${({active}) => (active ? '#191919' : '#f5f5f5')};
+`;
+
+export const ChipText = styled.Text<{active?: boolean}>`
+  font-size: 13px;
+  font-weight: ${({active}) => (active ? '600' : '400')};
+  color: ${({active}) => (active ? '#fff' : '#333')};
 `;
 
 export const ResultCard = styled.View`
@@ -77,25 +121,4 @@ export const StatusText = styled.Text`
   color: #999;
   font-size: 14px;
   padding: 20px;
-`;
-
-export const DebugSectionLabel = styled.Text`
-  font-size: 13px;
-  font-weight: 600;
-  color: #666;
-  padding: 12px 16px 4px;
-`;
-
-export const DebugBox = styled.ScrollView`
-  max-height: 260px;
-  background-color: #191919;
-  margin: 0 16px 16px;
-  border-radius: 8px;
-  padding: 10px;
-`;
-
-export const DebugText = styled.Text`
-  color: #9cff9c;
-  font-size: 11px;
-  font-family: ${Platform.OS === 'ios' ? 'Menlo' : 'monospace'};
 `;

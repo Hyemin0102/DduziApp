@@ -1,5 +1,7 @@
 import {createNavigationContainerRef} from '@react-navigation/native';
+import {DeviceEventEmitter} from 'react-native';
 import {RootStackParamList} from '@/@types/navigation';
+import {supabase} from '@/lib/supabase';
 import {
   ROOT_ROUTES,
   TAB_ROUTES,
@@ -15,6 +17,31 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 // 아직 준비되기 전에 네비게이션 요청이 들어올 수 있어 대기시켜뒀다가 onReady에서 흘려보냄
 let pendingNotificationData: Record<string, string> | undefined;
 
+// 푸쉬를 탭해서 콘텐츠로 바로 딥링크되는 경로는 알림센터 화면을 거치지 않아서
+// 별도로 읽음 처리를 안 해주면 계속 안읽음으로 남음. FCM data payload엔 유저별
+// notifications 행의 id가 없어서(한 트리거가 여러 유저에게 같은 payload를 보내는
+// 구조), user_id + noticeId/postId 조합으로 매칭해서 읽음 처리함
+async function markNotificationAsRead(
+  matchColumn: 'noticeId' | 'postId',
+  value: string,
+) {
+  const {data: {user}} = await supabase.auth.getUser();
+  if (!user) return;
+
+  const {error} = await supabase
+    .from('notifications')
+    .update({is_read: true})
+    .eq('user_id', user.id)
+    .eq('is_read', false)
+    .eq(`data->>${matchColumn}`, value);
+
+  if (error) {
+    console.error('푸쉬 탭 알림 읽음 처리 실패:', error);
+    return;
+  }
+  DeviceEventEmitter.emit('notificationsUpdated');
+}
+
 export function navigateFromNotificationData(data?: Record<string, string>) {
   if (!data || Object.keys(data).length === 0) return;
 
@@ -24,6 +51,7 @@ export function navigateFromNotificationData(data?: Record<string, string>) {
   }
 
   if (data.noticeId) {
+    markNotificationAsRead('noticeId', data.noticeId);
     navigationRef.navigate(ROOT_ROUTES.TAB_NAVIGATOR, {
       screen: TAB_ROUTES.MY_PAGE_TAB,
       params: {
@@ -35,6 +63,7 @@ export function navigateFromNotificationData(data?: Record<string, string>) {
   }
 
   if (data.postId) {
+    markNotificationAsRead('postId', data.postId);
     navigationRef.navigate(ROOT_ROUTES.TAB_NAVIGATOR, {
       screen: TAB_ROUTES.HOME_TAB,
       params: {

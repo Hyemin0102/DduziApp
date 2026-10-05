@@ -24,6 +24,8 @@ export const TAB_ROUTES = {
 // ============= Explore Stack Routes =============
 export const EXPLORE_ROUTES = {
   EXPLORE_MAIN: 'ExploreMain',
+  PATTERN_DETAIL: 'PatternDetail',
+  PATTERN_NOTES: 'PatternNotes',
 } as const;
 
 // ============= Projects Stack Routes =============

@@ -47,7 +47,7 @@ export const BadgeRow = styled.View`
 `;
 
 export const StatusBadge = styled.View<{
-  variant: 'progress' | 'completed' | 'public' | 'private';
+  variant: 'progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
 }>`
   padding-horizontal: 10px;
   padding-vertical: 5px;
@@ -62,12 +62,16 @@ export const StatusBadge = styled.View<{
         return '#e3f2fd';
       case 'private':
         return '#f5f5f5';
+      case 'on':
+        return '#e3f2fd';
+      case 'off':
+        return '#f5f5f5';
     }
   }};
 `;
 
 export const StatusText = styled.Text<{
-  variant: 'progress' | 'completed' | 'public' | 'private';
+  variant: 'progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
 }>`
   font-size: 13px;
   font-weight: 600;
@@ -80,6 +84,10 @@ export const StatusText = styled.Text<{
       case 'public':
         return '#1e88e5';
       case 'private':
+        return '#999';
+      case 'on':
+        return '#1e88e5';
+      case 'off':
         return '#999';
     }
   }};
@@ -610,6 +618,27 @@ export const PostDateText = styled.Text`
   font-size: 12px;
   font-weight: 600;
   color: #191919;
+`;
+
+// 좋아요 상태/댓글 수 — 탭 인터랙션 없이 표시만(카드 전체가 이미 상세로 이동하는 터치 영역).
+// PostDateRow 맨 오른쪽 끝에 붙고, 그 행의 align-items: center로 세로 중앙 정렬됨
+export const PostStatsRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+`;
+
+export const PostStatItem = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const PostStatText = styled.Text`
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
 `;
 
 export const ViewAllButton = styled.TouchableOpacity`

@@ -85,8 +85,8 @@ android {
         applicationId "com.dduziapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 31
-        versionName "1.0.6"
+        versionCode 32
+        versionName "1.0.7"
     }
     signingConfigs {
         debug {

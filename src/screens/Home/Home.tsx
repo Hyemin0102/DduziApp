@@ -20,6 +20,15 @@ import {HOME_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import * as HS from '../Navigator/stacks/HomeStack.style';
 import {trackEvent} from '@/lib/mixpanel';
+import PostCommentsSheet from '@/components/common/PostCommentsSheet';
+
+interface OpenComments {
+  postId: string;
+  postOwnerId: string;
+  postContent: string | null;
+  projectId: string;
+  projectTitle: string;
+}
 
 const PAGE_SIZE = 10;
 
@@ -60,6 +69,7 @@ const Home = () => {
   const blockedIdsRef = useRef<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const maxViewedIndexRef = useRef(0);
+  const [openComments, setOpenComments] = useState<OpenComments | null>(null);
 
   const fetchBlockedIds = async (): Promise<string[]> => {
     const {data: {user}} = await supabase.auth.getUser();
@@ -87,7 +97,9 @@ const Home = () => {
           id,
           title,
           visibility,
-          is_completed
+          is_completed,
+          likes_enabled,
+          comments_enabled
         )
       `,
       )
@@ -102,7 +114,7 @@ const Home = () => {
     const {data, error} = await query;
     if (error) throw error;
 
-    return data
+    const posts: Post[] = data
       ? (data as any[]).map((post: any) => ({
           ...post,
           post_images: (post.post_images || []).sort(
@@ -110,6 +122,40 @@ const Home = () => {
           ),
         }))
       : [];
+
+    return attachLikesAndComments(posts);
+  };
+
+  // 페이지 단위로 좋아요/댓글 카운트+좋아요 여부를 배치 조회해서 머지(게시물당 쿼리
+  // 날리면 N+1이라 post_id in (...)으로 한 번씩만 조회)
+  const attachLikesAndComments = async (posts: Post[]): Promise<Post[]> => {
+    if (posts.length === 0) return posts;
+    const postIds = posts.map(p => p.id);
+    const {data: {user}} = await supabase.auth.getUser();
+
+    const [{data: likesData}, {data: commentsData}] = await Promise.all([
+      supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
+      supabase.from('comments').select('post_id').in('post_id', postIds),
+    ]);
+
+    const likesCountMap: Record<string, number> = {};
+    const likedPostIds = new Set<string>();
+    (likesData || []).forEach((l: any) => {
+      likesCountMap[l.post_id] = (likesCountMap[l.post_id] || 0) + 1;
+      if (user && l.user_id === user.id) likedPostIds.add(l.post_id);
+    });
+
+    const commentsCountMap: Record<string, number> = {};
+    (commentsData || []).forEach((c: any) => {
+      commentsCountMap[c.post_id] = (commentsCountMap[c.post_id] || 0) + 1;
+    });
+
+    return posts.map(p => ({
+      ...p,
+      likes_count: likesCountMap[p.id] || 0,
+      is_liked: likedPostIds.has(p.id),
+      comments_count: commentsCountMap[p.id] || 0,
+    }));
   };
 
   const fetchPosts = async () => {
@@ -181,10 +227,18 @@ const Home = () => {
   );
 
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('inAppNotification', () => {
-      refreshUnreadCount();
-    });
-    return () => sub.remove();
+    const foregroundSub = DeviceEventEmitter.addListener(
+      'inAppNotification',
+      () => refreshUnreadCount(),
+    );
+    // 푸쉬 탭으로 바로 딥링크됐을 때 navigationRef.ts에서 읽음 처리 후 쏘는 이벤트
+    const readSub = DeviceEventEmitter.addListener('notificationsUpdated', () =>
+      refreshUnreadCount(),
+    );
+    return () => {
+      foregroundSub.remove();
+      readSub.remove();
+    };
   }, [refreshUnreadCount]);
 
   // 홈 피드 스크롤 깊이 트래킹 — 화면에 보인 게시물 중 가장 마지막 인덱스를
@@ -262,8 +316,36 @@ const Home = () => {
 
   const feedItems = useMemo(() => buildFeedItems(posts), [posts]);
 
+  const handleLikeToggled = (postId: string, liked: boolean) => {
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === postId
+          ? {...p, is_liked: liked, likes_count: Math.max(0, (p.likes_count ?? 0) + (liked ? 1 : -1))}
+          : p,
+      ),
+    );
+  };
+
+  const handleOpenComments = (post: Post) => {
+    setOpenComments({
+      postId: post.id,
+      postOwnerId: post.user_id,
+      postContent: post.content ?? null,
+      projectId: post.projects.id,
+      projectTitle: post.projects.title,
+    });
+  };
+
   const renderItem = ({item}: {item: FeedItem}) =>
-    item.type === 'ad' ? <NativeAdCard /> : <PostCard post={item.post} />;
+    item.type === 'ad' ? (
+      <NativeAdCard />
+    ) : (
+      <PostCard
+        post={item.post}
+        onLikeToggled={handleLikeToggled}
+        onOpenComments={handleOpenComments}
+      />
+    );
 
   const renderFooter = () => {
     if (!loadingMore) return null;
@@ -340,6 +422,25 @@ const Home = () => {
           />
         )}
       </S.Container>
+
+      {/* 카드마다 바텀시트를 두면 FlatList 가상화(removeClippedSubviews)로
+      스크롤 중 날아갈 수 있어서 화면 레벨에 하나만 두고 postId만 바꿔끼움 */}
+      <PostCommentsSheet
+        visible={!!openComments}
+        onClose={() => setOpenComments(null)}
+        postId={openComments?.postId ?? ''}
+        postOwnerId={openComments?.postOwnerId ?? ''}
+        postContent={openComments?.postContent ?? null}
+        projectId={openComments?.projectId ?? ''}
+        projectTitle={openComments?.projectTitle ?? ''}
+        onCommentsCountChange={count => {
+          if (!openComments) return;
+          const {postId} = openComments;
+          setPosts(prev =>
+            prev.map(p => (p.id === postId ? {...p, comments_count: count} : p)),
+          );
+        }}
+      />
     </SafeAreaView>
   );
 };

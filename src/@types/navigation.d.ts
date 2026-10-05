@@ -106,7 +106,9 @@ export type HomeStackParamList = {
 
 // Explore Stack
 export type ExploreStackParamList = {
-  [EXPLORE_ROUTES.EXPLORE_MAIN]: undefined;
+  [EXPLORE_ROUTES.EXPLORE_MAIN]: {initialQuery?: string} | undefined;
+  [EXPLORE_ROUTES.PATTERN_DETAIL]: {patternId: number | string; patternName?: string};
+  [EXPLORE_ROUTES.PATTERN_NOTES]: {notes: string; patternName?: string};
 };
 
 // Posts Stack

@@ -1,6 +1,6 @@
 import {supabase} from '@/lib/supabase';
 import {RouteProp, useFocusEffect, useRoute} from '@react-navigation/native';
-import {useState, useCallback, useRef, useEffect} from 'react';
+import React, {useState, useCallback, useRef, useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,7 @@ import {PostDetail} from '@/@types/database';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from '@/components/common/PinchZoomImage';
+import PostCommentsSheet from '@/components/common/PostCommentsSheet';
 import {
   PROJECTS_ROUTES,
   POST_ROUTES,
@@ -23,6 +24,15 @@ import {
 } from '@/constants/navigation.constant';
 import {deletePostImageFileIfUnused} from '@/lib/uploadImage';
 import Icon from 'react-native-vector-icons/Feather';
+import FA5Icon from 'react-native-vector-icons/FontAwesome5';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import LikeBurst from '@/components/common/LikeBurst';
 import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
@@ -66,6 +76,21 @@ export default function PostDetailScreen() {
   const hasFetchedRef = useRef(false);
   const viewTrackedRef = useRef(false);
   const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 좋아요
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [likeBurstKey, setLikeBurstKey] = useState<number | null>(null);
+  const heartScale = useSharedValue(1);
+  const heartAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{scale: heartScale.value}],
+  }));
+
+  // 댓글 — 목록/작성 등 바텀시트 내부 로직은 PostCommentsSheet가 전담, 여기선
+  // 액션 바에 보여줄 카운트와 바텀시트 열림 여부만 관리
+  const [commentsCount, setCommentsCount] = useState(0);
+  const [showCommentsSheet, setShowCommentsSheet] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -120,7 +145,9 @@ export default function PostDetailScreen() {
             pattern_info,
             pattern_url,
             is_completed,
-            visibility
+            visibility,
+            likes_enabled,
+            comments_enabled
           )
         `,
         )
@@ -147,10 +174,38 @@ export default function PostDetailScreen() {
         pattern_url: project?.pattern_url,
         is_completed: project?.is_completed,
         visibility: project?.visibility,
+        likes_enabled: project?.likes_enabled ?? true,
+        comments_enabled: project?.comments_enabled ?? true,
+        likes_count: 0,
+        is_liked: false,
         images: ((postData as any).post_images || []).sort(
           (a: any, b: any) => a.display_order - b.display_order,
         ),
       };
+
+      const {count: likesCountResult} = await supabase
+        .from('likes')
+        .select('id', {count: 'exact', head: true})
+        .eq('post_id', postId);
+      postDetail.likes_count = likesCountResult ?? 0;
+      setLikesCount(likesCountResult ?? 0);
+
+      const {count: commentsCountResult} = await supabase
+        .from('comments')
+        .select('id', {count: 'exact', head: true})
+        .eq('post_id', postId);
+      setCommentsCount(commentsCountResult ?? 0);
+
+      if (user) {
+        const {data: likeData} = await supabase
+          .from('likes')
+          .select('id')
+          .eq('post_id', postId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        postDetail.is_liked = !!likeData;
+        setIsLiked(!!likeData);
+      }
 
       setPost(postDetail);
       hasFetchedRef.current = true;
@@ -209,6 +264,45 @@ export default function PostDetailScreen() {
       Alert.alert('오류', '뜨개함 저장 중 문제가 발생했습니다.');
     } finally {
       setIsSaveLoading(false);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!user || !post || isLikeLoading) return;
+    setIsLikeLoading(true);
+    const wasLiked = isLiked;
+    heartScale.value = withSequence(
+      withTiming(1.3, {duration: 100, easing: Easing.out(Easing.quad)}),
+      withTiming(1, {duration: 150, easing: Easing.out(Easing.quad)}),
+    );
+    try {
+      if (wasLiked) {
+        setIsLiked(false);
+        setLikesCount(c => Math.max(0, c - 1));
+        const {error} = await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', post.id)
+          .eq('user_id', user.id);
+        if (error) throw error;
+        trackEvent('post_unliked', {post_id: post.id});
+      } else {
+        setIsLiked(true);
+        setLikesCount(c => c + 1);
+        setLikeBurstKey(k => (k ?? 0) + 1);
+        const {error} = await supabase
+          .from('likes')
+          .insert({post_id: post.id, user_id: user.id});
+        if (error && error.code !== '23505') throw error;
+        trackEvent('post_liked', {post_id: post.id});
+      }
+    } catch (error: any) {
+      setIsLiked(wasLiked);
+      setLikesCount(c => (wasLiked ? c + 1 : Math.max(0, c - 1)));
+      console.error('❌ 좋아요 처리 실패:', error);
+      Alert.alert('오류', error?.message ?? '좋아요 처리 중 문제가 발생했습니다.');
+    } finally {
+      setIsLikeLoading(false);
     }
   };
 
@@ -284,6 +378,8 @@ export default function PostDetailScreen() {
         reporter_id: user.id,
         post_id: post.id,
         reason,
+        project_id: post.project_id,
+        project_title: post.title,
       });
       if (insertError) {
         if (insertError.code === '23505') {
@@ -299,6 +395,9 @@ export default function PostDetailScreen() {
           reporterNickname: user.nickname ?? '알 수 없음',
           postId: post.id,
           postContent: post.content,
+          projectId: post.project_id,
+          projectTitle: post.title,
+          reportType: 'post',
           reason,
         },
       });
@@ -398,9 +497,40 @@ export default function PostDetailScreen() {
                 </S.ImageWrapper>
               ))}
             </S.ImageGallery>
-           
+            <S.ImageGalleryDivider />
           </>
         )}
+
+                {/* 좋아요/댓글 액션 바 */}
+        <S.ActionBar>
+          {post.likes_enabled && (
+            <S.ActionButton
+              onPress={handleToggleLike}
+              disabled={isLikeLoading}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <S.LikeIconWrapper>
+                <Animated.View style={heartAnimatedStyle}>
+                  <FA5Icon
+                    name="heart"
+                    solid={isLiked}
+                    size={18}
+                    color={isLiked ? '#FF3B30' : '#191919'}
+                  />
+                </Animated.View>
+                {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
+              </S.LikeIconWrapper>
+              {likesCount > 0 && <S.ActionButtonText>{likesCount}</S.ActionButtonText>}
+            </S.ActionButton>
+          )}
+          {post.comments_enabled && (
+            <S.ActionButton
+              onPress={() => setShowCommentsSheet(true)}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <FA5Icon name="comment" solid={false} size={18} color="#191919" />
+              {commentsCount > 0 && <S.ActionButtonText>{commentsCount}</S.ActionButtonText>}
+            </S.ActionButton>
+          )}
+        </S.ActionBar>
 
         {/* 게시물 내용 */}
         <S.ContentSection>
@@ -412,6 +542,8 @@ export default function PostDetailScreen() {
           )}
           <S.Content>{post.content}</S.Content>
         </S.ContentSection>
+
+
 
         {/* 연결된 프로젝트 */}
         {post.project_id && (
@@ -489,6 +621,24 @@ export default function PostDetailScreen() {
           {label: '기타', onPress: () => handleReport('기타')},
         ]}
       />
+
+      <PostCommentsSheet
+        visible={showCommentsSheet}
+        onClose={() => setShowCommentsSheet(false)}
+        postId={post.id}
+        postOwnerId={post.user_id}
+        postContent={post.content ?? null}
+        projectId={post.project_id}
+        projectTitle={post.title}
+        onCommentsCountChange={setCommentsCount}
+      />
+
+      {isReporting && (
+        <S.ActionLoadingOverlay>
+          <ActivityIndicator size="large" color="#fff" />
+          <S.ActionLoadingText>신고 접수 중...</S.ActionLoadingText>
+        </S.ActionLoadingOverlay>
+      )}
     </S.Container>
   );
 }

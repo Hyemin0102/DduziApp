@@ -25,6 +25,24 @@ export interface KnittingLog {
   created_at: string;
 }
 
+export interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  parent_comment_id: string | null;
+  content: string;
+  is_hidden: boolean;
+  is_edited: boolean;
+  created_at: string;
+  updated_at: string;
+  nickname: string;
+  profile_image: string | null;
+}
+
+export interface CommentWithReplies extends Comment {
+  replies: Comment[];
+}
+
 // ================================
 // 프로젝트 타입 (projects 테이블)
 // ================================
@@ -41,6 +59,8 @@ export interface ProjectBase {
   needle_info?: string | null;
   is_completed: boolean;
   visibility: 'public' | 'private';
+  likes_enabled: boolean;
+  comments_enabled: boolean;
   progress?: number;
   thumbnail_url?: string | null;
   started_at?: string | null;
@@ -74,6 +94,11 @@ export interface SimplePost {
   updated_at: string;
   published_at?: string | null;
   post_images: Array<Pick<PostImage, 'id' | 'image_url' | 'display_order'>>;
+  // 좋아요/댓글 배치 조회로 채워주는 필드 — 아직 이 쿼리를 안 하는 화면에서는
+  // undefined이므로, 화면마다 이 값들 존재 여부로 좋아요/댓글 UI 노출을 결정함
+  likes_count?: number;
+  is_liked?: boolean;
+  comments_count?: number;
 }
 
 // 홈/피드용 (users, post_images, project 조인)
@@ -83,7 +108,10 @@ export interface Post extends SimplePost {
     nickname: string;
     profile_image: string;
   };
-  projects: Pick<ProjectBase, 'id' | 'title' | 'visibility' | 'is_completed'>;
+  projects: Pick<
+    ProjectBase,
+    'id' | 'title' | 'visibility' | 'is_completed' | 'likes_enabled' | 'comments_enabled'
+  >;
 }
 
 // 상세 페이지용 (플랫 구조)
@@ -104,6 +132,10 @@ export interface PostDetail {
   pattern_url?: string | null;
   is_completed: boolean;
   visibility: 'public' | 'private';
+  likes_enabled: boolean;
+  comments_enabled: boolean;
+  likes_count: number;
+  is_liked: boolean;
 }
 
 // ================================

@@ -16,6 +16,15 @@ import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import {trackEvent} from '@/lib/mixpanel';
+import PostCommentsSheet from '@/components/common/PostCommentsSheet';
+
+interface OpenComments {
+  postId: string;
+  postOwnerId: string;
+  postContent: string | null;
+  projectId: string;
+  projectTitle: string;
+}
 
 interface MostSavedProject {
   project_id: string;
@@ -71,6 +80,7 @@ const Search = () => {
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
   const [mostSavedProjects, setMostSavedProjects] = useState<MostSavedProject[]>([]);
   const [weeklyTopPosters, setWeeklyTopPosters] = useState<WeeklyTopPoster[]>([]);
+  const [openComments, setOpenComments] = useState<OpenComments | null>(null);
   const isFocused = useRef(true);
   const inputRef = useRef<any>(null);
 
@@ -160,6 +170,38 @@ const Search = () => {
     }, []),
   );
 
+  // 검색 결과 페이지 단위로 좋아요/댓글 카운트+좋아요 여부를 배치 조회해서 머지
+  // (게시물당 쿼리 날리면 N+1이라 post_id in (...)으로 한 번씩만 조회, Home.tsx와 동일 패턴)
+  const attachLikesAndComments = async (posts: Post[]): Promise<Post[]> => {
+    if (posts.length === 0) return posts;
+    const postIds = posts.map(p => p.id);
+    const {data: {user}} = await supabase.auth.getUser();
+
+    const [{data: likesData}, {data: commentsData}] = await Promise.all([
+      supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
+      supabase.from('comments').select('post_id').in('post_id', postIds),
+    ]);
+
+    const likesCountMap: Record<string, number> = {};
+    const likedPostIds = new Set<string>();
+    (likesData || []).forEach((l: any) => {
+      likesCountMap[l.post_id] = (likesCountMap[l.post_id] || 0) + 1;
+      if (user && l.user_id === user.id) likedPostIds.add(l.post_id);
+    });
+
+    const commentsCountMap: Record<string, number> = {};
+    (commentsData || []).forEach((c: any) => {
+      commentsCountMap[c.post_id] = (commentsCountMap[c.post_id] || 0) + 1;
+    });
+
+    return posts.map(p => ({
+      ...p,
+      likes_count: likesCountMap[p.id] || 0,
+      is_liked: likedPostIds.has(p.id),
+      comments_count: commentsCountMap[p.id] || 0,
+    }));
+  };
+
   const handleSearch = async (query: string) => {
     Keyboard.dismiss();
 
@@ -218,7 +260,9 @@ const Search = () => {
             title,
             visibility,
             is_completed,
-            user_id
+            user_id,
+            likes_enabled,
+            comments_enabled
           )
         `,
         )
@@ -227,7 +271,7 @@ const Search = () => {
 
       if (error) throw error;
 
-      const results: Post[] = data
+      const filtered: Post[] = data
         ? (data as any[])
             .filter((post: any) => {
               if (blockedIds.includes(post.user_id)) return false;
@@ -243,6 +287,8 @@ const Search = () => {
               ),
             }))
         : [];
+
+      const results = await attachLikesAndComments(filtered);
 
       if (isFocused.current) {
         setSearchResults(results);
@@ -274,8 +320,36 @@ const Search = () => {
 
   const feedItems = useMemo(() => buildSearchFeedItems(searchResults), [searchResults]);
 
+  const handleLikeToggled = (postId: string, liked: boolean) => {
+    setSearchResults(prev =>
+      prev.map(p =>
+        p.id === postId
+          ? {...p, is_liked: liked, likes_count: Math.max(0, (p.likes_count ?? 0) + (liked ? 1 : -1))}
+          : p,
+      ),
+    );
+  };
+
+  const handleOpenComments = (post: Post) => {
+    setOpenComments({
+      postId: post.id,
+      postOwnerId: post.user_id,
+      postContent: post.content ?? null,
+      projectId: post.projects.id,
+      projectTitle: post.projects.title,
+    });
+  };
+
   const renderItem = ({item}: {item: SearchFeedItem}) =>
-    item.type === 'ad' ? <NativeAdCard /> : <PostCard post={item.post} />;
+    item.type === 'ad' ? (
+      <NativeAdCard />
+    ) : (
+      <PostCard
+        post={item.post}
+        onLikeToggled={handleLikeToggled}
+        onOpenComments={handleOpenComments}
+      />
+    );
 
   const renderSavedProjectCard = (project: MostSavedProject) => (
     <SavedProjectSearchCard
@@ -457,6 +531,25 @@ const Search = () => {
         }
         onScrollBeginDrag={Keyboard.dismiss}
         keyboardDismissMode="on-drag"
+      />
+
+      {/* 카드마다 바텀시트를 두면 FlatList 가상화로 스크롤 중 날아갈 수 있어서
+      화면 레벨에 하나만 두고 postId만 바꿔끼움(Home.tsx와 동일 패턴) */}
+      <PostCommentsSheet
+        visible={!!openComments}
+        onClose={() => setOpenComments(null)}
+        postId={openComments?.postId ?? ''}
+        postOwnerId={openComments?.postOwnerId ?? ''}
+        postContent={openComments?.postContent ?? null}
+        projectId={openComments?.projectId ?? ''}
+        projectTitle={openComments?.projectTitle ?? ''}
+        onCommentsCountChange={count => {
+          if (!openComments) return;
+          const {postId} = openComments;
+          setSearchResults(prev =>
+            prev.map(p => (p.id === postId ? {...p, comments_count: count} : p)),
+          );
+        }}
       />
     </S.Container>
   );

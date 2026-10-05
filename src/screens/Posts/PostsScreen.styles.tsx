@@ -28,6 +28,25 @@ export const LoadingText = styled.Text`
   color: #999;
 `;
 
+// 차단 처리 중 화면 전체를 덮는 오버레이(PostCreateForProjectScreen과 동일 패턴)
+export const ActionLoadingOverlay = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+`;
+
+export const ActionLoadingText = styled.Text`
+  margin-top: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+`;
+
 export const EmptyContainer = styled.View`
   flex: 1;
   align-items: center;

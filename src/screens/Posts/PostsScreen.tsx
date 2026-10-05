@@ -1,6 +1,7 @@
 // screens/Posts/PostsScreen.tsx
 import React, {useState, useCallback, useEffect, useRef} from 'react';
 import {
+  ActivityIndicator,
   DeviceEventEmitter,
   FlatList,
   RefreshControl,
@@ -142,6 +143,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const [activeTab, setActiveTab] = useState<TabType>('inProgress');
   const [nickname, setNickname] = useState<string | null>(null);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   const targetUserId = route.params?.userId;
   const isMyPage = !targetUserId || targetUserId === currentUserId;
@@ -250,6 +252,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
           style: 'destructive',
           onPress: async () => {
             if (!currentUserId || !targetUserId) return;
+            setIsBlocking(true);
             try {
               const {error: insertError} = await supabase.from('blocks').insert({
                 blocker_id: currentUserId,
@@ -277,6 +280,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
               Alert.alert('오류', '차단 처리 중 오류가 발생했습니다.');
             } finally {
               setShowBlockSheet(false);
+              setIsBlocking(false);
             }
           },
         },
@@ -372,6 +376,13 @@ export default function PostsScreen({route}: PostsScreenProps) {
         {label: '차단하기', onPress: handleBlock, isDestructive: true},
       ]}
     />
+
+    {isBlocking && (
+      <S.ActionLoadingOverlay>
+        <ActivityIndicator size="large" color="#fff" />
+        <S.ActionLoadingText>차단 처리 중...</S.ActionLoadingText>
+      </S.ActionLoadingOverlay>
+    )}
     </SafeAreaView>
   );
 }

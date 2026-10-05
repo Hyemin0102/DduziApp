@@ -43,8 +43,19 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const {reporterId, reporterNickname, postId, postContent, reason} =
-      await req.json();
+    const {
+      reporterId,
+      reporterNickname,
+      postId,
+      postContent,
+      projectId,
+      projectTitle,
+      reportType,
+      commentId,
+      commentContent,
+      reason,
+    } = await req.json();
+    const isCommentReport = reportType === 'comment';
 
     // 토큰의 uid와 요청의 reporterId가 일치하는지 확인
     if (user.id !== reporterId) {
@@ -65,6 +76,24 @@ Deno.serve(async (req: Request) => {
     const safePostId = escapeHtml(postId ?? '');
     const safeReason = escapeHtml(reason ?? '');
     const safeContent = escapeHtml(postContent ?? '(내용 없음)');
+    const safeProjectId = escapeHtml(projectId ?? '');
+    const safeProjectTitle = escapeHtml(projectTitle ?? '(제목 없음)');
+    const safeCommentContent = escapeHtml(commentContent ?? '(내용 없음)');
+    const safeCommentId = escapeHtml(commentId ?? '');
+
+    const typeLabel = isCommentReport ? '댓글' : '게시물';
+
+    const commentRow = isCommentReport
+      ? `
+            <tr>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">댓글 ID</td>
+              <td style="padding:8px;border:1px solid #eee">${safeCommentId}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">댓글 내용</td>
+              <td style="padding:8px;border:1px solid #eee">${safeCommentContent}</td>
+            </tr>`
+      : '';
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -75,26 +104,30 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: 'onboarding@resend.dev',
         to: TO_EMAIL,
-        subject: '[뜨지] 게시물 신고가 접수되었습니다',
+        subject: `[뜨지] ${typeLabel} 신고가 접수되었습니다`,
         html: `
-          <h2>게시물 신고 접수</h2>
+          <h2>${typeLabel} 신고 접수</h2>
           <table style="border-collapse:collapse;width:100%;max-width:500px">
             <tr>
-              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold">신고자</td>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">신고자</td>
               <td style="padding:8px;border:1px solid #eee">${safeNickname} (${user.id})</td>
             </tr>
             <tr>
-              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold">게시물 ID</td>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">프로젝트</td>
+              <td style="padding:8px;border:1px solid #eee">${safeProjectTitle} (${safeProjectId})</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">게시물 ID</td>
               <td style="padding:8px;border:1px solid #eee">${safePostId}</td>
             </tr>
             <tr>
-              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold">신고 사유</td>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">신고 사유</td>
               <td style="padding:8px;border:1px solid #eee">${safeReason}</td>
             </tr>
             <tr>
-              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold">게시물 내용</td>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">게시물 내용</td>
               <td style="padding:8px;border:1px solid #eee">${safeContent}</td>
-            </tr>
+            </tr>${commentRow}
           </table>
           <p style="margin-top:16px;color:#888;font-size:13px">24시간 내에 검토 후 처리해주세요.</p>
         `,

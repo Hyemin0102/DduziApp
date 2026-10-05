@@ -14,6 +14,7 @@ import {thumbnailUrl} from '@/lib/imageTransform';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
+import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 
 const PAGE_SIZE = 20;
 
@@ -32,6 +33,9 @@ interface PostItem {
   content: string | null;
   created_at: string;
   post_images: PostImage[];
+  likes_count?: number;
+  is_liked?: boolean;
+  comments_count?: number;
 }
 
 function PostContent({content}: {content: string}) {
@@ -54,6 +58,55 @@ export default function ProjectPostsAllScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [projectFlags, setProjectFlags] = useState({likesEnabled: true, commentsEnabled: true});
+
+  useEffect(() => {
+    supabase
+      .from('projects')
+      .select('likes_enabled, comments_enabled')
+      .eq('id', projectId)
+      .single()
+      .then(({data}) => {
+        if (data) {
+          setProjectFlags({
+            likesEnabled: data.likes_enabled ?? true,
+            commentsEnabled: data.comments_enabled ?? true,
+          });
+        }
+      });
+  }, [projectId]);
+
+  // 게시물 목록의 좋아요/댓글 카운트+좋아요 여부를 배치 조회해서 머지
+  // (게시물당 쿼리 날리면 N+1이라 post_id in (...)으로 한 번씩만, Home.tsx와 동일 패턴)
+  const attachLikesAndComments = async (items: PostItem[]): Promise<PostItem[]> => {
+    if (items.length === 0) return items;
+    const postIds = items.map(p => p.id);
+    const {data: {user}} = await supabase.auth.getUser();
+
+    const [{data: likesData}, {data: commentsData}] = await Promise.all([
+      supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
+      supabase.from('comments').select('post_id').in('post_id', postIds),
+    ]);
+
+    const likesCountMap: Record<string, number> = {};
+    const likedPostIds = new Set<string>();
+    (likesData || []).forEach((l: any) => {
+      likesCountMap[l.post_id] = (likesCountMap[l.post_id] || 0) + 1;
+      if (user && l.user_id === user.id) likedPostIds.add(l.post_id);
+    });
+
+    const commentsCountMap: Record<string, number> = {};
+    (commentsData || []).forEach((c: any) => {
+      commentsCountMap[c.post_id] = (commentsCountMap[c.post_id] || 0) + 1;
+    });
+
+    return items.map(p => ({
+      ...p,
+      likes_count: likesCountMap[p.id] || 0,
+      is_liked: likedPostIds.has(p.id),
+      comments_count: commentsCountMap[p.id] || 0,
+    }));
+  };
 
   const fetchPosts = useCallback(
     async (pageNum: number) => {
@@ -73,12 +126,14 @@ export default function ProjectPostsAllScreen() {
 
       if (error) return;
 
-      const items: PostItem[] = (data as any[]).map(p => ({
-        ...p,
-        post_images: (p.post_images || []).sort(
-          (a: PostImage, b: PostImage) => a.display_order - b.display_order,
-        ),
-      }));
+      const items: PostItem[] = await attachLikesAndComments(
+        (data as any[]).map(p => ({
+          ...p,
+          post_images: (p.post_images || []).sort(
+            (a: PostImage, b: PostImage) => a.display_order - b.display_order,
+          ),
+        })),
+      );
 
       if (pageNum === 0) {
         setPosts(items);
@@ -172,6 +227,31 @@ export default function ProjectPostsAllScreen() {
                     day: 'numeric',
                   })}
                 </Text>
+                {item.likes_count !== undefined && (
+                  <View style={styles.statsRow}>
+                    {projectFlags.likesEnabled && (
+                      <View style={styles.statItem}>
+                        <FA5Icon
+                          name="heart"
+                          solid={item.is_liked}
+                          size={12}
+                          color={item.is_liked ? '#FF3B30' : '#999'}
+                        />
+                        {(item.likes_count ?? 0) > 0 && (
+                          <Text style={styles.statText}>{item.likes_count}</Text>
+                        )}
+                      </View>
+                    )}
+                    {projectFlags.commentsEnabled && (
+                      <View style={styles.statItem}>
+                        <FA5Icon name="comment" solid={false} size={12} color="#999" />
+                        {(item.comments_count ?? 0) > 0 && (
+                          <Text style={styles.statText}>{item.comments_count}</Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
               {item.content ? <PostContent content={item.content} /> : null}
               {item.post_images.length > 1 && (
@@ -268,5 +348,21 @@ const styles = StyleSheet.create({
   imageCount: {
     fontSize: 11,
     color: '#bbb',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginLeft: 'auto',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999',
   },
 });
