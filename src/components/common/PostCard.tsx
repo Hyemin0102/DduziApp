@@ -136,40 +136,42 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments}
       {/* 이미지 */}
       {hasImages && (
         <>
-          <FlatList
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            data={post.post_images}
-            keyExtractor={(_, index) => String(index)}
-            renderItem={({item, index}) => {
-              const url = thumbnailUrl(item.image_url) ?? item.image_url;
-              return (
-                <S.ImageContainer>
-                  <PinchZoomImage uri={item.image_url}>
-                    <PostImage uri={url} />
-                  </PinchZoomImage>
-                  {multipleImages && (
-                    <S.ImageCounter>
-                      <S.ImageCounterText>
-                        {index + 1} / {post.post_images.length}
-                      </S.ImageCounterText>
-                    </S.ImageCounter>
-                  )}
-                </S.ImageContainer>
-              );
-            }}
-            getItemLayout={(_, index) => ({
-              length: SCREEN_WIDTH,
-              offset: SCREEN_WIDTH * index,
-              index,
-            })}
-            initialNumToRender={1}
-            windowSize={3}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-            style={{height: IMAGE_HEIGHT}}
-          />
+          <S.ImageCarouselWrapper>
+            <FlatList
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              data={post.post_images}
+              keyExtractor={(_, index) => String(index)}
+              renderItem={({item}) => {
+                const url = thumbnailUrl(item.image_url) ?? item.image_url;
+                return (
+                  <S.ImageContainer>
+                    <PinchZoomImage uri={item.image_url}>
+                      <PostImage uri={url} />
+                    </PinchZoomImage>
+                  </S.ImageContainer>
+                );
+              }}
+              getItemLayout={(_, index) => ({
+                length: SCREEN_WIDTH,
+                offset: SCREEN_WIDTH * index,
+                index,
+              })}
+              initialNumToRender={1}
+              windowSize={3}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={viewabilityConfig}
+              style={{height: IMAGE_HEIGHT}}
+            />
+            {multipleImages && (
+              <S.ImageCounter>
+                <S.ImageCounterText>
+                  {activeIndex + 1} / {post.post_images.length}
+                </S.ImageCounterText>
+              </S.ImageCounter>
+            )}
+          </S.ImageCarouselWrapper>
 
           {/* 이미지 dots */}
           {multipleImages && (
@@ -195,9 +197,13 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments}
                 {post.projects.title}
               </S.ProjectBadgeText>
             </S.ProjectBadge>
-            <S.StatusBadge completed={post.projects.is_completed}>
-              <S.StatusBadgeText completed={post.projects.is_completed}>
-                {post.projects.is_completed ? '완료' : '진행 중'}
+            <S.StatusBadge status={post.projects.status}>
+              <S.StatusBadgeText status={post.projects.status}>
+                {post.projects.status === 'planned'
+                  ? '예정'
+                  : post.projects.status === 'completed'
+                  ? '완료'
+                  : '진행 중'}
               </S.StatusBadgeText>
             </S.StatusBadge>
             {showActionBar && (

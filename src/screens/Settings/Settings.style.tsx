@@ -35,6 +35,17 @@ export const MenuText = styled.Text`
   color: #333;
 `;
 
+// 라벨 + 설명을 세로로 쌓는 왼쪽 영역 (좋아요/댓글 알림처럼 부연설명이 필요한 행에서 사용)
+export const MenuTextColumn = styled.View`
+  flex: 1;
+`;
+
+export const MenuSubText = styled.Text`
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+`;
+
 export const MenuArrow = styled.Text`
   font-size: 24px;
   color: #999;

@@ -50,10 +50,15 @@ export const Username = styled.Text`
   flex: 1;
 `;
 
+export const ImageCarouselWrapper = styled.View`
+  width: 100%;
+  height: ${`${IMAGE_HEIGHT}px`};
+  position: relative;
+`;
+
 export const ImageContainer = styled.View`
   width: ${`${SCREEN_WIDTH}px`};
   height: ${`${IMAGE_HEIGHT}px`};
-  position: relative;
 `;
 
 export const PostImage = styled(FastImage)`
@@ -121,16 +126,35 @@ export const ProjectBadgeText = styled.Text`
   font-weight: 600;
 `;
 
-export const StatusBadge = styled.View<{completed: boolean}>`
-  background-color: ${({completed}) => (completed ? '#e8f5e9' : '#fff8e1')};
+export const StatusBadge = styled.View<{status: 'planned' | 'in_progress' | 'completed'}>`
+  background-color: ${({status}) => {
+    switch (status) {
+      case 'planned':
+        return '#ede7f6';
+      case 'completed':
+        return '#e8f5e9';
+      default:
+        return '#fff8e1';
+    }
+  }};
   padding-horizontal: 8px;
   padding-vertical: 3px;
   border-radius: 10px;
+  justify-content: center;
 `;
 
-export const StatusBadgeText = styled.Text<{completed: boolean}>`
+export const StatusBadgeText = styled.Text<{status: 'planned' | 'in_progress' | 'completed'}>`
   font-size: 12px;
-  color: ${({completed}) => (completed ? '#4CAF50' : '#f59e0b')};
+  color: ${({status}) => {
+    switch (status) {
+      case 'planned':
+        return '#7e57c2';
+      case 'completed':
+        return '#4CAF50';
+      default:
+        return '#f59e0b';
+    }
+  }};
   font-weight: 600;
 `;
 

@@ -47,14 +47,16 @@ export const BadgeRow = styled.View`
 `;
 
 export const StatusBadge = styled.View<{
-  variant: 'progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
+  variant: 'planned' | 'in_progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
 }>`
   padding-horizontal: 10px;
   padding-vertical: 5px;
   border-radius: 12px;
   background-color: ${({variant}) => {
     switch (variant) {
-      case 'progress':
+      case 'planned':
+        return '#ede7f6';
+      case 'in_progress':
         return '#fff8e1';
       case 'completed':
         return '#e8f5e9';
@@ -71,13 +73,15 @@ export const StatusBadge = styled.View<{
 `;
 
 export const StatusText = styled.Text<{
-  variant: 'progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
+  variant: 'planned' | 'in_progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
 }>`
   font-size: 13px;
   font-weight: 600;
   color: ${({variant}) => {
     switch (variant) {
-      case 'progress':
+      case 'planned':
+        return '#7e57c2';
+      case 'in_progress':
         return '#f59e0b';
       case 'completed':
         return '#4CAF50';
@@ -111,6 +115,13 @@ export const ProjectDate = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+`;
+
+export const StatusDateGroup = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 1;
 `;
 
 export const SaveBadge = styled.TouchableOpacity`
@@ -267,6 +278,11 @@ export const PostImageWrapper = styled.View<{width: number}>`
 export const PostImage = styled(FastImage)`
   width: 100%;
   height: 100%;
+`;
+
+export const PostImageCarouselWrapper = styled.View`
+  position: relative;
+  height: 220px;
 `;
 
 export const PostImageCounter = styled.Text`

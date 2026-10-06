@@ -62,4 +62,6 @@ export const MY_PAGE_ROUTES = {
   NOTICE_LIST: 'NoticeList',
   NOTICE_DETAIL: 'NoticeDetail',
   FEEDBACK: 'Feedback',
+  LIKED_POSTS: 'LikedPosts',
+  MY_COMMENTS: 'MyComments',
 } as const;

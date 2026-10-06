@@ -31,7 +31,6 @@ export interface Comment {
   user_id: string;
   parent_comment_id: string | null;
   content: string;
-  is_hidden: boolean;
   is_edited: boolean;
   created_at: string;
   updated_at: string;
@@ -58,6 +57,9 @@ export interface ProjectBase {
   pattern_pdf_name?: string | null;
   needle_info?: string | null;
   is_completed: boolean;
+  // 'planned'(예정)/'in_progress'(진행 중)/'completed'(완료) — is_completed는
+  // DB 트리거가 이 값에서 파생시켜 항상 동기화함('completed'일 때만 true)
+  status: 'planned' | 'in_progress' | 'completed';
   visibility: 'public' | 'private';
   likes_enabled: boolean;
   comments_enabled: boolean;
@@ -72,7 +74,7 @@ export interface ProjectBase {
 // 프로젝트 목록용
 export type ProjectItem = Pick<
   ProjectBase,
-  'id' | 'title' | 'created_at' | 'updated_at' | 'is_completed' | 'visibility' | 'thumbnail_url' | 'started_at' | 'completed_at'
+  'id' | 'title' | 'created_at' | 'updated_at' | 'is_completed' | 'status' | 'visibility' | 'thumbnail_url' | 'started_at' | 'completed_at'
 >;
 
 // 프로젝트 상세용 (knitting_logs 포함)
@@ -110,7 +112,7 @@ export interface Post extends SimplePost {
   };
   projects: Pick<
     ProjectBase,
-    'id' | 'title' | 'visibility' | 'is_completed' | 'likes_enabled' | 'comments_enabled'
+    'id' | 'title' | 'visibility' | 'is_completed' | 'status' | 'likes_enabled' | 'comments_enabled'
   >;
 }
 

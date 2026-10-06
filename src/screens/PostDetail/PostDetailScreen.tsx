@@ -65,6 +65,7 @@ export default function PostDetailScreen() {
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showReportSheet, setShowReportSheet] = useState(false);
   const [showReportReasonSheet, setShowReportReasonSheet] = useState(false);
@@ -474,29 +475,37 @@ export default function PostDetailScreen() {
         {/* 이미지 갤러리 */}
         {post.images.length > 0 && (
           <>
-            <S.ImageGallery
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              style={{height: GALLERY_HEIGHT}}>
-              {post.images.map((image, index) => (
-                <S.ImageWrapper key={image.id} style={{height: GALLERY_HEIGHT}}>
-                  <PinchZoomImage uri={image.image_url}>
-                    <S.PostImage
-                      source={{uri: image.image_url}}
-                      resizeMode="contain"
-                    />
-                  </PinchZoomImage>
-                  {post.images.length > 1 && (
-                    <S.ImageCounter>
-                      <S.ImageCounterText>
-                        {index + 1} / {post.images.length}
-                      </S.ImageCounterText>
-                    </S.ImageCounter>
-                  )}
-                </S.ImageWrapper>
-              ))}
-            </S.ImageGallery>
+            <S.ImageGalleryWrapper>
+              <S.ImageGallery
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onScroll={e =>
+                  setActiveImageIndex(
+                    Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH),
+                  )
+                }
+                style={{height: GALLERY_HEIGHT}}>
+                {post.images.map(image => (
+                  <S.ImageWrapper key={image.id} style={{height: GALLERY_HEIGHT}}>
+                    <PinchZoomImage uri={image.image_url}>
+                      <S.PostImage
+                        source={{uri: image.image_url}}
+                        resizeMode="contain"
+                      />
+                    </PinchZoomImage>
+                  </S.ImageWrapper>
+                ))}
+              </S.ImageGallery>
+              {post.images.length > 1 && (
+                <S.ImageCounter>
+                  <S.ImageCounterText>
+                    {activeImageIndex + 1} / {post.images.length}
+                  </S.ImageCounterText>
+                </S.ImageCounter>
+              )}
+            </S.ImageGalleryWrapper>
             <S.ImageGalleryDivider />
           </>
         )}

@@ -44,6 +44,14 @@ const Mypage = () => {
     navigation.navigate(MY_PAGE_ROUTES.FEEDBACK);
   };
 
+  const handleLikedPosts = () => {
+    navigation.navigate(MY_PAGE_ROUTES.LIKED_POSTS);
+  };
+
+  const handleMyComments = () => {
+    navigation.navigate(MY_PAGE_ROUTES.MY_COMMENTS);
+  };
+
   const handleAppReview = () => {
     trackEvent('app_review_tapped');
     if (Platform.OS === 'ios') {
@@ -119,6 +127,18 @@ const Mypage = () => {
             <S.AccountValue>{user.email || '-'}</S.AccountValue>
           </S.AccountItem>
         </S.AccountSection>
+
+        <S.SectionLabel>내 활동</S.SectionLabel>
+        <S.MenuSection style={{marginTop: 4}}>
+          <S.MenuItem onPress={handleLikedPosts}>
+            <S.MenuText>좋아요</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+          <S.MenuItem onPress={handleMyComments}>
+            <S.MenuText>댓글</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+        </S.MenuSection>
 
         <S.SectionLabel>고객센터</S.SectionLabel>
         <S.MenuSection style={{marginTop: 4}}>

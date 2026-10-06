@@ -107,6 +107,10 @@ export const Date = styled.Text`
 `;
 
 // 이미지 갤러리
+export const ImageGalleryWrapper = styled.View`
+  position: relative;
+`;
+
 export const ImageGallery = styled.ScrollView`
   height: ${`${SCREEN_WIDTH}px`};
 `;

@@ -65,6 +65,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       terms_agreed_at: dbUser?.terms_agreed_at ?? null,
       profile_completed_at: dbUser?.profile_completed_at ?? null,
       notifications_enabled: dbUser?.notifications_enabled ?? true,
+      like_notifications_enabled: dbUser?.like_notifications_enabled ?? true,
+      comment_notifications_enabled: dbUser?.comment_notifications_enabled ?? true,
       rawProfile: rawProfile as any,
     };
   };

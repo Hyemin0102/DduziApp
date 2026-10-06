@@ -12,37 +12,34 @@ export const Center = styled.View`
   justify-content: center;
 `;
 
-/* ─── Summary (탭 역할 겸) ─── */
+/* ─── 탭 ─── */
 
-export const Summary = styled.View`
+export const TabContainer = styled.View`
   flex-direction: row;
-  padding-vertical: 24px;
   border-bottom-width: 1px;
-  border-bottom-color: #f0f0f0;
+  border-bottom-color: #eee;
 `;
 
-export const SummaryItem = styled.TouchableOpacity`
+export const Tab = styled.TouchableOpacity<{active: boolean}>`
   flex: 1;
+  padding: 16px;
   align-items: center;
+  position: relative;
 `;
 
-export const SummaryDivider = styled.View`
-  width: 1px;
-  height: 32px;
-  background-color: #eee;
-  align-self: center;
+export const TabText = styled.Text<{active: boolean}>`
+  font-size: 16px;
+  font-weight: ${props => (props.active ? '700' : '400')};
+  color: ${props => (props.active ? '#333' : '#999')};
 `;
 
-export const SummaryCount = styled.Text<{active: boolean}>`
-  font-size: 22px;
-  font-weight: 700;
-  color: ${({active}) => (active ? '#191919' : '#ccc')};
-`;
-
-export const SummaryLabel = styled.Text<{active: boolean}>`
-  font-size: 12px;
-  color: ${({active}) => (active ? '#191919' : '#ccc')};
-  margin-top: 3px;
+export const TabIndicator = styled.View`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #000;
 `;
 
 /* ─── Empty ─── */

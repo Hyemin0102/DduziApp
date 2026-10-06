@@ -98,6 +98,7 @@ const Home = () => {
           title,
           visibility,
           is_completed,
+          status,
           likes_enabled,
           comments_enabled
         )

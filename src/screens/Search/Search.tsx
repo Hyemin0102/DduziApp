@@ -260,6 +260,7 @@ const Search = () => {
             title,
             visibility,
             is_completed,
+            status,
             user_id,
             likes_enabled,
             comments_enabled

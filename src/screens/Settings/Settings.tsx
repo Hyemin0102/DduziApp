@@ -24,6 +24,8 @@ const Settings = () => {
   const {user, provider, updateUserProfile} = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
+  const [isUpdatingLikeNotifications, setIsUpdatingLikeNotifications] = useState(false);
+  const [isUpdatingCommentNotifications, setIsUpdatingCommentNotifications] = useState(false);
   const [versionStatus, setVersionStatus] = useState<'loading' | 'latest' | 'update' | 'unknown'>('loading');
 
   useEffect(() => {
@@ -71,6 +73,46 @@ const Settings = () => {
       Alert.alert('오류', '알림 설정 변경에 실패했습니다.');
     } finally {
       setIsUpdatingNotifications(false);
+    }
+  };
+
+  const handleToggleLikeNotifications = async (value: boolean) => {
+    if (!user || isUpdatingLikeNotifications) return;
+    setIsUpdatingLikeNotifications(true);
+    try {
+      const {error} = await supabase
+        .from('users')
+        .update({like_notifications_enabled: value})
+        .eq('id', user.id);
+      if (error) throw error;
+
+      updateUserProfile({like_notifications_enabled: value});
+      trackEvent('like_notifications_toggled', {enabled: value});
+    } catch (error) {
+      console.error('❌ 좋아요 알림 설정 변경 실패:', error);
+      Alert.alert('오류', '좋아요 알림 설정 변경에 실패했습니다.');
+    } finally {
+      setIsUpdatingLikeNotifications(false);
+    }
+  };
+
+  const handleToggleCommentNotifications = async (value: boolean) => {
+    if (!user || isUpdatingCommentNotifications) return;
+    setIsUpdatingCommentNotifications(true);
+    try {
+      const {error} = await supabase
+        .from('users')
+        .update({comment_notifications_enabled: value})
+        .eq('id', user.id);
+      if (error) throw error;
+
+      updateUserProfile({comment_notifications_enabled: value});
+      trackEvent('comment_notifications_toggled', {enabled: value});
+    } catch (error) {
+      console.error('❌ 댓글 알림 설정 변경 실패:', error);
+      Alert.alert('오류', '댓글 알림 설정 변경에 실패했습니다.');
+    } finally {
+      setIsUpdatingCommentNotifications(false);
     }
   };
 
@@ -140,17 +182,46 @@ const Settings = () => {
     );
   }
 
+  const notificationsOn = user?.notifications_enabled ?? true;
+
   return (
     <S.Container>
       <S.ScrollView contentContainerStyle={{paddingVertical: 16, gap: 8}}>
         <S.SectionLabel>알림</S.SectionLabel>
         <S.MenuSection>
           <S.MenuItem activeOpacity={1}>
-            <S.MenuText>알림 받기</S.MenuText>
+            <S.MenuTextColumn>
+              <S.MenuText>알림 받기</S.MenuText>
+              <S.MenuSubText>뜨지 소식, 내 활동에 대한 알림을 받을 수 있어요</S.MenuSubText>
+            </S.MenuTextColumn>
             <Switch
-              value={user?.notifications_enabled ?? true}
+              value={notificationsOn}
               onValueChange={handleToggleNotifications}
               disabled={isUpdatingNotifications}
+              style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+            />
+          </S.MenuItem>
+          <S.MenuItem activeOpacity={1} style={{opacity: notificationsOn ? 1 : 0.4}}>
+            <S.MenuTextColumn>
+              <S.MenuText>좋아요 알림</S.MenuText>
+              <S.MenuSubText>내 게시물에 좋아요가 눌리면 알림 받기</S.MenuSubText>
+            </S.MenuTextColumn>
+            <Switch
+              value={user?.like_notifications_enabled ?? true}
+              onValueChange={handleToggleLikeNotifications}
+              disabled={!notificationsOn || isUpdatingLikeNotifications}
+              style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+            />
+          </S.MenuItem>
+          <S.MenuItem activeOpacity={1} style={{opacity: notificationsOn ? 1 : 0.4}}>
+            <S.MenuTextColumn>
+              <S.MenuText>댓글 알림</S.MenuText>
+              <S.MenuSubText>내 게시물/댓글에 댓글이 달리면 알림 받기</S.MenuSubText>
+            </S.MenuTextColumn>
+            <Switch
+              value={user?.comment_notifications_enabled ?? true}
+              onValueChange={handleToggleCommentNotifications}
+              disabled={!notificationsOn || isUpdatingCommentNotifications}
               style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
             />
           </S.MenuItem>

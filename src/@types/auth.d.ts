@@ -26,6 +26,10 @@ export interface UserProfile {
   profile_completed_at?: string | null;
   // 알림 수신 여부 — DB users.notifications_enabled와 매핑
   notifications_enabled?: boolean;
+  // 좋아요/댓글 알림 개별 수신 여부 — notifications_enabled 꺼지면 같이 무시됨
+  // (DB 트리거에서 두 값 AND로 체크, users.like_notifications_enabled/comment_notifications_enabled와 매핑)
+  like_notifications_enabled?: boolean;
+  comment_notifications_enabled?: boolean;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | GoogleUserProfile | AppleUserProfile;

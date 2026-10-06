@@ -17,6 +17,8 @@ import PrivacyPolicyScreen from '@/screens/PrivacyPolicy/PrivacyPolicyScreen';
 import NoticeListScreen from '@/screens/Notice/NoticeListScreen';
 import NoticeDetailScreen from '@/screens/Notice/NoticeDetailScreen';
 import FeedbackScreen from '@/screens/Feedback/FeedbackScreen';
+import LikedPostsScreen from '@/screens/MyPage/LikedPostsScreen';
+import MyCommentsScreen from '@/screens/MyPage/MyCommentsScreen';
 import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
@@ -80,6 +82,21 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.FEEDBACK}
         component={FeedbackScreen}
         options={{title: '피드백 보내기'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.LIKED_POSTS}
+        component={LikedPostsScreen}
+        options={{title: '좋아요'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.MY_COMMENTS}
+        component={MyCommentsScreen}
+        options={{title: '댓글'}}
+      />
+      <Stack.Screen
+        name={POST_ROUTES.POST_DETAIL}
+        component={PostDetailScreen}
+        options={{title: '게시물'}}
       />
     </Stack.Navigator>
   );

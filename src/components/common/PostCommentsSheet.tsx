@@ -53,7 +53,7 @@ interface PostCommentsSheetProps {
 }
 
 // 게시물 상세, 홈 피드 등 여러 화면에서 공용으로 쓰는 댓글 바텀시트.
-// 목록/작성/답글/수정/삭제/숨기기/신고를 전부 포함 — 원래 PostDetailScreen에 있던
+// 목록/작성/답글/수정/삭제(본인 또는 게시물 소유자)/신고를 전부 포함 — 원래 PostDetailScreen에 있던
 // 댓글 로직을 그대로 추출한 것(화면마다 postId/postOwnerId/프로젝트 정보만 다름)
 export default function PostCommentsSheet({
   visible,
@@ -117,7 +117,6 @@ export default function PostCommentsSheet({
           user_id,
           parent_comment_id,
           content,
-          is_hidden,
           is_edited,
           created_at,
           updated_at,
@@ -145,7 +144,6 @@ export default function PostCommentsSheet({
           user_id: c.user_id,
           parent_comment_id: c.parent_comment_id,
           content: c.content,
-          is_hidden: c.is_hidden,
           is_edited: c.is_edited,
           created_at: c.created_at,
           updated_at: c.updated_at,
@@ -154,7 +152,11 @@ export default function PostCommentsSheet({
         }))
         .filter((c: Comment) => !blockedIds.includes(c.user_id));
 
-      const topLevel = flat.filter(c => !c.parent_comment_id);
+      // 원댓글은 최신순(인스타그램/유튜브 관례 — 새로 쓴 댓글이 바로 위에 보임),
+      // 대댓글은 각자 작성 순서 그대로(오래된순)라 답글 대화 흐름은 안 뒤집힘.
+      // flat이 이미 created_at ascending으로 조회돼 있어서 replies는 그대로 두고
+      // topLevel만 뒤집으면 됨
+      const topLevel = flat.filter(c => !c.parent_comment_id).reverse();
       const tree: CommentWithReplies[] = topLevel.map(top => ({
         ...top,
         replies: flat.filter(c => c.parent_comment_id === top.id),
@@ -237,7 +239,7 @@ export default function PostCommentsSheet({
   };
 
   const handleDeleteComment = (commentId: string) => {
-    Alert.alert('댓글 삭제', '정말 이 댓글을 삭제하시겠습니까?', [
+    Alert.alert('댓글 삭제', '댓글을 삭제하시겠습니까? 복원할 수 없습니다.', [
       {text: '취소', style: 'cancel'},
       {
         text: '삭제',
@@ -254,17 +256,6 @@ export default function PostCommentsSheet({
         },
       },
     ]);
-  };
-
-  const handleHideComment = async (commentId: string) => {
-    try {
-      const {error} = await supabase.from('comments').update({is_hidden: true}).eq('id', commentId);
-      if (error) throw error;
-      await fetchComments();
-    } catch (error) {
-      console.error('❌ 댓글 숨기기 실패:', error);
-      Alert.alert('오류', '댓글을 숨기는 중 문제가 발생했습니다.');
-    }
   };
 
   const handleOpenCommentReport = (comment: Comment) => {
@@ -329,10 +320,10 @@ export default function PostCommentsSheet({
     parentAuthor?: {id: string; nickname: string},
   ) => {
     // 답글 작성 시 content 맨 앞에 "@닉네임 "을 붙여서 저장해둔 걸 분리해서
-    // 멘션 부분만 따로 스타일링(평문화 방지용 — DB엔 parent_comment_id만 있어서
-    // 누구에게 단 답글인지는 이 텍스트 태그로만 구분됨). 답글은 항상 원댓글(top-level)
-    // 작성자에게만 달리므로(1단계 제한), parentAuthor는 그 원댓글 작성자 정보 — 멘션
-    // 텍스트가 그 닉네임으로 시작할 때만 탭해서 프로필로 이동 가능하게 함
+    // 멘션 부분만 따로 스타일링(평문화 방지용 — DB엔 parent_comment_id만 있고 항상
+    // 최상위 원댓글을 가리키도록 flatten돼 있어서, 대댓글에 단 대댓글인지는 이 텍스트
+    // 태그로만 구분됨). parentAuthor는 호출부에서 이 댓글의 실제 멘션 대상(원댓글
+    // 작성자 또는 같은 쓰레드의 다른 대댓글 작성자)을 찾아서 넘겨줌
     const mentionPrefix = parentAuthor ? `@${parentAuthor.nickname} ` : null;
     const hasMention = isReply && !!mentionPrefix && comment.content.startsWith(mentionPrefix);
     const restContent = hasMention ? comment.content.slice(mentionPrefix!.length) : comment.content;
@@ -383,11 +374,9 @@ export default function PostCommentsSheet({
             {restContent}
             {comment.is_edited && <S.CommentEditedMark>  (수정됨)</S.CommentEditedMark>}
           </S.CommentContent>
-          {!isReply && (
-            <S.CommentReplyButton onPress={() => handleStartReply(comment)}>
-              <S.CommentReplyButtonText>답글</S.CommentReplyButtonText>
-            </S.CommentReplyButton>
-          )}
+          <S.CommentReplyButton onPress={() => handleStartReply(comment)}>
+            <S.CommentReplyButtonText>답글</S.CommentReplyButtonText>
+          </S.CommentReplyButton>
         </S.CommentBody>
       </S.CommentRow>
     );
@@ -412,9 +401,14 @@ export default function PostCommentsSheet({
           },
         ]
       : isPostOwnerForCommentMenu
-      ? // 2) 게시물 소유자(댓글 작성자는 아님) → 숨기기/신고하기
+      ? // 2) 게시물 소유자(댓글 작성자는 아님) → 삭제하기/신고하기 (RLS가 게시물 소유자의
+        // 댓글 삭제를 이미 허용하고 있음 — "Author or post owner can delete comment")
         [
-          {label: '숨기기', onPress: () => handleHideComment(commentMenuTarget.id)},
+          {
+            label: '삭제하기',
+            onPress: () => handleDeleteComment(commentMenuTarget.id),
+            isDestructive: true,
+          },
           {
             label: '신고하기',
             onPress: () => handleOpenCommentReport(commentMenuTarget),
@@ -455,17 +449,36 @@ export default function PostCommentsSheet({
           ) : comments.length === 0 ? (
             <S.CommentsEmptyText>첫 댓글을 남겨보세요.</S.CommentsEmptyText>
           ) : (
-            comments.map(comment => (
-              <React.Fragment key={comment.id}>
-                {renderCommentRow(comment, false)}
-                {comment.replies.map(reply =>
-                  renderCommentRow(reply, true, {
-                    id: comment.user_id,
-                    nickname: comment.nickname,
-                  }),
-                )}
-              </React.Fragment>
-            ))
+            comments.map(comment => {
+              // 같은 쓰레드(원댓글 + 그 대댓글들) 참여자 닉네임→유저 맵 — 대댓글이
+              // 원댓글 작성자가 아니라 다른 대댓글 작성자를 멘션했을 수도 있어서,
+              // content 앞부분의 "@닉네임 "이 누구를 가리키는지 여기서 역으로 찾음
+              const participants: Record<string, {id: string; nickname: string}> = {
+                [comment.nickname]: {id: comment.user_id, nickname: comment.nickname},
+              };
+              comment.replies.forEach(r => {
+                participants[r.nickname] = {id: r.user_id, nickname: r.nickname};
+              });
+              const resolveMentionAuthor = (reply: Comment) => {
+                const matches = Object.keys(participants).filter(
+                  nick => nick !== reply.nickname && reply.content.startsWith(`@${nick} `),
+                );
+                // 닉네임이 서로의 접두사인 경우(드묾) 더 긴 쪽이 더 구체적인 매치
+                matches.sort((a, b) => b.length - a.length);
+                return matches.length > 0
+                  ? participants[matches[0]]
+                  : {id: comment.user_id, nickname: comment.nickname};
+              };
+
+              return (
+                <React.Fragment key={comment.id}>
+                  {renderCommentRow(comment, false)}
+                  {comment.replies.map(reply =>
+                    renderCommentRow(reply, true, resolveMentionAuthor(reply)),
+                  )}
+                </React.Fragment>
+              );
+            })
           )}
         </S.CommentsSheetList>
         {(replyingTo || editingTarget) && (

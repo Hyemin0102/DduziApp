@@ -20,7 +20,7 @@ import {getProjectDateLabel} from '@/lib/projectDate';
 import SavedProjectCard from '@/components/common/SavedProjectCard';
 import {trackEvent} from '@/lib/mixpanel';
 
-type TabType = 'inProgress' | 'completed' | 'saved';
+type TabType = 'planned' | 'inProgress' | 'completed' | 'saved';
 
 interface SavedProject {
   savedId: string;
@@ -75,7 +75,7 @@ export default function ProjectsScreen() {
       const [projectsRes, savedRes] = await Promise.all([
         supabase
           .from('projects')
-          .select('id, title, created_at, updated_at, is_completed, visibility, thumbnail_url, started_at, completed_at')
+          .select('id, title, created_at, updated_at, is_completed, status, visibility, thumbnail_url, started_at, completed_at')
           .eq('user_id', user.id)
           .order('created_at', {ascending: false}),
         supabase
@@ -214,8 +214,9 @@ export default function ProjectsScreen() {
     }
   };
 
-  const inProgressProjects = myProjects.filter(p => !p.is_completed);
-  const completedProjects = myProjects.filter(p => p.is_completed);
+  const plannedProjects = myProjects.filter(p => p.status === 'planned');
+  const inProgressProjects = myProjects.filter(p => p.status === 'in_progress');
+  const completedProjects = myProjects.filter(p => p.status === 'completed');
   const activeSaved = savedProjects.filter(p => p.visibility === 'public');
   const privateSaved = savedProjects.filter(p => p.visibility === 'private');
 
@@ -297,33 +298,33 @@ export default function ProjectsScreen() {
   }
 
   const currentProjects =
-    activeTab === 'inProgress' ? inProgressProjects : completedProjects;
+    activeTab === 'planned'
+      ? plannedProjects
+      : activeTab === 'inProgress'
+      ? inProgressProjects
+      : completedProjects;
 
   return (
     <S.Container>
-      {/* Summary (탭 역할 겸) */}
-      <S.Summary>
-        <S.SummaryItem onPress={() => switchTab('inProgress')}>
-          <S.SummaryCount active={activeTab === 'inProgress'}>
-            {inProgressProjects.length}
-          </S.SummaryCount>
-          <S.SummaryLabel active={activeTab === 'inProgress'}>진행 중</S.SummaryLabel>
-        </S.SummaryItem>
-        <S.SummaryDivider />
-        <S.SummaryItem onPress={() => switchTab('completed')}>
-          <S.SummaryCount active={activeTab === 'completed'}>
-            {completedProjects.length}
-          </S.SummaryCount>
-          <S.SummaryLabel active={activeTab === 'completed'}>완료</S.SummaryLabel>
-        </S.SummaryItem>
-        <S.SummaryDivider />
-        <S.SummaryItem onPress={() => switchTab('saved')}>
-          <S.SummaryCount active={activeTab === 'saved'}>
-            {savedProjects.length}
-          </S.SummaryCount>
-          <S.SummaryLabel active={activeTab === 'saved'}>뜨개함</S.SummaryLabel>
-        </S.SummaryItem>
-      </S.Summary>
+      {/* 탭 */}
+      <S.TabContainer>
+        <S.Tab active={activeTab === 'planned'} onPress={() => switchTab('planned')}>
+          <S.TabText active={activeTab === 'planned'}>예정</S.TabText>
+          {activeTab === 'planned' && <S.TabIndicator />}
+        </S.Tab>
+        <S.Tab active={activeTab === 'inProgress'} onPress={() => switchTab('inProgress')}>
+          <S.TabText active={activeTab === 'inProgress'}>진행 중</S.TabText>
+          {activeTab === 'inProgress' && <S.TabIndicator />}
+        </S.Tab>
+        <S.Tab active={activeTab === 'completed'} onPress={() => switchTab('completed')}>
+          <S.TabText active={activeTab === 'completed'}>완료</S.TabText>
+          {activeTab === 'completed' && <S.TabIndicator />}
+        </S.Tab>
+        <S.Tab active={activeTab === 'saved'} onPress={() => switchTab('saved')}>
+          <S.TabText active={activeTab === 'saved'}>뜨개함</S.TabText>
+          {activeTab === 'saved' && <S.TabIndicator />}
+        </S.Tab>
+      </S.TabContainer>
 
       {/* 뜨개함 탭 */}
       {activeTab === 'saved' ? (
@@ -385,12 +386,16 @@ export default function ProjectsScreen() {
                 resizeMode="contain"
               />
               <S.EmptyText>
-                {activeTab === 'inProgress'
+                {activeTab === 'planned'
+                  ? '예정된 프로젝트가 없어요'
+                  : activeTab === 'inProgress'
                   ? '진행 중인 프로젝트가 없어요'
                   : '완료된 프로젝트가 없어요'}
               </S.EmptyText>
               <S.EmptySubText>
-                {activeTab === 'inProgress'
+                {activeTab === 'planned'
+                  ? '새 프로젝트를 만들어보세요!'
+                  : activeTab === 'inProgress'
                   ? '프로젝트를 시작해보세요!'
                   : '프로젝트를 완료해보세요!'}
               </S.EmptySubText>

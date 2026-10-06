@@ -148,6 +148,9 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.NOTICE_LIST]: undefined;
   [MY_PAGE_ROUTES.NOTICE_DETAIL]: {noticeId: string; title?: string};
   [MY_PAGE_ROUTES.FEEDBACK]: undefined;
+  [MY_PAGE_ROUTES.LIKED_POSTS]: undefined;
+  [MY_PAGE_ROUTES.MY_COMMENTS]: undefined;
+  [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 
 // ============= Navigation Props =============

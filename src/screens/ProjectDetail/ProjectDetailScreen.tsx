@@ -120,7 +120,7 @@ function checkDirty(
     original.needleInfo !== current.needleInfo ||
     original.patternInfo !== current.patternInfo ||
     original.patternUrl !== current.patternUrl ||
-    original.formIsCompleted !== current.formIsCompleted ||
+    original.formStatus !== current.formStatus ||
     original.formVisibility !== current.formVisibility ||
     original.formLikesEnabled !== current.formLikesEnabled ||
     original.formCommentsEnabled !== current.formCommentsEnabled ||
@@ -138,7 +138,7 @@ interface OriginalValues {
   needleInfo: string;
   patternInfo: string;
   patternUrl: string;
-  formIsCompleted: boolean;
+  formStatus: 'planned' | 'in_progress' | 'completed';
   formVisibility: 'public' | 'private';
   formLikesEnabled: boolean;
   formCommentsEnabled: boolean;
@@ -154,7 +154,7 @@ interface CurrentForm {
   needleInfo: string;
   patternInfo: string;
   patternUrl: string;
-  formIsCompleted: boolean;
+  formStatus: 'planned' | 'in_progress' | 'completed';
   formVisibility: 'public' | 'private';
   formLikesEnabled: boolean;
   formCommentsEnabled: boolean;
@@ -176,6 +176,39 @@ function PostContentPreview({content}: {content: string}) {
       </S.PostContent>
       {isTruncated && <S.PostMore>더보기</S.PostMore>}
     </>
+  );
+}
+
+function PostImageCarousel({images}: {images: {id: string; image_url: string}[]}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const pageWidth = SCREEN_WIDTH - 36;
+  return (
+    <S.PostImageCarouselWrapper>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={pageWidth}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        onScroll={e =>
+          setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / pageWidth))
+        }
+        style={{height: 220}}>
+        {images.map(img => (
+          <S.PostImageWrapper key={img.id} width={pageWidth}>
+            <S.PostImage
+              source={{uri: toThumbnailUrl(img.image_url) ?? img.image_url}}
+            />
+          </S.PostImageWrapper>
+        ))}
+      </ScrollView>
+      {images.length > 1 && (
+        <S.PostImageCounter>
+          {activeIndex + 1} / {images.length}
+        </S.PostImageCounter>
+      )}
+    </S.PostImageCarouselWrapper>
   );
 }
 
@@ -236,7 +269,7 @@ export default function ProjectDetailScreen() {
   const [needleInfo, setNeedleInfo] = useState('');
   const [patternInfo, setPatternInfo] = useState('');
   const [patternUrl, setPatternUrl] = useState('');
-  const [formIsCompleted, setFormIsCompleted] = useState(false);
+  const [formStatus, setFormStatus] = useState<'planned' | 'in_progress' | 'completed'>('planned');
   const [formVisibility, setFormVisibility] = useState<'public' | 'private'>(
     'private',
   );
@@ -289,7 +322,7 @@ export default function ProjectDetailScreen() {
         needleInfo,
         patternInfo,
         patternUrl,
-        formIsCompleted,
+        formStatus,
         formVisibility,
         formLikesEnabled,
         formCommentsEnabled,
@@ -308,7 +341,7 @@ export default function ProjectDetailScreen() {
       needleInfo,
       patternInfo,
       patternUrl,
-      formIsCompleted,
+      formStatus,
       formVisibility,
       formLikesEnabled,
       formCommentsEnabled,
@@ -334,7 +367,7 @@ export default function ProjectDetailScreen() {
         needleInfo: setNeedleInfo,
         patternInfo: setPatternInfo,
         patternUrl: setPatternUrl,
-        formIsCompleted: setFormIsCompleted,
+        formStatus: setFormStatus,
         formVisibility: setFormVisibility,
         formLikesEnabled: setFormLikesEnabled,
         formCommentsEnabled: setFormCommentsEnabled,
@@ -457,7 +490,7 @@ export default function ProjectDetailScreen() {
       needleInfo: p.needle_info || '',
       patternInfo: p.pattern_info || '',
       patternUrl: p.pattern_url || '',
-      formIsCompleted: p.is_completed || false,
+      formStatus: p.status || 'in_progress',
       formVisibility: p.visibility || 'private',
       formLikesEnabled: p.likes_enabled ?? true,
       formCommentsEnabled: p.comments_enabled ?? true,
@@ -473,7 +506,7 @@ export default function ProjectDetailScreen() {
     setNeedleInfo(values.needleInfo);
     setPatternInfo(values.patternInfo);
     setPatternUrl(values.patternUrl);
-    setFormIsCompleted(values.formIsCompleted);
+    setFormStatus(values.formStatus);
     setFormLikesEnabled(values.formLikesEnabled);
     setFormCommentsEnabled(values.formCommentsEnabled);
     setFormVisibility(values.formVisibility);
@@ -564,7 +597,7 @@ export default function ProjectDetailScreen() {
         .from('projects')
         .select(
           `id, user_id, title, content, yarn_info, needle_info,
-           pattern_info, pattern_url, pattern_pdf_name, is_completed, visibility,
+           pattern_info, pattern_url, pattern_pdf_name, is_completed, status, visibility,
            likes_enabled, comments_enabled,
            thumbnail_url, started_at, completed_at,
            created_at, updated_at,
@@ -631,8 +664,10 @@ export default function ProjectDetailScreen() {
     try {
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const finalCompletedAt = formIsCompleted ? (completedAt || todayStr) : null;
-      const finalStartedAt = startedAt || todayStr;
+      const finalCompletedAt = formStatus === 'completed' ? (completedAt || todayStr) : null;
+      // 예정 상태는 아직 안 시작한 거라 시작일을 자동으로 채우면 안 됨(DB 컬럼 기본값도 우회해야
+      // 하므로 명시적으로 null을 보냄 — 컬럼을 생략하면 DEFAULT current_date가 적용돼버림)
+      const finalStartedAt = formStatus === 'planned' ? null : startedAt || todayStr;
 
       // 썸네일 업로드
       let finalThumbnailUrl = thumbnailUrl;
@@ -689,7 +724,7 @@ export default function ProjectDetailScreen() {
             pattern_info: patternInfo.trim() || null,
             pattern_url: finalPatternUrl.trim() || null,
             pattern_pdf_name: finalPatternPdfName.trim() || null,
-            is_completed: formIsCompleted,
+            status: formStatus,
             visibility: formVisibility,
             likes_enabled: formLikesEnabled,
             comments_enabled: formCommentsEnabled,
@@ -715,7 +750,7 @@ export default function ProjectDetailScreen() {
             pattern_info: patternInfo.trim() || null,
             pattern_url: finalPatternUrl.trim() || null,
             pattern_pdf_name: finalPatternPdfName.trim() || null,
-            is_completed: formIsCompleted,
+            status: formStatus,
             visibility: formVisibility,
             likes_enabled: formLikesEnabled,
             comments_enabled: formCommentsEnabled,
@@ -733,7 +768,7 @@ export default function ProjectDetailScreen() {
           throw new Error('프로젝트 수정에 실패했습니다.');
         }
         currentProjectId = projectId!;
-        if (!project?.is_completed && formIsCompleted) {
+        if (project?.status !== 'completed' && formStatus === 'completed') {
           trackEvent('project_completed', {project_id: currentProjectId});
         }
       }
@@ -801,7 +836,7 @@ export default function ProjectDetailScreen() {
     startedAt,
     completedAt,
     currentUserId,
-    formIsCompleted,
+    formStatus,
     formVisibility,
     formLikesEnabled,
     formCommentsEnabled,
@@ -837,7 +872,7 @@ export default function ProjectDetailScreen() {
           pattern_pdf_name: copiedPatternUrl ? project.pattern_pdf_name ?? null : null,
           content: null,
           thumbnail_url: null,
-          is_completed: false,
+          status: 'in_progress',
           visibility: 'private',
         })
         .select('id, title')
@@ -1085,7 +1120,7 @@ export default function ProjectDetailScreen() {
   // ── 캘린더 핸들러
   const openCalendar = (target: 'started' | 'completed') => {
     setCalendarTarget(target);
-    setCalendarMode(formIsCompleted ? 'range' : 'single');
+    setCalendarMode(formStatus === 'completed' ? 'range' : 'single');
     setShowCalendar(true);
   };
 
@@ -1222,28 +1257,29 @@ export default function ProjectDetailScreen() {
           ) : project ? (
             <>
               {project.content ? <S.Body>{project.content}</S.Body> : null}
-              {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at) && (
-                <S.ProjectDate>
-                  <S.DateChip activeOpacity={1} disabled>
-                    <Icon name="calendar" size={12} color="#888" />
-                    <S.DateChipText>
-                      {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
-                    </S.DateChipText>
-                  </S.DateChip>
-
-                  <S.SaveBadge
-                    onPress={handleToggleSave}
-                    disabled={isSaveLoading}
-                    activeOpacity={0.7}>
-                    {isSaved ? (
-                      <SavedCheckIcon width={12} height={12} color="#666666" />
-                    ) : (
-                      <SaveIcon width={16} height={16} color="#454545" />
-                    )}
-                    <S.SaveBadgeText>{isSaved ? "뜨개함 보관 중" :"뜨개함 담기"} </S.SaveBadgeText>
-                  </S.SaveBadge>
-                </S.ProjectDate>
-              )}
+              <S.ProjectDate>
+                <S.StatusDateGroup>
+                  {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at) && (
+                    <S.DateChip activeOpacity={1} disabled>
+                      <Icon name="calendar" size={12} color="#888" />
+                      <S.DateChipText>
+                        {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
+                      </S.DateChipText>
+                    </S.DateChip>
+                  )}
+                </S.StatusDateGroup>
+                <S.SaveBadge
+                  onPress={handleToggleSave}
+                  disabled={isSaveLoading}
+                  activeOpacity={0.7}>
+                  {isSaved ? (
+                    <SavedCheckIcon width={12} height={12} color="#666666" />
+                  ) : (
+                    <SaveIcon width={16} height={16} color="#454545" />
+                  )}
+                  <S.SaveBadgeText>{isSaved ? "뜨개함 보관 중" :"뜨개함 담기"} </S.SaveBadgeText>
+                </S.SaveBadge>
+              </S.ProjectDate>
             </>
           ) : null}
 
@@ -1266,82 +1302,53 @@ export default function ProjectDetailScreen() {
               <View style={{alignItems: 'flex-end', gap: 10}}>
                 <S.StatusSegment>
                   <S.StatusSegmentButton
-                    active={!formIsCompleted}
-                    onPress={() => {
-                      if (formIsCompleted) {
-                        setField('formIsCompleted', false);
-                      }
-                    }}>
-                    <S.StatusSegmentText active={!formIsCompleted}>
+                    active={formStatus === 'planned'}
+                    onPress={() => setField('formStatus', 'planned')}>
+                    <S.StatusSegmentText active={formStatus === 'planned'}>
+                      예정
+                    </S.StatusSegmentText>
+                  </S.StatusSegmentButton>
+                  <S.StatusSegmentButton
+                    active={formStatus === 'in_progress'}
+                    onPress={() => setField('formStatus', 'in_progress')}>
+                    <S.StatusSegmentText active={formStatus === 'in_progress'}>
                       진행 중
                     </S.StatusSegmentText>
                   </S.StatusSegmentButton>
                   <S.StatusSegmentButton
-                    active={formIsCompleted}
-                    onPress={() => {
-                      if (!formIsCompleted) setField('formIsCompleted', true);
-                    }}>
-                    <S.StatusSegmentText active={formIsCompleted}>
+                    active={formStatus === 'completed'}
+                    onPress={() => setField('formStatus', 'completed')}>
+                    <S.StatusSegmentText active={formStatus === 'completed'}>
                       완료
                     </S.StatusSegmentText>
                   </S.StatusSegmentButton>
                 </S.StatusSegment>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  {formIsCompleted ? (
-                    <>
+                {formStatus !== 'planned' && (
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    {formStatus === 'completed' ? (
+                      <>
+                        <S.DateChip onPress={() => openCalendar('started')}>
+                          <Icon name="calendar" size={12} color="#888" />
+                          <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
+                        </S.DateChip>
+                        <S.DateRangeSep>~</S.DateRangeSep>
+                        <S.DateChip onPress={() => openCalendar('completed')}>
+                          <Icon name="calendar" size={12} color="#888" />
+                          <S.DateChipText>{formatDateDisplay(completedAt, '종료일')}</S.DateChipText>
+                        </S.DateChip>
+                      </>
+                    ) : (
                       <S.DateChip onPress={() => openCalendar('started')}>
                         <Icon name="calendar" size={12} color="#888" />
                         <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
                       </S.DateChip>
-                      <S.DateRangeSep>~</S.DateRangeSep>
-                      <S.DateChip onPress={() => openCalendar('completed')}>
-                        <Icon name="calendar" size={12} color="#888" />
-                        <S.DateChipText>{formatDateDisplay(completedAt, '종료일')}</S.DateChipText>
-                      </S.DateChip>
-                    </>
-                  ) : (
-                    <S.DateChip onPress={() => openCalendar('started')}>
-                      <Icon name="calendar" size={12} color="#888" />
-                      <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
-                    </S.DateChip>
-                  )}
-                </View>
+                    )}
+                  </View>
+                )}
               </View>
             </S.MetaRow>
           </S.MetaSection>
         )}
-
-        {/* 조회 전용 상태 (타인 프로젝트) — 기존 뱃지 디자인 유지 */}
-        {!canEdit && project && (
-          <S.MetaSection>
-            <S.MetaRow style={{borderBottomWidth: 0, flexDirection: 'column', alignItems: 'flex-start', gap: 8}}>
-              <S.BadgeRow>
-                <S.StatusBadge variant={project.is_completed ? 'completed' : 'progress'}>
-                  <S.StatusText variant={project.is_completed ? 'completed' : 'progress'}>
-                    {project.is_completed ? '완료' : '진행 중'}
-                  </S.StatusText>
-                </S.StatusBadge>
-                <S.StatusBadge variant={project.visibility === 'public' ? 'public' : 'private'}>
-                  <S.StatusText variant={project.visibility === 'public' ? 'public' : 'private'}>
-                    {project.visibility === 'public' ? '공개' : '비공개'}
-                  </S.StatusText>
-                </S.StatusBadge>
-                <S.StatusBadge variant={project.likes_enabled ? 'on' : 'off'}>
-                  <S.StatusText variant={project.likes_enabled ? 'on' : 'off'}>
-                    {project.likes_enabled ? '좋아요 허용' : '좋아요 비허용'}
-                  </S.StatusText>
-                </S.StatusBadge>
-                <S.StatusBadge variant={project.comments_enabled ? 'on' : 'off'}>
-                  <S.StatusText variant={project.comments_enabled ? 'on' : 'off'}>
-                    {project.comments_enabled ? '댓글 허용' : '댓글 비허용'}
-                  </S.StatusText>
-                </S.StatusBadge>
-              </S.BadgeRow>
-             
-            </S.MetaRow>
-          </S.MetaSection>
-        )}
-
 
         {/* ══ 정보 섹션: 실 · 바늘 · 도안 ══════════════════ */}
         <S.InfoSection>
@@ -1708,35 +1715,11 @@ export default function ProjectDetailScreen() {
                 {posts.slice(0, MAX_LENGTH_POST).map(post => (
                   <S.PostCard key={post.id}>
                     {post.post_images.length > 0 && (
-                      <ScrollView
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        snapToInterval={SCREEN_WIDTH - 36}
-                        decelerationRate="fast"
-                        style={{height: 220}}>
-                        {post.post_images
+                      <PostImageCarousel
+                        images={post.post_images
                           .slice()
-                          .sort((a, b) => a.display_order - b.display_order)
-                          .map((img, index) => (
-                            <S.PostImageWrapper
-                              key={img.id}
-                              width={SCREEN_WIDTH - 36}>
-                              <S.PostImage
-                                source={{
-                                  uri:
-                                    toThumbnailUrl(img.image_url) ??
-                                    img.image_url,
-                                }}
-                              />
-                              {post.post_images.length > 1 && (
-                                <S.PostImageCounter>
-                                  {index + 1} / {post.post_images.length}
-                                </S.PostImageCounter>
-                              )}
-                            </S.PostImageWrapper>
-                          ))}
-                      </ScrollView>
+                          .sort((a, b) => a.display_order - b.display_order)}
+                      />
                     )}
                     <TouchableOpacity
                       onPress={() =>
@@ -1860,10 +1843,10 @@ export default function ProjectDetailScreen() {
       {/* 캘린더 모달 */}
       <CalendarModal
         visible={showCalendar}
-        mode={formIsCompleted ? 'range' : 'single'}
-        initialDate={!formIsCompleted ? startedAt : undefined}
-        initialStart={formIsCompleted ? startedAt : undefined}
-        initialEnd={formIsCompleted ? completedAt : undefined}
+        mode={formStatus === 'completed' ? 'range' : 'single'}
+        initialDate={formStatus !== 'completed' ? startedAt : undefined}
+        initialStart={formStatus === 'completed' ? startedAt : undefined}
+        initialEnd={formStatus === 'completed' ? completedAt : undefined}
         maxDate={new Date().toISOString().split('T')[0]}
         onConfirm={handleCalendarConfirm}
         onClose={() => setShowCalendar(false)}

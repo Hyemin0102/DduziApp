@@ -16,13 +16,21 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 
 interface NotificationItem {
   id: string;
-  type: 'notice' | 'project_post';
+  type: 'notice' | 'project_post' | 'post_like' | 'comment';
   title: string;
   body: string;
   data: Record<string, string> | null;
   is_read: boolean;
   created_at: string;
 }
+
+// 좋아요/댓글 알림은 "닉네임" 부분만 굵게 보여주려고, DB가 평문으로 합쳐둔
+// body 대신 data.nickname + 이 접미사로 클라이언트에서 다시 조립함
+// (SQL 쪽 문구가 바뀌면 여기도 같이 맞춰야 함 — supabase/migrations/20261005050000_personalize_like_comment_notification_body.sql)
+const NICKNAME_NOTIFICATION_SUFFIX: Partial<Record<NotificationItem['type'], string>> = {
+  post_like: '님이 회원님의 게시물을 좋아합니다.',
+  comment: '님이 댓글을 남겼습니다.',
+};
 
 function formatRelativeTime(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -117,18 +125,30 @@ export default function NotificationListScreen() {
           <Text style={styles.emptyText}>받은 알림이 없어요</Text>
         </View>
       }
-      renderItem={({item}) => (
-        <TouchableOpacity style={styles.row} onPress={() => handlePress(item)}>
-          {!item.is_read && <View style={styles.unreadDot} />}
-          <View style={styles.rowContent}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.body} numberOfLines={2}>
-              {item.body}
-            </Text>
-            <Text style={styles.date}>{formatRelativeTime(item.created_at)}</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      renderItem={({item}) => {
+        const nickname = item.data?.nickname;
+        const suffix = NICKNAME_NOTIFICATION_SUFFIX[item.type];
+
+        return (
+          <TouchableOpacity style={styles.row} onPress={() => handlePress(item)}>
+            {!item.is_read && <View style={styles.unreadDot} />}
+            <View style={styles.rowContent}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.body} numberOfLines={2}>
+                {nickname && suffix ? (
+                  <>
+                    <Text style={styles.bodyBold}>{nickname}</Text>
+                    {suffix}
+                  </>
+                ) : (
+                  item.body
+                )}
+              </Text>
+              <Text style={styles.date}>{formatRelativeTime(item.created_at)}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
     />
   );
@@ -169,6 +189,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
     marginBottom: 6,
+  },
+  bodyBold: {
+    fontWeight: '700',
+    color: '#191919',
   },
   date: {
     fontSize: 12,
