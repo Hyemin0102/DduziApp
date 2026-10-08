@@ -3,6 +3,7 @@ import {ActivityIndicator, Text} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {UserProfile} from '../../@types/auth';
 import * as S from './UserProfileCard.style';
+import SupporterBadge from './SupporterBadge';
 import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {supabase} from '@/lib/supabase';
@@ -20,10 +21,19 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   onAddPost,
 }) => {
   const {navigation} = useCommonNavigation();
-  const {user: authUser} = useAuth();
+  const {user: authUser, refreshUserProfile} = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const loadedUserIdRef = useRef<string | null>(null);
+  const refreshRef = useRef(refreshUserProfile);
+  refreshRef.current = refreshUserProfile;
+
+  // 내 페이지 진입 시 DB 기준으로 뱃지 등급 등 최신 정보를 다시 읽음
+  useFocusEffect(
+    useCallback(() => {
+      if (isMyPage) refreshRef.current();
+    }, [isMyPage]),
+  );
 
   // 내 페이지면 AuthContext 사용 (프로필 수정 즉시 반영)
   useEffect(() => {
@@ -67,6 +77,10 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   if (loading) return <ActivityIndicator size="small" color="#191919" />;
   if (!userId || !user) return <Text>프로필을 불러올 수 없습니다</Text>;
 
+  console.log('show_supporter_badge',user.show_supporter_badge);
+  console.log('supporter_level',user.supporter_level);
+  
+
   return (
     <S.Container>
       {/* 프로필 이미지 + 정보 */}
@@ -80,8 +94,15 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
             </S.ProfileImagePlaceholderText>
           </S.ProfileImagePlaceholder>
         )}
+
+
         <S.InfoContainer>
-          <S.Name>{user.nickname || '이름 없음'}</S.Name>
+          <S.NameRow>
+            <S.Name>{user.nickname || '이름 없음'}</S.Name>
+            {(isMyPage || user.show_supporter_badge) && user.supporter_level ? (
+              <SupporterBadge level={user.supporter_level} size={24} />
+            ) : null}
+          </S.NameRow>
           {user.bio ? <S.ProviderText>{user.bio}</S.ProviderText> : null}
         </S.InfoContainer>
       </S.Wrapper>

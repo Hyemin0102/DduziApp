@@ -2,6 +2,7 @@ import React, {useCallback, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   RefreshControl,
   Text,
   TouchableOpacity,
@@ -10,6 +11,7 @@ import {
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {supabase} from '@/lib/supabase';
+import {thumbnailUrl} from '@/lib/imageTransform';
 import {useAuth} from '@/contexts/AuthContext';
 import {navigateFromNotificationData} from '@/lib/navigationRef';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
@@ -52,6 +54,7 @@ export default function NotificationListScreen() {
   const {navigation} = useCommonNavigation();
   const {user} = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [postThumbnails, setPostThumbnails] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,6 +72,46 @@ export default function NotificationListScreen() {
 
       if (!error && data) {
         setNotifications(data as NotificationItem[]);
+
+        const postIds = Array.from(
+          new Set(
+            (data as NotificationItem[])
+              .map(n => n.data?.postId)
+              .filter((id): id is string => !!id),
+          ),
+        );
+        const projectIds = Array.from(
+          new Set(
+            (data as NotificationItem[])
+              .filter(n => n.type === 'project_post')
+              .map(n => n.data?.projectId)
+              .filter((id): id is string => !!id),
+          ),
+        );
+
+        const [postsRes, projectsRes] = await Promise.all([
+          postIds.length > 0
+            ? supabase
+                .from('posts')
+                .select('id, post_images ( image_url, display_order )')
+                .in('id', postIds)
+            : Promise.resolve({data: [] as any[]}),
+          projectIds.length > 0
+            ? supabase.from('projects').select('id, thumbnail_url').in('id', projectIds)
+            : Promise.resolve({data: [] as any[]}),
+        ]);
+
+        const postThumbs: Record<string, string> = {};
+        (postsRes.data || []).forEach((post: any) => {
+          const firstImage = [...(post.post_images || [])].sort(
+            (a: any, b: any) => a.display_order - b.display_order,
+          )[0]?.image_url;
+          if (firstImage) postThumbs[post.id] = firstImage;
+        });
+        (projectsRes.data || []).forEach((project: any) => {
+          if (project.thumbnail_url) postThumbs[`project:${project.id}`] = project.thumbnail_url;
+        });
+        setPostThumbnails(postThumbs);
 
         // 목록에 보이는 것과 상관없이(50개 제한 밖의 것 포함) 안 읽은 알림을
         // 전부 읽음 처리 — 홈 헤더 뱃지는 전체 안읽음 개수를 세기 때문에,
@@ -128,6 +171,11 @@ export default function NotificationListScreen() {
       renderItem={({item}) => {
         const nickname = item.data?.nickname;
         const suffix = NICKNAME_NOTIFICATION_SUFFIX[item.type];
+        const projectThumbnail = item.data?.projectId
+          ? postThumbnails[`project:${item.data.projectId}`]
+          : undefined;
+        const thumbnail =
+          projectThumbnail ?? (item.data?.postId ? postThumbnails[item.data.postId] : undefined);
 
         return (
           <TouchableOpacity style={styles.row} onPress={() => handlePress(item)}>
@@ -146,6 +194,12 @@ export default function NotificationListScreen() {
               </Text>
               <Text style={styles.date}>{formatRelativeTime(item.created_at)}</Text>
             </View>
+            {thumbnail && (
+              <Image
+                source={{uri: thumbnailUrl(thumbnail) ?? thumbnail}}
+                style={styles.thumbnail}
+              />
+            )}
           </TouchableOpacity>
         );
       }}
@@ -178,6 +232,12 @@ const styles = StyleSheet.create({
   },
   rowContent: {
     flex: 1,
+  },
+  thumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 15,

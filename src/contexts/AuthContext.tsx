@@ -1,10 +1,12 @@
 import React, {createContext, useContext, useEffect, useState} from 'react';
+import {AppState} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {AuthContextType, AuthProviderProps, UserProfile} from '../@types/auth';
 import {supabase} from '../lib/supabase';
 import {logout as KakaoLogout} from '@react-native-seoul/kakao-login';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {identifyUser, resetUser, trackEvent} from '../lib/mixpanel';
+import {recordAppOpen} from '../lib/appOpens';
 import {
   requestNotificationPermission,
   registerDeviceToken,
@@ -67,6 +69,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       notifications_enabled: dbUser?.notifications_enabled ?? true,
       like_notifications_enabled: dbUser?.like_notifications_enabled ?? true,
       comment_notifications_enabled: dbUser?.comment_notifications_enabled ?? true,
+      supporter_level: dbUser?.supporter_level ?? null,
+      supporter_count: dbUser?.supporter_count ?? 0,
+      show_supporter_badge: dbUser?.show_supporter_badge ?? false,
       rawProfile: rawProfile as any,
     };
   };
@@ -99,6 +104,19 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  // 접속 기록(app_opens) — 로그인 상태에서 앱을 열거나 포그라운드로 돌아올 때마다
+  // 기록 시도. 하루 1회만 남도록 서버의 유니크 제약(ON CONFLICT DO NOTHING)에 맡기므로
+  // 여기서 날짜를 따로 계산하거나 중복 호출을 막을 필요가 없음
+  useEffect(() => {
+    if (!user?.id) return;
+    recordAppOpen(user.id);
+
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') recordAppOpen(user.id);
+    });
+    return () => subscription.remove();
+  }, [user?.id]);
 
   // 로그인 상태가 되면(신규 로그인이든 앱 재시작 시 세션 복원이든) 알림이 켜져있는
   // 계정에 한해 권한 요청 + 디바이스 토큰 등록을 자동으로 시도
@@ -193,6 +211,16 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
     identifyUser(userData.id, {nickname: userData.nickname, provider});
     trackEvent('login_completed', {provider});
+  };
+
+  // DB에서 현재 사용자 정보를 다시 읽어 컨텍스트에 반영 (뱃지 등급처럼 서버가 바꾸는 값 동기화용)
+  const refreshUserProfile = async () => {
+    const {
+      data: {session},
+    } = await supabase.auth.getSession();
+    if (!session) return;
+    const userData = await fetchUserWithProfile(session);
+    setUser(userData);
   };
 
   // 사용자 프로필 업데이트 (로컬 상태만)
@@ -292,6 +320,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         hasSeenOnboarding,
         completeOnboarding,
         updateUserProfile,
+        refreshUserProfile,
         setNeedsProfileSetup,
         completeTermsAgreement,
       }}>

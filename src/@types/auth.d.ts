@@ -30,6 +30,10 @@ export interface UserProfile {
   // (DB 트리거에서 두 값 AND로 체크, users.like_notifications_enabled/comment_notifications_enabled와 매핑)
   like_notifications_enabled?: boolean;
   comment_notifications_enabled?: boolean;
+  // 앱 후원 뱃지 — supporter_level은 서버만 갱신(1~3), show_supporter_badge는 사용자가 설정
+  supporter_level?: 1 | 2 | 3 | null;
+  supporter_count?: number;
+  show_supporter_badge?: boolean;
 
   // 원본 프로필 데이터 보관 (provider별로 다름)
   rawProfile: KakaoUserProfile | GoogleUserProfile | AppleUserProfile;
@@ -60,6 +64,7 @@ export interface AuthContextType {
   checkAuthStatus: () => Promise<void>;
   //로컬 유저 프로필 업데이트
   updateUserProfile: (updates: Partial<UserProfile>) => void;
+  refreshUserProfile: () => Promise<void>;
   //프로필 업데이트 상태 관리
   setNeedsProfileSetup: (needs: boolean) => void;
   //온보딩 완료 처리

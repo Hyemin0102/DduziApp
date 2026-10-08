@@ -150,6 +150,7 @@ export type MyPageStackParamList = {
   [MY_PAGE_ROUTES.FEEDBACK]: undefined;
   [MY_PAGE_ROUTES.LIKED_POSTS]: undefined;
   [MY_PAGE_ROUTES.MY_COMMENTS]: undefined;
+  [MY_PAGE_ROUTES.SUPPORT_STATUS]: undefined;
   [POST_ROUTES.POST_DETAIL]: {postId: string};
 };
 

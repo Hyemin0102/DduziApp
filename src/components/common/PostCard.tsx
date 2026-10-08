@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import LikeBurst from './LikeBurst';
+import SupporterBadge from './SupporterBadge';
 import * as S from './PostCard.style';
 import {thumbnailUrl, profileUrl} from '@/lib/imageTransform';
 import {supabase} from '@/lib/supabase';
@@ -23,6 +24,7 @@ interface PostCardProps {
   post: Post;
   onLikeToggled?: (postId: string, liked: boolean) => void;
   onOpenComments?: (post: Post) => void;
+  onOpenLikers?: (post: Post) => void;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -43,7 +45,7 @@ const PostImage = ({uri}: {uri: string}) => {
   );
 };
 
-const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments}) => {
+const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments, onOpenLikers}) => {
   const {navigation} = useCommonNavigation();
   const {user} = useAuth();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -68,6 +70,7 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments}
 
   // likes_count/is_liked/comments_count가 undefined면 이 화면(피드)이 배치 조회를
   // 안 하는 거라(예: Search) 액션바 자체를 숨김 — Home에서만 이 값들이 채워져 있음
+  const isMyPost = !!user && post.user_id === user.id;
   const showActionBar =
     post.likes_count !== undefined &&
     post.is_liked !== undefined &&
@@ -130,7 +133,12 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments}
             </S.ProfileImagePlaceholderText>
           </S.ProfileImagePlaceholder>
         )}
-        <S.Username>{post.users.nickname}</S.Username>
+        <S.UsernameRow>
+          <S.Username>{post.users.nickname}</S.Username>
+          {post.users.show_supporter_badge && post.users.supporter_level ? (
+            <SupporterBadge level={post.users.supporter_level} size={20} />
+          ) : null}
+        </S.UsernameRow>
       </S.ProfileSection>
 
       {/* 이미지 */}
@@ -209,34 +217,48 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments}
             {showActionBar && (
               <S.ActionBar>
                 {post.projects.likes_enabled && (
-                  <S.ActionButton
-                    onPress={handleToggleLike}
-                    disabled={isLikeLoading}
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                    <S.LikeIconWrapper>
-                      <Animated.View style={heartAnimatedStyle}>
-                        <FA5Icon
-                          name="heart"
-                          solid={post.is_liked}
-                          size={18}
-                          color={post.is_liked ? '#FF3B30' : '#000'}
-                        />
-                      </Animated.View>
-                      {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
-                    </S.LikeIconWrapper>
-                    {(post.likes_count ?? 0) > 0 && (
-                      <S.ActionButtonText>{post.likes_count}</S.ActionButtonText>
-                    )}
+                  <S.ActionButton>
+                    <S.ActionTouch
+                      onPress={handleToggleLike}
+                      disabled={isLikeLoading}
+                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                      <S.LikeIconWrapper>
+                        <Animated.View style={heartAnimatedStyle}>
+                          <FA5Icon
+                            name="heart"
+                            solid={post.is_liked}
+                            size={18}
+                            color={post.is_liked ? '#FF3B30' : '#000'}
+                          />
+                        </Animated.View>
+                        {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
+                      </S.LikeIconWrapper>
+                    </S.ActionTouch>
+                    {(post.likes_count ?? 0) > 0 &&
+                      (isMyPost ? (
+                        <S.ActionTouch
+                          onPress={e => {
+                            e.stopPropagation?.();
+                            onOpenLikers?.(post);
+                          }}
+                          hitSlop={{top: 8, bottom: 8, left: 0, right: 8}}>
+                          <S.ActionButtonText>{post.likes_count}</S.ActionButtonText>
+                        </S.ActionTouch>
+                      ) : (
+                        <S.ActionButtonText>{post.likes_count}</S.ActionButtonText>
+                      ))}
                   </S.ActionButton>
                 )}
                 {post.projects.comments_enabled && (
-                  <S.ActionButton
-                    onPress={e => {
-                      e.stopPropagation?.();
-                      onOpenComments?.(post);
-                    }}
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                    <FA5Icon name="comment" solid={false} size={18} color="#000" />
+                  <S.ActionButton>
+                    <S.ActionTouch
+                      onPress={e => {
+                        e.stopPropagation?.();
+                        onOpenComments?.(post);
+                      }}
+                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                      <FA5Icon name="comment" solid={false} size={18} color="#000" />
+                    </S.ActionTouch>
                     {(post.comments_count ?? 0) > 0 && (
                       <S.ActionButtonText>{post.comments_count}</S.ActionButtonText>
                     )}

@@ -17,6 +17,7 @@ import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import {trackEvent} from '@/lib/mixpanel';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
+import PostLikersSheet from '@/components/common/PostLikersSheet';
 
 interface OpenComments {
   postId: string;
@@ -81,6 +82,7 @@ const Search = () => {
   const [mostSavedProjects, setMostSavedProjects] = useState<MostSavedProject[]>([]);
   const [weeklyTopPosters, setWeeklyTopPosters] = useState<WeeklyTopPoster[]>([]);
   const [openComments, setOpenComments] = useState<OpenComments | null>(null);
+  const [likersPostId, setLikersPostId] = useState<string | null>(null);
   const isFocused = useRef(true);
   const inputRef = useRef<any>(null);
 
@@ -253,7 +255,9 @@ const Search = () => {
           users (
             id,
             nickname,
-            profile_image
+            profile_image,
+            supporter_level,
+            show_supporter_badge
           ),
           projects (
             id,
@@ -331,6 +335,10 @@ const Search = () => {
     );
   };
 
+  const handleOpenLikers = (post: Post) => {
+    setLikersPostId(post.id);
+  };
+
   const handleOpenComments = (post: Post) => {
     setOpenComments({
       postId: post.id,
@@ -349,6 +357,7 @@ const Search = () => {
         post={item.post}
         onLikeToggled={handleLikeToggled}
         onOpenComments={handleOpenComments}
+        onOpenLikers={handleOpenLikers}
       />
     );
 
@@ -536,6 +545,12 @@ const Search = () => {
 
       {/* 카드마다 바텀시트를 두면 FlatList 가상화로 스크롤 중 날아갈 수 있어서
       화면 레벨에 하나만 두고 postId만 바꿔끼움(Home.tsx와 동일 패턴) */}
+      <PostLikersSheet
+        visible={!!likersPostId}
+        onClose={() => setLikersPostId(null)}
+        postId={likersPostId ?? ''}
+      />
+
       <PostCommentsSheet
         visible={!!openComments}
         onClose={() => setOpenComments(null)}

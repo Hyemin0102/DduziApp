@@ -243,11 +243,18 @@ export const ActionBar = styled.View`
   margin-bottom: 8px;
 `;
 
-export const ActionButton = styled.TouchableOpacity`
+export const ActionButton = styled.View`
   flex-direction: row;
   align-items: center;
   gap: 4px;
-  padding: 4px 2px;
+`;
+
+export const ActionTouch = styled.TouchableOpacity`
+  padding: 2px;
+`;
+
+export const ActionIconPad = styled.View`
+  padding: 2px;
 `;
 
 // 하트 버스트 파티클이 겹쳐 뜰 기준 위치(좋아요 아이콘 중심)

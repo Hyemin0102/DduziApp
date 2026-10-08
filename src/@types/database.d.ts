@@ -109,6 +109,8 @@ export interface Post extends SimplePost {
     id: string;
     nickname: string;
     profile_image: string;
+    supporter_level?: 1 | 2 | 3 | null;
+    show_supporter_badge?: boolean;
   };
   projects: Pick<
     ProjectBase,

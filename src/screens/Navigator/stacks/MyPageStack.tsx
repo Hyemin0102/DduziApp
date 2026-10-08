@@ -19,6 +19,7 @@ import NoticeDetailScreen from '@/screens/Notice/NoticeDetailScreen';
 import FeedbackScreen from '@/screens/Feedback/FeedbackScreen';
 import LikedPostsScreen from '@/screens/MyPage/LikedPostsScreen';
 import MyCommentsScreen from '@/screens/MyPage/MyCommentsScreen';
+import SupportStatusScreen from '@/screens/MyPage/SupportStatusScreen';
 import AppHeader from '@/components/Header/AppHeader';
 
 const Stack = createNativeStackNavigator<MyPageStackParamList>();
@@ -92,6 +93,11 @@ const MyPageStack = () => {
         name={MY_PAGE_ROUTES.MY_COMMENTS}
         component={MyCommentsScreen}
         options={{title: '댓글'}}
+      />
+      <Stack.Screen
+        name={MY_PAGE_ROUTES.SUPPORT_STATUS}
+        component={SupportStatusScreen}
+        options={{title: '내 상태'}}
       />
       <Stack.Screen
         name={POST_ROUTES.POST_DETAIL}

@@ -1,9 +1,12 @@
 import {supabase} from '@/lib/supabase';
+import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  DeviceEventEmitter,
   Dimensions,
+  FlatList,
   Keyboard,
   Platform,
   TextInput,
@@ -17,9 +20,11 @@ import ActionSheetModal, {ActionSheetAction} from '@/components/modal/ActionShee
 import InSheetActionSheet from './InSheetActionSheet';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
+import {REPORT_REASONS} from '@/constants/report.constant';
 import {trackEvent} from '@/lib/mixpanel';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
+const COMMENT_MAX_LENGTH = 1000;
 
 // ActionSheetModal의 시트 하단 safe-area 패딩(ActionSheetModal.tsx styles.sheet)과 동일한 값.
 // 키보드가 그 여백보다 더 올라온 만큼만 바텀시트를 밀어올려서, 패딩+키보드 간 빈 틈이 생기지 않게 함
@@ -50,6 +55,8 @@ interface PostCommentsSheetProps {
   projectId: string;
   projectTitle: string;
   onCommentsCountChange?: (count: number) => void;
+  inline?: boolean;
+  headerComponent?: React.ReactNode;
 }
 
 // 게시물 상세, 홈 피드 등 여러 화면에서 공용으로 쓰는 댓글 바텀시트.
@@ -64,6 +71,8 @@ export default function PostCommentsSheet({
   projectId,
   projectTitle,
   onCommentsCountChange,
+  inline = false,
+  headerComponent,
 }: PostCommentsSheetProps) {
   const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
@@ -81,6 +90,7 @@ export default function PostCommentsSheet({
   const [showReportReasonSheet, setShowReportReasonSheet] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -100,6 +110,7 @@ export default function PostCommentsSheet({
       // postId가 바뀐 채로 재사용되는 공용 인스턴스(홈 피드 등)라, 새로 열릴 때마다
       // 이전 게시물의 댓글 목록이 한 프레임이라도 그대로 보이지 않도록 바로 비움
       setComments([]);
+      setExpandedThreads({});
       fetchComments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -226,6 +237,9 @@ export default function PostCommentsSheet({
         if (error) throw error;
         trackEvent('comment_posted', {post_id: postId, is_reply: !!replyingTo});
       }
+      if (replyingTo) {
+        setExpandedThreads(prev => ({...prev, [replyingTo.id]: true}));
+      }
       setCommentText('');
       setReplyingTo(null);
       setEditingTarget(null);
@@ -256,6 +270,44 @@ export default function PostCommentsSheet({
         },
       },
     ]);
+  };
+
+  const handleBlockCommenter = (comment: Comment) => {
+    if (!user) return;
+    Alert.alert(
+      '유저 차단',
+      `${comment.nickname}님을 차단하시겠습니까?\n차단하면 이 유저의 게시물이 피드에서 보이지 않고, 이 유저는 회원님의 게시물에 좋아요와 댓글을 남길 수 없습니다.`,
+      [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '차단',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const {error} = await supabase.from('blocks').insert({
+                blocker_id: user.id,
+                blocked_id: comment.user_id,
+              });
+              if (error) throw error;
+              trackEvent('user_blocked', {blocked_id: comment.user_id});
+              supabase.functions.invoke('send-block-email', {
+                body: {
+                  blockerId: user.id,
+                  blockerNickname: user.nickname ?? '알 수 없음',
+                  blockedId: comment.user_id,
+                  blockedNickname: comment.nickname ?? '알 수 없음',
+                },
+              });
+              DeviceEventEmitter.emit('userBlocked', {blockedId: comment.user_id});
+              await fetchComments();
+            } catch (error) {
+              console.error('❌ 차단 실패:', error);
+              Alert.alert('오류', '차단 처리 중 오류가 발생했습니다.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleOpenCommentReport = (comment: Comment) => {
@@ -334,18 +386,22 @@ export default function PostCommentsSheet({
 
     return (
       <S.CommentRow key={comment.id} style={isReply ? {marginLeft: 44} : undefined}>
-        {comment.profile_image ? (
-          <S.CommentAvatar
-            source={{uri: comment.profile_image}}
-            style={avatarSizeStyle}
-          />
-        ) : (
-          <S.CommentAvatarPlaceholder style={avatarSizeStyle}>
-            <S.CommentAvatarPlaceholderText>
-              {comment.nickname.charAt(0)}
-            </S.CommentAvatarPlaceholderText>
-          </S.CommentAvatarPlaceholder>
-        )}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => handlePressMention(comment.user_id)}>
+          {comment.profile_image ? (
+            <S.CommentAvatar
+              source={{uri: comment.profile_image}}
+              style={avatarSizeStyle}
+            />
+          ) : (
+            <S.CommentAvatarPlaceholder style={avatarSizeStyle}>
+              <S.CommentAvatarPlaceholderText>
+                {comment.nickname.charAt(0)}
+              </S.CommentAvatarPlaceholderText>
+            </S.CommentAvatarPlaceholder>
+          )}
+        </TouchableOpacity>
         <S.CommentBody>
           <S.CommentHeaderRow>
             <S.CommentHeaderLeft>
@@ -382,7 +438,9 @@ export default function PostCommentsSheet({
     );
   };
 
+  const tabBarHeight = useBottomTabBarHeight();
   const keyboardOverlap = Math.max(0, keyboardHeight - SHEET_BOTTOM_PADDING);
+  const inlineKeyboardOffset = Math.max(0, keyboardHeight - tabBarHeight);
 
   const isCommentMenuTargetAuthor =
     !!user && !!commentMenuTarget && commentMenuTarget.user_id === user.id;
@@ -414,6 +472,11 @@ export default function PostCommentsSheet({
             onPress: () => handleOpenCommentReport(commentMenuTarget),
             isDestructive: true,
           },
+          {
+            label: '차단하기',
+            onPress: () => handleBlockCommenter(commentMenuTarget),
+            isDestructive: true,
+          },
         ]
       : // 3) 그 외 타인 → 신고하기만
         [
@@ -425,12 +488,170 @@ export default function PostCommentsSheet({
         ]
     : [];
 
-  const reportReasonActions: ActionSheetAction[] = [
-    {label: '스팸', onPress: () => handleReport('스팸')},
-    {label: '부적절한 콘텐츠', onPress: () => handleReport('부적절한 콘텐츠'), isDestructive: true},
-    {label: '저작권 침해', onPress: () => handleReport('저작권 침해'), isDestructive: true},
-    {label: '기타', onPress: () => handleReport('기타')},
-  ];
+  const reportReasonActions: ActionSheetAction[] = REPORT_REASONS.map(item => ({
+    label: item.label,
+    onPress: () => handleReport(item.reason),
+  }));
+
+  const renderThread = (comment: CommentWithReplies) => {
+    // 같은 쓰레드(원댓글 + 그 대댓글들) 참여자 닉네임→유저 맵 — 대댓글이
+    // 원댓글 작성자가 아니라 다른 대댓글 작성자를 멘션했을 수도 있어서,
+    // content 앞부분의 "@닉네임 "이 누구를 가리키는지 여기서 역으로 찾음
+    const participants: Record<string, {id: string; nickname: string}> = {
+      [comment.nickname]: {id: comment.user_id, nickname: comment.nickname},
+    };
+    comment.replies.forEach(r => {
+      participants[r.nickname] = {id: r.user_id, nickname: r.nickname};
+    });
+    const resolveMentionAuthor = (reply: Comment) => {
+      const matches = Object.keys(participants).filter(
+        nick => nick !== reply.nickname && reply.content.startsWith(`@${nick} `),
+      );
+      // 닉네임이 서로의 접두사인 경우(드묾) 더 긴 쪽이 더 구체적인 매치
+      matches.sort((a, b) => b.length - a.length);
+      return matches.length > 0
+        ? participants[matches[0]]
+        : {id: comment.user_id, nickname: comment.nickname};
+    };
+
+    const isExpanded = !!expandedThreads[comment.id];
+    return (
+      <React.Fragment key={comment.id}>
+        {renderCommentRow(comment, false)}
+        {comment.replies.length > 0 && (
+          <S.RepliesToggle
+            onPress={() =>
+              setExpandedThreads(prev => ({...prev, [comment.id]: !isExpanded}))
+            }>
+            <S.RepliesToggleLine />
+            <S.RepliesToggleText>
+              {isExpanded ? '답글 숨기기' : `답글 ${comment.replies.length}개 보기`}
+            </S.RepliesToggleText>
+          </S.RepliesToggle>
+        )}
+        {isExpanded &&
+          comment.replies.map(reply =>
+            renderCommentRow(reply, true, resolveMentionAuthor(reply)),
+          )}
+      </React.Fragment>
+    );
+  };
+
+  const emptyOrLoading = loadingComments ? (
+    <ActivityIndicator size="small" color="#999" style={{paddingVertical: 40}} />
+  ) : comments.length === 0 ? (
+    <S.CommentsEmptyText>첫 댓글을 남겨보세요.</S.CommentsEmptyText>
+  ) : null;
+
+  const commentSection = inline ? (
+    <FlatList
+      data={comments}
+      keyExtractor={item => item.id}
+      renderItem={({item, index}) => (
+        <S.InlineThread
+          style={{
+            paddingTop: index === 0 ? 20 : 0,
+            paddingBottom: index === comments.length - 1 ? 20 : 0,
+          }}>
+          {renderThread(item)}
+        </S.InlineThread>
+      )}
+      ListHeaderComponent={
+        <>
+          {headerComponent}
+          <S.CommentsSheetHeader>
+            <S.CommentsSheetTitle>댓글</S.CommentsSheetTitle>
+          </S.CommentsSheetHeader>
+        </>
+      }
+      ListEmptyComponent={emptyOrLoading}
+      keyboardShouldPersistTaps="handled"
+      style={{flex: 1}}
+    />
+  ) : (
+    <S.CommentsSheetList keyboardShouldPersistTaps="handled">
+      {emptyOrLoading ?? comments.map(renderThread)}
+    </S.CommentsSheetList>
+  );
+
+  const body = (
+    <>
+      {!inline && <S.ActionSheetHandle />}
+      {!inline && (
+        <S.CommentsSheetHeader>
+          <S.CommentsSheetTitle>댓글</S.CommentsSheetTitle>
+        </S.CommentsSheetHeader>
+      )}
+      {commentSection}
+      {(replyingTo || editingTarget) && (
+        <S.ReplyingToChip>
+          <S.ReplyingToText>
+            {editingTarget ? '댓글 수정 중' : `@${replyingTo?.nickname}님에게 답글`}
+          </S.ReplyingToText>
+          <TouchableOpacity onPress={handleCancelReplyOrEdit}>
+            <S.ReplyingToCancel>취소</S.ReplyingToCancel>
+          </TouchableOpacity>
+        </S.ReplyingToChip>
+      )}
+      <S.InputBar>
+        <S.CommentInput
+          ref={commentInputRef}
+          value={commentText}
+          onChangeText={setCommentText}
+          placeholder="댓글을 입력하세요"
+          placeholderTextColor="#999"
+          multiline
+          maxLength={
+            replyingTo && !editingTarget
+              ? COMMENT_MAX_LENGTH - `@${replyingTo.nickname} `.length
+              : COMMENT_MAX_LENGTH
+          }
+        />
+        <S.CommentSendButton
+          onPress={handleSubmitComment}
+          disabled={!commentText.trim() || isSubmittingComment}>
+          <S.CommentSendButtonText>
+            {editingTarget ? '수정' : '게시'}
+          </S.CommentSendButtonText>
+        </S.CommentSendButton>
+      </S.InputBar>
+
+      {isSubmittingComment && (
+        <S.CommentSubmitOverlay>
+          <ActivityIndicator size="large" color="#191919" />
+        </S.CommentSubmitOverlay>
+      )}
+
+      <InSheetActionSheet
+        visible={showCommentActionSheet}
+        onClose={() => setShowCommentActionSheet(false)}
+        actions={commentMenuActions}
+      />
+
+      {/* 댓글 신고 사유 — 댓글 바텀시트가 떠있는 상태에서 Modal을 또 띄우면
+      중첩 Modal 문제로 안 보일 수 있어서 같은 방식(InSheetActionSheet)으로 처리 */}
+      <InSheetActionSheet
+        visible={showReportReasonSheet}
+        onClose={() => setShowReportReasonSheet(false)}
+        actions={reportReasonActions}
+      />
+
+      {isReporting && (
+        <S.ActionLoadingOverlay>
+          <ActivityIndicator size="large" color="#fff" />
+          <S.ActionLoadingText>신고 접수 중...</S.ActionLoadingText>
+        </S.ActionLoadingOverlay>
+      )}
+    </>
+  );
+
+  if (inline) {
+    return (
+      <View style={{flex: 1, marginBottom: inlineKeyboardOffset}}>
+        {body}
+      </View>
+    );
+  }
 
   return (
     <ActionSheetModal visible={visible} onClose={handleClose} showCancel={false} hideHandle>
@@ -439,97 +660,7 @@ export default function PostCommentsSheet({
           height: SCREEN_HEIGHT * 0.65 - keyboardOverlap,
           marginBottom: keyboardOverlap,
         }}>
-        <S.ActionSheetHandle />
-        <S.CommentsSheetHeader>
-          <S.CommentsSheetTitle>댓글</S.CommentsSheetTitle>
-        </S.CommentsSheetHeader>
-        <S.CommentsSheetList keyboardShouldPersistTaps="handled">
-          {loadingComments ? (
-            <ActivityIndicator size="small" color="#999" style={{paddingVertical: 40}} />
-          ) : comments.length === 0 ? (
-            <S.CommentsEmptyText>첫 댓글을 남겨보세요.</S.CommentsEmptyText>
-          ) : (
-            comments.map(comment => {
-              // 같은 쓰레드(원댓글 + 그 대댓글들) 참여자 닉네임→유저 맵 — 대댓글이
-              // 원댓글 작성자가 아니라 다른 대댓글 작성자를 멘션했을 수도 있어서,
-              // content 앞부분의 "@닉네임 "이 누구를 가리키는지 여기서 역으로 찾음
-              const participants: Record<string, {id: string; nickname: string}> = {
-                [comment.nickname]: {id: comment.user_id, nickname: comment.nickname},
-              };
-              comment.replies.forEach(r => {
-                participants[r.nickname] = {id: r.user_id, nickname: r.nickname};
-              });
-              const resolveMentionAuthor = (reply: Comment) => {
-                const matches = Object.keys(participants).filter(
-                  nick => nick !== reply.nickname && reply.content.startsWith(`@${nick} `),
-                );
-                // 닉네임이 서로의 접두사인 경우(드묾) 더 긴 쪽이 더 구체적인 매치
-                matches.sort((a, b) => b.length - a.length);
-                return matches.length > 0
-                  ? participants[matches[0]]
-                  : {id: comment.user_id, nickname: comment.nickname};
-              };
-
-              return (
-                <React.Fragment key={comment.id}>
-                  {renderCommentRow(comment, false)}
-                  {comment.replies.map(reply =>
-                    renderCommentRow(reply, true, resolveMentionAuthor(reply)),
-                  )}
-                </React.Fragment>
-              );
-            })
-          )}
-        </S.CommentsSheetList>
-        {(replyingTo || editingTarget) && (
-          <S.ReplyingToChip>
-            <S.ReplyingToText>
-              {editingTarget ? '댓글 수정 중' : `@${replyingTo?.nickname}님에게 답글`}
-            </S.ReplyingToText>
-            <TouchableOpacity onPress={handleCancelReplyOrEdit}>
-              <S.ReplyingToCancel>취소</S.ReplyingToCancel>
-            </TouchableOpacity>
-          </S.ReplyingToChip>
-        )}
-        <S.InputBar>
-          <S.CommentInput
-            ref={commentInputRef}
-            value={commentText}
-            onChangeText={setCommentText}
-            placeholder="댓글을 입력하세요"
-            placeholderTextColor="#999"
-            multiline
-            maxLength={1000}
-          />
-          <S.CommentSendButton
-            onPress={handleSubmitComment}
-            disabled={!commentText.trim() || isSubmittingComment}>
-            <S.CommentSendButtonText>
-              {editingTarget ? '수정' : '게시'}
-            </S.CommentSendButtonText>
-          </S.CommentSendButton>
-        </S.InputBar>
-
-        <InSheetActionSheet
-          visible={showCommentActionSheet}
-          onClose={() => setShowCommentActionSheet(false)}
-          actions={commentMenuActions}
-        />
-
-        {/* 댓글 신고 사유 — 댓글 바텀시트가 떠있는 상태에서 Modal을 또 띄우면
-        중첩 Modal 문제로 안 보일 수 있어서 같은 방식(InSheetActionSheet)으로 처리 */}
-        <InSheetActionSheet
-          visible={showReportReasonSheet}
-          onClose={() => setShowReportReasonSheet(false)}
-          actions={reportReasonActions}
-        />
-
-        {isReporting && (
-          <S.ActionLoadingOverlay>
-            <ActivityIndicator size="large" color="#fff" />
-            <S.ActionLoadingText>신고 접수 중...</S.ActionLoadingText>
-          </S.ActionLoadingOverlay>
-        )}
+        {body}
       </View>
     </ActionSheetModal>
   );

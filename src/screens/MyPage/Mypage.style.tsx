@@ -146,3 +146,28 @@ export const ProfileArrow = styled.Text`
   font-size: 22px;
   color: #ccc;
 `;
+
+export const SectionLabelRow = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 16px 8px;
+  align-self: flex-start;
+`;
+
+export const SectionLabelText = styled.Text`
+  font-size: 13px;
+  color: #999;
+`;
+
+export const MenuLabelRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const ProfileNameRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+`;

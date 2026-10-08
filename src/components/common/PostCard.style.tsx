@@ -43,11 +43,18 @@ export const ProfileImagePlaceholderText = styled.Text`
   color: #191919;
 `;
 
+export const UsernameRow = styled.View`
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+`;
+
 export const Username = styled.Text`
   font-weight: 600;
   font-size: 14px;
   color: #191919;
-  flex: 1;
+  flex-shrink: 1;
 `;
 
 export const ImageCarouselWrapper = styled.View`
@@ -118,6 +125,8 @@ export const ProjectBadge = styled.View`
   padding-vertical: 3px;
   border-radius: 10px;
   max-width: 160px;
+  flex-shrink: 1;
+  justify-content: center;
 `;
 
 export const ProjectBadgeText = styled.Text`
@@ -162,11 +171,17 @@ export const StatusBadgeText = styled.Text<{status: 'planned' | 'in_progress' | 
 export const ActionBar = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-left: auto;
 `;
 
-export const ActionButton = styled.TouchableOpacity`
+export const ActionButton = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const ActionTouch = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   gap: 4px;

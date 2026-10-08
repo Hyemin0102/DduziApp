@@ -1,12 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Linking, Platform} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAuth} from '../../contexts/AuthContext';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {MY_PAGE_ROUTES, TAB_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Mypage.style';
 import {profileUrl} from '@/lib/imageTransform';
 import {trackEvent} from '@/lib/mixpanel';
+import {SUPPORT_PAYMENT_ENABLED} from '@/constants/support.constant';
+import SupportInfoSheet from './SupportInfoSheet';
+import SupporterBadge from '@/components/common/SupporterBadge';
 
 const IOS_BUNDLE_ID = 'com.dduzi.app';
 const ANDROID_PACKAGE_ID = 'com.dduziapp';
@@ -15,6 +19,7 @@ const Mypage = () => {
   const {user, logout} = useAuth();
   const {navigation} = useCommonNavigation();
   const [appStoreId, setAppStoreId] = useState<string | null>(null);
+  const [showSupportInfo, setShowSupportInfo] = useState(false);
 
   useEffect(() => {
     fetch(`https://itunes.apple.com/lookup?bundleId=${IOS_BUNDLE_ID}&country=kr`)
@@ -42,6 +47,14 @@ const Mypage = () => {
   const handleContact = () => {
     trackEvent('feedback_button_tapped');
     navigation.navigate(MY_PAGE_ROUTES.FEEDBACK);
+  };
+
+  const handleSupportStatus = () => {
+    navigation.navigate(MY_PAGE_ROUTES.SUPPORT_STATUS);
+  };
+
+  const handleSupportPurchase = () => {
+    if (!SUPPORT_PAYMENT_ENABLED) return;
   };
 
   const handleLikedPosts = () => {
@@ -111,7 +124,12 @@ const Mypage = () => {
             </S.ProfileAvatarPlaceholder>
           )}
           <S.ProfileInfo>
-            <S.ProfileName>{user.nickname ?? '이름 없음'}</S.ProfileName>
+            <S.ProfileNameRow>
+              <S.ProfileName>{user.nickname ?? '이름 없음'}</S.ProfileName>
+              {user.supporter_level ? (
+                <SupporterBadge level={user.supporter_level} size={24} />
+              ) : null}
+            </S.ProfileNameRow>
             <S.ProfileSubText>프로필 수정</S.ProfileSubText>
           </S.ProfileInfo>
           <S.ProfileArrow>›</S.ProfileArrow>
@@ -127,6 +145,31 @@ const Mypage = () => {
             <S.AccountValue>{user.email || '-'}</S.AccountValue>
           </S.AccountItem>
         </S.AccountSection>
+
+        <S.SectionLabelRow onPress={() => setShowSupportInfo(true)}>
+          <S.SectionLabelText>뜨지 응원</S.SectionLabelText>
+          <Icon name="info" size={13} color="#000" />
+        </S.SectionLabelRow>
+        <S.MenuSection style={{marginTop: 4}}>
+          <S.MenuItem onPress={handleSupportStatus}>
+            <S.MenuText>내 상태</S.MenuText>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+          <S.MenuItem
+            onPress={handleSupportPurchase}
+            disabled={!SUPPORT_PAYMENT_ENABLED}
+            activeOpacity={SUPPORT_PAYMENT_ENABLED ? 0.7 : 1}>
+            <S.MenuLabelRow>
+              <MaterialCommunityIcon
+                name="star-shooting-outline"
+                size={20}
+                color="#191919"
+              />
+              <S.MenuText>응원하기</S.MenuText>
+            </S.MenuLabelRow>
+            <S.MenuArrow>›</S.MenuArrow>
+          </S.MenuItem>
+        </S.MenuSection>
 
         <S.SectionLabel>내 활동</S.SectionLabel>
         <S.MenuSection style={{marginTop: 4}}>
@@ -167,6 +210,10 @@ const Mypage = () => {
           </S.LogoutMenuItem>
         </S.MenuSection>
       </S.ScrollView>
+      <SupportInfoSheet
+        visible={showSupportInfo}
+        onClose={() => setShowSupportInfo(false)}
+      />
     </S.Container>
   );
 };

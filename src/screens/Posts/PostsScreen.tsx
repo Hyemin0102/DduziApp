@@ -244,7 +244,7 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const handleBlock = () => {
     Alert.alert(
       '유저 차단',
-      `${nickname ?? '이 유저'}를 차단하시겠습니까?\n차단하면 이 유저의 게시물이 피드에서 보이지 않습니다.`,
+      `${nickname ?? '이 유저'}를 차단하시겠습니까?\n차단하면 이 유저의 게시물이 피드에서 보이지 않고, 이 유저는 회원님의 게시물에 좋아요와 댓글을 남길 수 없습니다.`,
       [
         {text: '취소', style: 'cancel'},
         {

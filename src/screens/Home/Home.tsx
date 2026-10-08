@@ -16,11 +16,15 @@ import PostCardSkeleton from '@/components/skeleton/PostCardSkeleton';
 import {Post} from '@/@types/database';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {HOME_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import * as HS from '../Navigator/stacks/HomeStack.style';
 import {trackEvent} from '@/lib/mixpanel';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
+import PostLikersSheet from '@/components/common/PostLikersSheet';
+import SupportPromptModal from '@/components/common/SupportPromptModal';
+import {getSupportModalStage, recordSupportModalShown} from '@/lib/supportModal';
 
 interface OpenComments {
   postId: string;
@@ -70,6 +74,10 @@ const Home = () => {
   const flatListRef = useRef<FlatList>(null);
   const maxViewedIndexRef = useRef(0);
   const [openComments, setOpenComments] = useState<OpenComments | null>(null);
+  const [likersPostId, setLikersPostId] = useState<string | null>(null);
+  const [showSupportPrompt, setShowSupportPrompt] = useState(false);
+  const [supportPromptStage, setSupportPromptStage] = useState<1 | 2 | 3>(1);
+  const supportModalCheckedRef = useRef(false);
 
   const fetchBlockedIds = async (): Promise<string[]> => {
     const {data: {user}} = await supabase.auth.getUser();
@@ -91,7 +99,9 @@ const Home = () => {
         users (
           id,
           nickname,
-          profile_image
+          profile_image,
+          supporter_level,
+          show_supporter_badge
         ),
         projects!inner (
           id,
@@ -279,6 +289,22 @@ const Home = () => {
   );
 
   useEffect(() => {
+    if (supportModalCheckedRef.current) return;
+    supportModalCheckedRef.current = true;
+    (async () => {
+      const {
+        data: {user},
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const stage = await getSupportModalStage(user.id);
+      if (!stage) return;
+      await recordSupportModalShown(user.id, stage);
+      setSupportPromptStage(stage);
+      setShowSupportPrompt(true);
+    })();
+  }, []);
+
+  useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
       if (nextState === 'background') {
         flushScrollDepth();
@@ -327,6 +353,10 @@ const Home = () => {
     );
   };
 
+  const handleOpenLikers = (post: Post) => {
+    setLikersPostId(post.id);
+  };
+
   const handleOpenComments = (post: Post) => {
     setOpenComments({
       postId: post.id,
@@ -345,6 +375,7 @@ const Home = () => {
         post={item.post}
         onLikeToggled={handleLikeToggled}
         onOpenComments={handleOpenComments}
+        onOpenLikers={handleOpenLikers}
       />
     );
 
@@ -373,11 +404,11 @@ const Home = () => {
               <HS.SearchBubbleText>다들 뭐 뜨지?</HS.SearchBubbleText>
               <HS.SearchBubbleTail />
             </HS.SearchBubble>
-            <Icon name="search" size={20} color="#333" />
+            <Icon name="search" size={20} color="#000" />
           </HS.SearchButton>
           <HS.NotificationButton
             onPress={() => navigation.navigate(HOME_ROUTES.NOTIFICATIONS)}>
-            <Icon name="bell" size={20} color="#333" />
+            <Ionicons name="notifications-outline" size={22} color="#000" />
             {unreadNotificationCount > 0 && <HS.NotificationBadge />}
           </HS.NotificationButton>
         </HS.RightActions>
@@ -426,6 +457,18 @@ const Home = () => {
 
       {/* 카드마다 바텀시트를 두면 FlatList 가상화(removeClippedSubviews)로
       스크롤 중 날아갈 수 있어서 화면 레벨에 하나만 두고 postId만 바꿔끼움 */}
+      <PostLikersSheet
+        visible={!!likersPostId}
+        onClose={() => setLikersPostId(null)}
+        postId={likersPostId ?? ''}
+      />
+
+      <SupportPromptModal
+        visible={showSupportPrompt}
+        onClose={() => setShowSupportPrompt(false)}
+        stage={supportPromptStage}
+      />
+
       <PostCommentsSheet
         visible={!!openComments}
         onClose={() => setOpenComments(null)}

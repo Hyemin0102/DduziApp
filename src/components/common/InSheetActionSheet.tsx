@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 17,
     color: '#000',
-    textAlign: 'center',
+    textAlign: 'left',
   },
   destructiveText: {
     color: '#FF3B30',

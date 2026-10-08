@@ -6,13 +6,14 @@ import {
   Alert,
   DeviceEventEmitter,
   Dimensions,
-  ScrollView,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import {useAuth} from '@/contexts/AuthContext';
 import * as S from './PostDetailScreen.styles';
 import {PostDetail} from '@/@types/database';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
+import PostLikersSheet from '@/components/common/PostLikersSheet';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from '@/components/common/PinchZoomImage';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
@@ -37,6 +38,7 @@ import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
 import {POST_IMAGE_ASPECT_RATIO} from '@/constants/postImage.constant';
+import {REPORT_REASONS} from '@/constants/report.constant';
 import BottomBannerAd from '@/components/common/BottomBannerAd';
 
 // 토스트에서 "내 뜨개함에 담았어요." 문구는 절대 안 잘리게, 프로젝트명만 줄여서 "..." 처리
@@ -91,7 +93,6 @@ export default function PostDetailScreen() {
   // 댓글 — 목록/작성 등 바텀시트 내부 로직은 PostCommentsSheet가 전담, 여기선
   // 액션 바에 보여줄 카운트와 바텀시트 열림 여부만 관리
   const [commentsCount, setCommentsCount] = useState(0);
-  const [showCommentsSheet, setShowCommentsSheet] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -100,6 +101,7 @@ export default function PostDetailScreen() {
   }, []);
 
   const isMyPost = post && user && post.user_id === user.id;
+  const [showLikersSheet, setShowLikersSheet] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -434,7 +436,18 @@ export default function PostDetailScreen() {
 
   return (
     <S.Container>
-      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+      <PostCommentsSheet
+        inline
+        visible
+        onClose={() => {}}
+        postId={post.id}
+        postOwnerId={post.user_id}
+        postContent={post.content ?? null}
+        projectId={post.project_id}
+        projectTitle={post.title}
+        onCommentsCountChange={setCommentsCount}
+        headerComponent={
+          <View>
         {/* 작성자 정보 */}
         <S.AuthorSection
           onPress={() =>
@@ -513,29 +526,40 @@ export default function PostDetailScreen() {
                 {/* 좋아요/댓글 액션 바 */}
         <S.ActionBar>
           {post.likes_enabled && (
-            <S.ActionButton
-              onPress={handleToggleLike}
-              disabled={isLikeLoading}
-              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <S.LikeIconWrapper>
-                <Animated.View style={heartAnimatedStyle}>
-                  <FA5Icon
-                    name="heart"
-                    solid={isLiked}
-                    size={18}
-                    color={isLiked ? '#FF3B30' : '#191919'}
-                  />
-                </Animated.View>
-                {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
-              </S.LikeIconWrapper>
-              {likesCount > 0 && <S.ActionButtonText>{likesCount}</S.ActionButtonText>}
+            <S.ActionButton>
+              <S.ActionTouch
+                onPress={handleToggleLike}
+                disabled={isLikeLoading}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <S.LikeIconWrapper>
+                  <Animated.View style={heartAnimatedStyle}>
+                    <FA5Icon
+                      name="heart"
+                      solid={isLiked}
+                      size={18}
+                      color={isLiked ? '#FF3B30' : '#191919'}
+                    />
+                  </Animated.View>
+                  {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
+                </S.LikeIconWrapper>
+              </S.ActionTouch>
+              {likesCount > 0 &&
+                (isMyPost ? (
+                  <S.ActionTouch
+                    onPress={() => setShowLikersSheet(true)}
+                    hitSlop={{top: 8, bottom: 8, left: 0, right: 8}}>
+                    <S.ActionButtonText>{likesCount}</S.ActionButtonText>
+                  </S.ActionTouch>
+                ) : (
+                  <S.ActionButtonText>{likesCount}</S.ActionButtonText>
+                ))}
             </S.ActionButton>
           )}
           {post.comments_enabled && (
-            <S.ActionButton
-              onPress={() => setShowCommentsSheet(true)}
-              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <FA5Icon name="comment" solid={false} size={18} color="#191919" />
+            <S.ActionButton>
+              <S.ActionIconPad>
+                <FA5Icon name="comment" solid={false} size={18} color="#191919" />
+              </S.ActionIconPad>
               {commentsCount > 0 && <S.ActionButtonText>{commentsCount}</S.ActionButtonText>}
             </S.ActionButton>
           )}
@@ -585,7 +609,9 @@ export default function PostDetailScreen() {
           </S.ProjectBanner>
         )}
 
-      </ScrollView>
+          </View>
+        }
+      />
 
       {/* 뜨개함 저장 토스트 */}
       {showSaveToast && (
@@ -609,6 +635,12 @@ export default function PostDetailScreen() {
         ]}
       />
 
+      <PostLikersSheet
+        visible={showLikersSheet}
+        onClose={() => setShowLikersSheet(false)}
+        postId={post.id}
+      />
+
       <ActionSheetModal
         visible={showReportSheet}
         onClose={() => setShowReportSheet(false)}
@@ -623,24 +655,12 @@ export default function PostDetailScreen() {
       <ActionSheetModal
         visible={showReportReasonSheet}
         onClose={() => setShowReportReasonSheet(false)}
-        actions={[
-          {label: '스팸', onPress: () => handleReport('스팸')},
-          {label: '부적절한 콘텐츠', onPress: () => handleReport('부적절한 콘텐츠'), isDestructive: true},
-          {label: '저작권 침해', onPress: () => handleReport('저작권 침해'), isDestructive: true},
-          {label: '기타', onPress: () => handleReport('기타')},
-        ]}
+        actions={REPORT_REASONS.map(item => ({
+          label: item.label,
+          onPress: () => handleReport(item.reason),
+        }))}
       />
 
-      <PostCommentsSheet
-        visible={showCommentsSheet}
-        onClose={() => setShowCommentsSheet(false)}
-        postId={post.id}
-        postOwnerId={post.user_id}
-        postContent={post.content ?? null}
-        projectId={post.project_id}
-        projectTitle={post.title}
-        onCommentsCountChange={setCommentsCount}
-      />
 
       {isReporting && (
         <S.ActionLoadingOverlay>

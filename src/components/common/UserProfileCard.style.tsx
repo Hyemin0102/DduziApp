@@ -10,6 +10,7 @@ export const Container = styled.View`
 export const Wrapper = styled.View`
   flex-direction: row;
   align-items: center;
+  gap: 16px;
 `;
 
 export const ProfileImage = styled(FastImage)`
@@ -18,7 +19,7 @@ export const ProfileImage = styled(FastImage)`
   border-radius: 36px;
   border-width: 1px;
   border-color: #e9e9e7;
-  margin-right: 16px;
+ 
 `;
 
 export const ProfileImagePlaceholder = styled.View`
@@ -28,7 +29,7 @@ export const ProfileImagePlaceholder = styled.View`
   background-color: #f1f1ef;
   justify-content: center;
   align-items: center;
-  margin-right: 16px;
+
 `;
 
 export const ProfileImagePlaceholderText = styled.Text`
@@ -41,11 +42,18 @@ export const InfoContainer = styled.View`
   flex: 1;
 `;
 
+export const NameRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+`;
+
 export const Name = styled.Text`
   font-size: 18px;
   font-weight: bold;
   color: #111;
-  margin-bottom: 4px;
+ 
 `;
 
 export const Email = styled.Text`
@@ -58,6 +66,11 @@ export const ProviderBadge = styled.View`
   padding-horizontal: 10px;
   padding-vertical: 4px;
   border-radius: 12px;
+`;
+
+export const BadgeRow = styled.View`
+  flex-direction: row;
+  margin-top: 6px;
 `;
 
 export const ProviderText = styled.Text`

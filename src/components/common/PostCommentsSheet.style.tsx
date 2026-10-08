@@ -12,7 +12,9 @@ export const ActionSheetHandle = styled.View`
 `;
 
 export const CommentsSheetHeader = styled.View`
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 16px;
+  padding-horizontal: 20px;
   padding-bottom: 12px;
   border-bottom-width: 1px;
   border-bottom-color: #eeeeee;
@@ -32,8 +34,8 @@ export const CommentsSheetList = styled.ScrollView`
 export const CommentsEmptyText = styled.Text`
   font-size: 14px;
   color: #999;
-  padding: 40px 0;
-  text-align: center;
+  padding: 40px 20px;
+  text-align: left;
 `;
 
 export const CommentRow = styled.View`
@@ -119,6 +121,26 @@ export const CommentReplyButton = styled.TouchableOpacity`
   margin-top: 6px;
 `;
 
+export const RepliesToggle = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-left: 44px;
+  padding: 8px 0;
+`;
+
+export const RepliesToggleLine = styled.View`
+  width: 24px;
+  height: 1px;
+  background-color: #dbdbdb;
+`;
+
+export const RepliesToggleText = styled.Text`
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+`;
+
 export const CommentReplyButtonText = styled.Text`
   font-size: 12px;
   color: #999;
@@ -192,4 +214,19 @@ export const ActionLoadingText = styled.Text`
   color: #fff;
   font-size: 15px;
   font-weight: 600;
+`;
+
+export const InlineThread = styled.View`
+  padding-horizontal: 20px;
+`;
+
+export const CommentSubmitOverlay = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.6);
+  align-items: center;
+  justify-content: center;
 `;

@@ -64,4 +64,5 @@ export const MY_PAGE_ROUTES = {
   FEEDBACK: 'Feedback',
   LIKED_POSTS: 'LikedPosts',
   MY_COMMENTS: 'MyComments',
+  SUPPORT_STATUS: 'SupportStatus',
 } as const;

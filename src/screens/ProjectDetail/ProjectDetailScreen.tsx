@@ -639,7 +639,7 @@ export default function ProjectDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [projectId, populateForm]);
+  }, [projectId, populateForm, currentUserId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -844,6 +844,8 @@ export default function ProjectDetailScreen() {
     projectId,
     navigation,
     fetchData,
+    project?.status,
+    setField,
   ]);
 
   handleSaveRef.current = handleSave;
