@@ -366,3 +366,9 @@ entrypoint = "./functions/test/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/test/*.html" ]
+
+# Apple 서버가 직접 호출하는 웹훅 — Supabase 로그인 토큰을 보내지 않으므로
+# verify_jwt를 꺼야 함(기본값 true면 Apple 요청이 게이트웨이 단계에서 401로 막힘)
+[functions.apple-server-notifications]
+enabled = true
+verify_jwt = false

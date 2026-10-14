@@ -1,10 +1,13 @@
 import React from 'react';
 import Icon from 'react-native-vector-icons/Feather';
+import AvatarLevelBadge from './AvatarLevelBadge';
 import * as S from './SavedProjectCard.style';
 
 interface SavedProjectCardProps {
   ownerNickname: string;
   ownerAvatarUri: string | null;
+  ownerSupporterLevel?: 1 | 2 | 3 | null;
+  ownerShowSupporterBadge?: boolean;
   title: string;
   dateLabel: string | null;
   thumbnailUrl: string | null;
@@ -17,6 +20,8 @@ interface SavedProjectCardProps {
 export default function SavedProjectCard({
   ownerNickname,
   ownerAvatarUri,
+  ownerSupporterLevel = null,
+  ownerShowSupporterBadge = false,
   title,
   dateLabel,
   thumbnailUrl,
@@ -29,13 +34,17 @@ export default function SavedProjectCard({
     <S.SavedCard activeOpacity={0.75} disabled={touchDisabled} onPress={onPress}>
       <S.SavedCardLeft>
         {leftAccessory}
-        {ownerAvatarUri ? (
-          <S.OwnerAvatar source={{uri: ownerAvatarUri}} />
-        ) : (
-          <S.OwnerAvatarPlaceholder>
-            <Icon name="user" size={14} color="#ccc" />
-          </S.OwnerAvatarPlaceholder>
-        )}
+        <AvatarLevelBadge
+          size={36}
+          level={ownerShowSupporterBadge ? ownerSupporterLevel : null}>
+          {ownerAvatarUri ? (
+            <S.OwnerAvatar source={{uri: ownerAvatarUri}} />
+          ) : (
+            <S.OwnerAvatarPlaceholder>
+              <Icon name="user" size={14} color="#ccc" />
+            </S.OwnerAvatarPlaceholder>
+          )}
+        </AvatarLevelBadge>
         <S.SavedCardInfo>
           <S.OwnerNickname numberOfLines={1}>{ownerNickname}</S.OwnerNickname>
           <S.SavedCardTitle numberOfLines={1} disabled={locked}>

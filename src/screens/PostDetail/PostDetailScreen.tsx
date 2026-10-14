@@ -17,6 +17,7 @@ import PostLikersSheet from '@/components/common/PostLikersSheet';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from '@/components/common/PinchZoomImage';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
+import AvatarLevelBadge from '@/components/common/AvatarLevelBadge';
 import {
   PROJECTS_ROUTES,
   POST_ROUTES,
@@ -25,7 +26,6 @@ import {
 } from '@/constants/navigation.constant';
 import {deletePostImageFileIfUnused} from '@/lib/uploadImage';
 import Icon from 'react-native-vector-icons/Feather';
-import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -35,8 +35,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import LikeBurst from '@/components/common/LikeBurst';
 import {trackEvent} from '@/lib/mixpanel';
-import SaveIcon from '@/assets/icons/save.svg';
+import SaveIcon from '@/assets/icons/save_new.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
+import LikeIcon from '@/assets/icons/likes.svg';
+import CommentIcon from '@/assets/icons/comments.svg';
 import {POST_IMAGE_ASPECT_RATIO} from '@/constants/postImage.constant';
 import {REPORT_REASONS} from '@/constants/report.constant';
 import BottomBannerAd from '@/components/common/BottomBannerAd';
@@ -133,7 +135,9 @@ export default function PostDetailScreen() {
           updated_at,
           users!posts_user_id_fkey!inner(
             nickname,
-            profile_image
+            profile_image,
+            supporter_level,
+            show_supporter_badge
           ),
           post_images (
             id,
@@ -170,6 +174,8 @@ export default function PostDetailScreen() {
         updated_at: (postData as any).updated_at,
         nickname: (postData as any).users.nickname,
         profile_image: (postData as any).users.profile_image,
+        supporter_level: (postData as any).users.supporter_level,
+        show_supporter_badge: (postData as any).users.show_supporter_badge,
         title: project?.title,
         yarn_info: project?.yarn_info,
         needle_info: project?.needle_info,
@@ -454,15 +460,23 @@ export default function PostDetailScreen() {
             navigation.push(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
           }>
           <S.AuthorInfo>
-            {post.profile_image ? (
-              <S.ProfileImage source={{uri: post.profile_image}} />
-            ) : (
-              <S.ProfilePlaceholder>
-                <S.ProfilePlaceholderText>
-                  {post.nickname.charAt(0)}
-                </S.ProfilePlaceholderText>
-              </S.ProfilePlaceholder>
-            )}
+            <AvatarLevelBadge
+              size={48}
+              level={
+                isMyPost || post.show_supporter_badge
+                  ? post.supporter_level
+                  : null
+              }>
+              {post.profile_image ? (
+                <S.ProfileImage source={{uri: post.profile_image}} />
+              ) : (
+                <S.ProfilePlaceholder>
+                  <S.ProfilePlaceholderText>
+                    {post.nickname.charAt(0)}
+                  </S.ProfilePlaceholderText>
+                </S.ProfilePlaceholder>
+              )}
+            </AvatarLevelBadge>
             <S.AuthorTextContainer>
               <S.Username>{post.nickname}</S.Username>
               <S.Date>
@@ -518,12 +532,28 @@ export default function PostDetailScreen() {
                   </S.ImageCounterText>
                 </S.ImageCounter>
               )}
+              {post.visibility === 'private' && (
+                <S.PrivateLockIcon>
+                  <Icon name="lock" size={13} color="#fff" />
+                </S.PrivateLockIcon>
+              )}
             </S.ImageGalleryWrapper>
-            <S.ImageGalleryDivider />
           </>
         )}
 
-                {/* 좋아요/댓글 액션 바 */}
+        {/* 연결된 프로젝트 */}
+        {post.project_id && (
+          <S.ProjectBanner onPress={handleGoToProject} activeOpacity={0.8}>
+            <S.ProjectBannerTextGroup>
+              <S.ProjectBannerTitle numberOfLines={1}>
+                {post.title || '프로젝트 보기'}
+              </S.ProjectBannerTitle>
+            </S.ProjectBannerTextGroup>
+            <S.ProjectBannerChevron>›</S.ProjectBannerChevron>
+          </S.ProjectBanner>
+        )}
+
+        {/* 좋아요/댓글/뜨개함 저장 액션 바 */}
         <S.ActionBar>
           {post.likes_enabled && (
             <S.ActionButton>
@@ -533,12 +563,7 @@ export default function PostDetailScreen() {
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                 <S.LikeIconWrapper>
                   <Animated.View style={heartAnimatedStyle}>
-                    <FA5Icon
-                      name="heart"
-                      solid={isLiked}
-                      size={18}
-                      color={isLiked ? '#FF3B30' : '#191919'}
-                    />
+                    <LikeIcon width={22} height={22} />
                   </Animated.View>
                   {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
                 </S.LikeIconWrapper>
@@ -558,56 +583,29 @@ export default function PostDetailScreen() {
           {post.comments_enabled && (
             <S.ActionButton>
               <S.ActionIconPad>
-                <FA5Icon name="comment" solid={false} size={18} color="#191919" />
+                <CommentIcon width={22} height={22} />
               </S.ActionIconPad>
               {commentsCount > 0 && <S.ActionButtonText>{commentsCount}</S.ActionButtonText>}
             </S.ActionButton>
+          )}
+          {post.project_id && (
+            <S.ActionBarSaveTouch
+              onPress={handleToggleSave}
+              disabled={isSaveLoading}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              {isSaved ? (
+                <SavedIcon width={26} height={26} color="#000000" />
+              ) : (
+                <SaveIcon width={26} height={26} color="#000000" />
+              )}
+            </S.ActionBarSaveTouch>
           )}
         </S.ActionBar>
 
         {/* 게시물 내용 */}
         <S.ContentSection>
-          {post.visibility === 'private' && (
-            <S.PrivateBadge>
-              <Icon name="lock" size={11} color="#888" />
-              <S.PrivateBadgeText>비공개</S.PrivateBadgeText>
-            </S.PrivateBadge>
-          )}
           <S.Content>{post.content}</S.Content>
         </S.ContentSection>
-
-
-
-        {/* 연결된 프로젝트 */}
-        {post.project_id && (
-          <S.ProjectBanner onPress={handleGoToProject} activeOpacity={0.8}>
-            <S.ProjectBannerLeft>
-              <TouchableOpacity
-                onPress={e => {
-                  e.stopPropagation?.();
-                  handleToggleSave();
-                }}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                disabled={isSaveLoading}>
-                {isSaved ? (
-                  <SavedIcon width={32} height={32}  color="#000000"/>
-                ) : (
-                  <SaveIcon width={32} height={32} color="#000000"/>
-                )}
-              </TouchableOpacity>
-              <S.ProjectBannerDivider />
-              <S.ProjectBannerTextGroup>
-                <S.ProjectBannerLabel>연결된 프로젝트</S.ProjectBannerLabel>
-                <S.ProjectBannerTitle numberOfLines={1}>
-                  {post.title || '프로젝트 보기'}
-                </S.ProjectBannerTitle>
-              </S.ProjectBannerTextGroup>
-            </S.ProjectBannerLeft>
-            <S.ProjectBannerRight>
-              <S.ProjectBannerChevron>›</S.ProjectBannerChevron>
-            </S.ProjectBannerRight>
-          </S.ProjectBanner>
-        )}
 
           </View>
         }

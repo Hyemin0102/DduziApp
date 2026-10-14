@@ -56,6 +56,22 @@ export const MenuArrow = styled.Text`
   color: #ccc;
 `;
 
+export const SupportCountBadge = styled.View<{active: boolean}>`
+  background-color: ${({active}) => (active ? '#191919' : '#f1f1ef')};
+  padding-horizontal: 10px;
+  padding-vertical: 4px;
+  border-radius: 12px;
+  flex-direction: row;
+  gap:4px;
+  align-items: center;
+  justify-content: center;
+  `;
+
+export const SupportCountBadgeText = styled.Text<{active: boolean}>`
+  font-size: 13px;
+  color: ${({active}) => (active ? '#fff' : '#999')};
+`;
+
 export const MenuValue = styled.Text`
   font-size: 14px;
   color: #999;

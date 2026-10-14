@@ -36,7 +36,9 @@ export const BulletDot = styled.Text`
 
 export const BadgeShowcase = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-around;
+  row-gap: 24px;
   margin-top: 24px;
 `;
 
@@ -48,6 +50,13 @@ export const BadgeItem = styled.View`
 export const BadgeItemLabel = styled.Text`
   font-size: 13px;
   color: #666;
+`;
+
+export const AvatarPreview = styled.View`
+  width: 96px;
+  height: 96px;
+  border-radius: 48px;
+  background-color: #f1f1ef;
 `;
 
 export const Hero = styled.View`

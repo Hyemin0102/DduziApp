@@ -3,7 +3,7 @@ import {ActivityIndicator, Text} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {UserProfile} from '../../@types/auth';
 import * as S from './UserProfileCard.style';
-import SupporterBadge from './SupporterBadge';
+import AvatarLevelBadge from './AvatarLevelBadge';
 import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {supabase} from '@/lib/supabase';
@@ -85,23 +85,28 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
     <S.Container>
       {/* 프로필 이미지 + 정보 */}
       <S.Wrapper>
-        {user.profile_image ? (
-          <S.ProfileImage source={{uri: user.profile_image}} />
-        ) : (
-          <S.ProfileImagePlaceholder>
-            <S.ProfileImagePlaceholderText>
-              {user.nickname?.charAt(0) || '?'}
-            </S.ProfileImagePlaceholderText>
-          </S.ProfileImagePlaceholder>
-        )}
+        <AvatarLevelBadge
+          size={72}
+          level={
+            isMyPage || user.show_supporter_badge
+              ? user.supporter_level
+              : null
+          }>
+          {user.profile_image ? (
+            <S.ProfileImage source={{uri: user.profile_image}} />
+          ) : (
+            <S.ProfileImagePlaceholder>
+              <S.ProfileImagePlaceholderText>
+                {user.nickname?.charAt(0) || '?'}
+              </S.ProfileImagePlaceholderText>
+            </S.ProfileImagePlaceholder>
+          )}
+        </AvatarLevelBadge>
 
 
         <S.InfoContainer>
           <S.NameRow>
             <S.Name>{user.nickname || '이름 없음'}</S.Name>
-            {(isMyPage || user.show_supporter_badge) && user.supporter_level ? (
-              <SupporterBadge level={user.supporter_level} size={24} />
-            ) : null}
           </S.NameRow>
           {user.bio ? <S.ProviderText>{user.bio}</S.ProviderText> : null}
         </S.InfoContainer>

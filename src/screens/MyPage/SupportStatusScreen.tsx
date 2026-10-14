@@ -4,7 +4,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import * as S from './SupportScreen.styles';
 import {useAuth} from '@/contexts/AuthContext';
 import {supabase} from '@/lib/supabase';
-import SupporterBadge from '@/components/common/SupporterBadge';
+import KnitLevelBadge from '@/components/common/KnitLevelBadge';
 import {trackEvent} from '@/lib/mixpanel';
 import {getSupportMessage} from '@/constants/support.constant';
 
@@ -51,7 +51,7 @@ export default function SupportStatusScreen() {
     <S.Container contentContainerStyle={{flexGrow: 1}}>
       <S.Hero>
         {level ? (
-          <SupporterBadge level={level} size={300} />
+          <KnitLevelBadge level={level} size={300} />
         ) : null}
        
         <S.HeroCount>

@@ -1,9 +1,11 @@
 import React from 'react';
-import SupporterBadge from './SupporterBadge';
+import AvatarLevelBadge from './AvatarLevelBadge';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {ROOT_ROUTES, TAB_ROUTES, MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import {trackEvent} from '@/lib/mixpanel';
+import {useAuth} from '@/contexts/AuthContext';
+import {profileUrl} from '@/lib/imageTransform';
 import * as S from './SupportPromptModal.style';
 
 interface SupportPromptModalProps {
@@ -18,6 +20,10 @@ export default function SupportPromptModal({
   stage = 1,
 }: SupportPromptModalProps) {
   const {rootNavigation} = useCommonNavigation<any>();
+  const {user} = useAuth();
+  const avatarUri = user?.profile_image
+    ? profileUrl(user.profile_image) ?? user.profile_image
+    : null;
 
   const handleConfirm = () => {
     trackEvent('support_modal_confirmed');
@@ -36,8 +42,18 @@ export default function SupportPromptModal({
   return (
     <ActionSheetModal visible={visible} onClose={handleDismiss} showCancel={false}>
       <S.Container>
-        <SupporterBadge level={stage} size={64} />
-        <S.Title>뜨지가 마음에 드셨다면,{'\n'}응원해주실래요?</S.Title>
+        <AvatarLevelBadge size={64} level={stage}>
+          {avatarUri ? (
+            <S.AvatarImage source={{uri: avatarUri}} />
+          ) : (
+            <S.AvatarPlaceholder>
+              <S.AvatarPlaceholderText>
+                {user?.nickname?.charAt(0) ?? '?'}
+              </S.AvatarPlaceholderText>
+            </S.AvatarPlaceholder>
+          )}
+        </AvatarLevelBadge>
+        <S.Title>뜨지가 마음에 드셨다면,{'\n'}응원하고 프로필을 꾸며보세요!</S.Title>
         <S.Message>
           뜨지는 1인이 개발하는 앱이에요.{'\n'}광고 없이 운영하는 데 큰 힘이 돼요.
         </S.Message>

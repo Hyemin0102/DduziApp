@@ -36,6 +36,8 @@ export interface Comment {
   updated_at: string;
   nickname: string;
   profile_image: string | null;
+  supporter_level?: 1 | 2 | 3 | null;
+  show_supporter_badge?: boolean;
 }
 
 export interface CommentWithReplies extends Comment {
@@ -128,6 +130,8 @@ export interface PostDetail {
   updated_at: string;
   nickname: string;
   profile_image: string | null;
+  supporter_level?: 1 | 2 | 3 | null;
+  show_supporter_badge?: boolean;
   images: PostImage[];
   title: string;
   yarn_info?: string | null;

@@ -31,6 +31,8 @@ interface SavedProject {
   isCompleted: boolean;
   ownerNickname: string;
   ownerProfileImage: string | null;
+  ownerSupporterLevel: 1 | 2 | 3 | null;
+  ownerShowSupporterBadge: boolean;
   thumbnailUrl: string | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -94,7 +96,9 @@ export default function ProjectsScreen() {
               completed_at,
               users!inner (
                 nickname,
-                profile_image
+                profile_image,
+                supporter_level,
+                show_supporter_badge
               )
             )
           `)
@@ -116,6 +120,8 @@ export default function ProjectsScreen() {
           isCompleted: item.projects.is_completed,
           ownerNickname: item.projects.users.nickname,
           ownerProfileImage: item.projects.users.profile_image,
+          ownerSupporterLevel: item.projects.users.supporter_level,
+          ownerShowSupporterBadge: item.projects.users.show_supporter_badge,
           thumbnailUrl: item.projects.thumbnail_url,
           startedAt: item.projects.started_at,
           completedAt: item.projects.completed_at,
@@ -263,6 +269,8 @@ export default function ProjectsScreen() {
         key={item.savedId}
         ownerNickname={item.ownerNickname}
         ownerAvatarUri={avatarUri}
+        ownerSupporterLevel={item.ownerSupporterLevel}
+        ownerShowSupporterBadge={item.ownerShowSupporterBadge}
         title={item.title}
         dateLabel={dateLabel}
         thumbnailUrl={item.thumbnailUrl}

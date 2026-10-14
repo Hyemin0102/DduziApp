@@ -5,12 +5,33 @@ export const Container = styled.View`
   align-items: center;
 `;
 
+export const AvatarImage = styled.Image`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+`;
+
+export const AvatarPlaceholder = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  background-color: #f1f1ef;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const AvatarPlaceholderText = styled.Text`
+  font-size: 24px;
+  font-weight: bold;
+  color: #191919;
+`;
+
 export const Title = styled.Text`
   font-size: 17px;
   font-weight: 700;
   color: #191919;
   text-align: center;
-  margin-top: 8px;
+  margin-top: 16px;
 `;
 
 export const Message = styled.Text`
@@ -18,7 +39,7 @@ export const Message = styled.Text`
   color: #666;
   text-align: center;
   line-height: 20px;
-  margin-top: 8px;
+  margin-top: 16px;
 `;
 
 export const ButtonRow = styled.View`

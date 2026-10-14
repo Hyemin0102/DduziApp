@@ -1,18 +1,22 @@
 buildscript {
     ext {
-        buildToolsVersion = "35.0.0"
+        buildToolsVersion = "36.0.0"
         minSdkVersion = 24
-        compileSdkVersion = 35
+        compileSdkVersion = 36
         targetSdkVersion = 35
         ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.0.21"
+        // react-native-iap(openiap-google)이 Kotlin 2.2.x로 컴파일되어 있어서(3.5.0도 마찬가지)
+        // 그보다 낮으면 "Module was compiled with an incompatible version of Kotlin" 에러 발생
+        kotlinVersion = "2.2.20"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        // react-native-gesture-handler가 androidx.core-ktx 1.18.0을 끌어오는데,
+        // 이게 AGP 8.9.1 이상 + compileSdk 36을 요구함(RN이 기본으로 묶어놓은 AGP 8.8.2로는 빌드 실패).
+        classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
         classpath("com.google.gms:google-services:4.5.0")

@@ -89,7 +89,9 @@ Deno.serve(async (req: Request) => {
     const packageName = Deno.env.get('GOOGLE_PACKAGE_NAME')!;
     const accessToken = await getGoogleAccessToken();
 
-    const startTimeMillis = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    // Google API가 정확히 30일 전 timestamp를 "30일 범위 밖"으로 거부하는 경계값 문제가 있어
+    // 29일로 약간 여유를 둠
+    const startTimeMillis = Date.now() - 29 * 24 * 60 * 60 * 1000;
     const res = await fetch(
       `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/voidedpurchases?startTime=${startTimeMillis}&maxResults=1000`,
       {headers: {Authorization: `Bearer ${accessToken}`}},

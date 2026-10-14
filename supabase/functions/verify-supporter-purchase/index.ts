@@ -118,17 +118,28 @@ interface AppleTransactionInfo {
 // HTTPS로 Apple 서버에 직접 묻는 것 자체가 1차 신뢰 근거가 됨)
 async function verifyAppStoreTransaction(transactionId: string): Promise<AppleTransactionInfo> {
   const token = await generateAppleServerApiToken();
-  // 운영 전환 시 sandbox 호스트(api.storekit-sandbox.itunes.apple.com)도 같이 확인해야 할 수 있음
-  const res = await fetch(
-    `https://api.storekit.itunes.apple.com/inApps/v1/transactions/${transactionId}`,
-    {headers: {Authorization: `Bearer ${token}`}},
-  );
-  if (!res.ok) {
-    throw new Error(`Apple transaction lookup failed: ${res.status} ${await res.text()}`);
+
+  // Apple 권장 방식: 운영 서버로 먼저 조회하고, 거래를 못 찾으면(404) 샌드박스
+  // 서버로 재조회 — 샌드박스 거래는 운영 서버에 없어서 그냥 운영 주소만 쓰면 항상 실패함
+  const hosts = [
+    'https://api.storekit.itunes.apple.com',
+    'https://api.storekit-sandbox.itunes.apple.com',
+  ];
+
+  let lastError: string | null = null;
+  for (const host of hosts) {
+    const res = await fetch(`${host}/inApps/v1/transactions/${transactionId}`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    if (res.ok) {
+      const {signedTransactionInfo} = await res.json();
+      const [, payloadSegment] = signedTransactionInfo.split('.');
+      return base64urlDecodeToJson(payloadSegment) as AppleTransactionInfo;
+    }
+    lastError = `${host}: ${res.status} ${await res.text()}`;
+    if (res.status !== 404) break; // 404(거래 없음) 말고 다른 에러면 샌드박스로 재시도해도 의미 없음
   }
-  const {signedTransactionInfo} = await res.json();
-  const [, payloadSegment] = signedTransactionInfo.split('.');
-  return base64urlDecodeToJson(payloadSegment) as AppleTransactionInfo;
+  throw new Error(`Apple transaction lookup failed — ${lastError}`);
 }
 
 // ── Google Play Developer API ───────────────────────────────────────────

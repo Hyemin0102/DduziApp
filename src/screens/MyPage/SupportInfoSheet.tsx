@@ -1,7 +1,7 @@
 import React from 'react';
 import {View} from 'react-native';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
-import SupporterBadge from '@/components/common/SupporterBadge';
+import AvatarLevelBadge from '@/components/common/AvatarLevelBadge';
 import * as S from './SupportScreen.styles';
 import {SUPPORT_PRICE_LABEL} from '@/constants/support.constant';
 
@@ -41,7 +41,9 @@ export default function SupportInfoSheet({visible, onClose}: SupportInfoSheetPro
         <S.BadgeShowcase>
           {BADGE_GUIDE.map(item => (
             <S.BadgeItem key={item.level}>
-              <SupporterBadge level={item.level} size={96} />
+              <AvatarLevelBadge size={96} level={item.level}>
+                <S.AvatarPreview />
+              </AvatarLevelBadge>
               <S.BadgeItemLabel>{item.label}</S.BadgeItemLabel>
             </S.BadgeItem>
           ))}

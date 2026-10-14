@@ -18,6 +18,7 @@ import * as S from './PostCommentsSheet.style';
 import {Comment, CommentWithReplies} from '@/@types/database';
 import ActionSheetModal, {ActionSheetAction} from '@/components/modal/ActionSheetModal';
 import InSheetActionSheet from './InSheetActionSheet';
+import AvatarLevelBadge from './AvatarLevelBadge';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import {REPORT_REASONS} from '@/constants/report.constant';
@@ -131,7 +132,7 @@ export default function PostCommentsSheet({
           is_edited,
           created_at,
           updated_at,
-          users!comments_user_id_fkey!inner(nickname, profile_image)
+          users!comments_user_id_fkey!inner(nickname, profile_image, supporter_level, show_supporter_badge)
         `,
         )
         .eq('post_id', postId)
@@ -160,6 +161,8 @@ export default function PostCommentsSheet({
           updated_at: c.updated_at,
           nickname: c.users.nickname,
           profile_image: c.users.profile_image,
+          supporter_level: c.users.supporter_level,
+          show_supporter_badge: c.users.show_supporter_badge,
         }))
         .filter((c: Comment) => !blockedIds.includes(c.user_id));
 
@@ -383,24 +386,35 @@ export default function PostCommentsSheet({
     const avatarSizeStyle = isReply
       ? {width: 24, height: 24, borderRadius: 12}
       : undefined;
+    const isMyComment = !!user && user.id === comment.user_id;
 
     return (
       <S.CommentRow key={comment.id} style={isReply ? {marginLeft: 44} : undefined}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => handlePressMention(comment.user_id)}>
-          {comment.profile_image ? (
-            <S.CommentAvatar
-              source={{uri: comment.profile_image}}
-              style={avatarSizeStyle}
-            />
-          ) : (
-            <S.CommentAvatarPlaceholder style={avatarSizeStyle}>
-              <S.CommentAvatarPlaceholderText>
-                {comment.nickname.charAt(0)}
-              </S.CommentAvatarPlaceholderText>
-            </S.CommentAvatarPlaceholder>
-          )}
+          <AvatarLevelBadge
+            size={32}
+            // 대댓글(24px)은 뱃지 아트 재조정 비용 대비 실익이 적어서 안 보여줌
+            level={
+              !isReply && (isMyComment || comment.show_supporter_badge)
+                ? comment.supporter_level
+                : null
+            }
+            >
+            {comment.profile_image ? (
+              <S.CommentAvatar
+                source={{uri: comment.profile_image}}
+                style={avatarSizeStyle}
+              />
+            ) : (
+              <S.CommentAvatarPlaceholder style={avatarSizeStyle}>
+                <S.CommentAvatarPlaceholderText>
+                  {comment.nickname.charAt(0)}
+                </S.CommentAvatarPlaceholderText>
+              </S.CommentAvatarPlaceholder>
+            )}
+          </AvatarLevelBadge>
         </TouchableOpacity>
         <S.CommentBody>
           <S.CommentHeaderRow>

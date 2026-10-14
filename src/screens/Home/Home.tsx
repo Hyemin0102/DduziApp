@@ -411,6 +411,18 @@ const Home = () => {
             <Ionicons name="notifications-outline" size={22} color="#000" />
             {unreadNotificationCount > 0 && <HS.NotificationBadge />}
           </HS.NotificationButton>
+          {__DEV__ && (
+            // 응원 유도 모달 디자인 확인용 임시 버튼 — 실제 로직(getSupportModalStage)과 동일하게
+            // 볼 때마다 1→2→3단계 뱃지를 순서대로 보여줌 (실제 응원 등급과는 무관)
+            <HS.NotificationButton
+              onPress={() => {
+                const nextStage = ((supportPromptStage % 3) + 1) as 1 | 2 | 3;
+                setSupportPromptStage(nextStage);
+                setShowSupportPrompt(true);
+              }}>
+              <Ionicons name="gift-outline" size={22} color="#000" />
+            </HS.NotificationButton>
+          )}
         </HS.RightActions>
       </HS.HeaderContainer>
       <S.Container>

@@ -115,11 +115,7 @@ export const ImageGallery = styled.ScrollView`
   height: ${`${SCREEN_WIDTH}px`};
 `;
 
-export const ImageGalleryDivider = styled.View`
-  height: 1px;
-  background-color: #eeeeee;
-  margin-bottom: 8px;
-`;
+
 
 export const ImageWrapper = styled.View`
   width: ${`${SCREEN_WIDTH}px`};
@@ -148,21 +144,13 @@ export const ImageCounterText = styled.Text`
   font-weight: 600;
 `;
 
-export const PrivateBadge = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  background-color: #f5f5f5;
-  border-radius: 10px;
-  padding: 4px 10px;
-  margin-bottom: 12px;
-`;
-
-export const PrivateBadgeText = styled.Text`
-  font-size: 12px;
-  color: #888;
-  font-weight: 600;
+export const PrivateLockIcon = styled.View`
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background-color: rgba(0, 0, 0, 0.55);
+  padding: 4px;
+  border-radius: 4px;
 `;
 
 export const DotsRow = styled.View`
@@ -184,36 +172,14 @@ export const ProjectBanner = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin: 0 16px 16px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background-color: #F8F8F7;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: #e9e9e7;
-`;
-
-export const ProjectBannerLeft = styled.View`
-  flex-direction: row;
-  align-items: center;
-  flex: 1;
-`;
-
-export const ProjectBannerDivider = styled.View`
-  width: 1px;
-  align-self: stretch;
-  margin: 2px 12px;
-  background-color: #e9e9e7;
-`;
-
-export const ProjectBannerLabel = styled.Text`
-  font-size: 11px;
-  color: #555;
-  font-weight: 600;
-  margin-bottom: 2px;
+  border-bottom-width: 1px;
+  border-bottom-color: #ededeb;
 `;
 
 export const ProjectBannerTitle = styled.Text`
-  font-size: 14px;
+  font-size: 12px;
   color: #191919;
   font-weight: 600;
 `;
@@ -222,31 +188,31 @@ export const ProjectBannerTextGroup = styled.View`
   flex: 1;
 `;
 
-export const ProjectBannerRight = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
-
 export const ProjectBannerChevron = styled.Text`
   font-size: 16px;
   color: #555;
 `;
 
-// 좋아요/댓글 액션 바
+// 좋아요/댓글/뜨개함 저장 액션 바
 export const ActionBar = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
-  padding: 0 20px;
-  margin-bottom: 8px;
+  gap: 4px;
+  padding: 10px 20px;
+  //margin-bottom: 8px;
+  //border: 1px solid red;
+`;
+
+export const ActionBarSaveTouch = styled.TouchableOpacity`
+  margin-left: auto;
+  padding: 2px;
 `;
 
 export const ActionButton = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 4px;
+  gap: 0px;
 `;
 
 export const ActionTouch = styled.TouchableOpacity`
@@ -461,7 +427,7 @@ export const SaveToastAction = styled.Text`
 
 // 콘텐츠 섹션
 export const ContentSection = styled.View`
-  padding: 0 20px 16px 20px;
+  padding: 16px 20px;
 `;
 
 export const Title = styled.Text`

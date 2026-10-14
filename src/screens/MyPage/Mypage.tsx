@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, Linking, Platform} from 'react-native';
+import {Alert, Linking, Platform, Switch, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAuth} from '../../contexts/AuthContext';
@@ -10,16 +10,22 @@ import {profileUrl} from '@/lib/imageTransform';
 import {trackEvent} from '@/lib/mixpanel';
 import {SUPPORT_PAYMENT_ENABLED} from '@/constants/support.constant';
 import SupportInfoSheet from './SupportInfoSheet';
-import SupporterBadge from '@/components/common/SupporterBadge';
+import BadgeVisibilityInfoSheet from './BadgeVisibilityInfoSheet';
+import AvatarLevelBadge from '@/components/common/AvatarLevelBadge';
+import {purchaseSupport} from '@/lib/iap';
+import {supabase} from '@/lib/supabase';
 
 const IOS_BUNDLE_ID = 'com.dduzi.app';
 const ANDROID_PACKAGE_ID = 'com.dduziapp';
 
 const Mypage = () => {
-  const {user, logout} = useAuth();
+  const {user, logout, updateUserProfile} = useAuth();
   const {navigation} = useCommonNavigation();
   const [appStoreId, setAppStoreId] = useState<string | null>(null);
   const [showSupportInfo, setShowSupportInfo] = useState(false);
+  const [showBadgeVisibilityInfo, setShowBadgeVisibilityInfo] = useState(false);
+  const [isPurchasingSupport, setIsPurchasingSupport] = useState(false);
+  const [isUpdatingBadge, setIsUpdatingBadge] = useState(false);
 
   useEffect(() => {
     fetch(`https://itunes.apple.com/lookup?bundleId=${IOS_BUNDLE_ID}&country=kr`)
@@ -49,12 +55,42 @@ const Mypage = () => {
     navigation.navigate(MY_PAGE_ROUTES.FEEDBACK);
   };
 
-  const handleSupportStatus = () => {
-    navigation.navigate(MY_PAGE_ROUTES.SUPPORT_STATUS);
+  const handleSupportPurchase = async () => {
+    if (!SUPPORT_PAYMENT_ENABLED || isPurchasingSupport) return;
+    setIsPurchasingSupport(true);
+    try {
+      const result = await purchaseSupport();
+      updateUserProfile({
+        supporter_level: result.supporter_level,
+        supporter_count: result.supporter_count,
+      });
+      Alert.alert('응원 완료', '뜨지를 응원해주셔서 감사해요!');
+    } catch (error: any) {
+      console.error('❌ 응원 결제 실패:', error);
+      Alert.alert('오류', error?.message ?? '결제 중 문제가 발생했어요.');
+    } finally {
+      setIsPurchasingSupport(false);
+    }
   };
 
-  const handleSupportPurchase = () => {
-    if (!SUPPORT_PAYMENT_ENABLED) return;
+  const handleToggleBadge = async (value: boolean) => {
+    if (!user || isUpdatingBadge) return;
+    setIsUpdatingBadge(true);
+    try {
+      const {error} = await supabase
+        .from('users')
+        .update({show_supporter_badge: value})
+        .eq('id', user.id);
+      if (error) throw error;
+
+      updateUserProfile({show_supporter_badge: value});
+      trackEvent('supporter_badge_visibility_toggled', {enabled: value});
+    } catch (error) {
+      console.error('❌ 뱃지 노출 설정 실패:', error);
+      Alert.alert('오류', '설정을 변경하지 못했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsUpdatingBadge(false);
+    }
   };
 
   const handleLikedPosts = () => {
@@ -109,26 +145,30 @@ const Mypage = () => {
     );
   }
 
+  //const supportCount = 1;
+   const supportCount = user.supporter_count ?? 0;
+  const hasBadge = !!user.supporter_level;
+  const showBadge = hasBadge && !!user.show_supporter_badge;
+
   return (
     <S.Container>
       <S.ScrollView>
         <S.ProfileCard onPress={handleProfile}>
-          {user.profile_image ? (
-            <S.ProfileAvatar
-              source={{uri: profileUrl(user.profile_image) ?? user.profile_image}}
-              resizeMode="cover"
-            />
-          ) : (
-            <S.ProfileAvatarPlaceholder>
-              <Icon name="user" size={28} color="#bbb" />
-            </S.ProfileAvatarPlaceholder>
-          )}
+          <AvatarLevelBadge size={60} level={user.supporter_level}>
+            {user.profile_image ? (
+              <S.ProfileAvatar
+                source={{uri: profileUrl(user.profile_image) ?? user.profile_image}}
+                resizeMode="cover"
+              />
+            ) : (
+              <S.ProfileAvatarPlaceholder>
+                <Icon name="user" size={28} color="#bbb" />
+              </S.ProfileAvatarPlaceholder>
+            )}
+          </AvatarLevelBadge>
           <S.ProfileInfo>
             <S.ProfileNameRow>
               <S.ProfileName>{user.nickname ?? '이름 없음'}</S.ProfileName>
-              {user.supporter_level ? (
-                <SupporterBadge level={user.supporter_level} size={24} />
-              ) : null}
             </S.ProfileNameRow>
             <S.ProfileSubText>프로필 수정</S.ProfileSubText>
           </S.ProfileInfo>
@@ -151,20 +191,45 @@ const Mypage = () => {
           <Icon name="info" size={13} color="#000" />
         </S.SectionLabelRow>
         <S.MenuSection style={{marginTop: 4}}>
-          <S.MenuItem onPress={handleSupportStatus}>
+          <S.MenuItem activeOpacity={1}>
             <S.MenuText>내 상태</S.MenuText>
-            <S.MenuArrow>›</S.MenuArrow>
+            <S.SupportCountBadge active={supportCount > 0}>
+              {supportCount !== 0 && 
+               <MaterialCommunityIcon
+               name="star-shooting-outline"
+               size={13}
+               color="#fff"
+             />
+              }
+           
+              <S.SupportCountBadgeText active={supportCount > 0}>
+            
+                {supportCount}회 응원
+              </S.SupportCountBadgeText>
+            </S.SupportCountBadge>
+          </S.MenuItem>
+          <S.MenuItem activeOpacity={1}>
+            <S.MenuLabelRow>
+              <S.MenuText>뱃지 보여주기</S.MenuText>
+              <TouchableOpacity
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                onPress={() => setShowBadgeVisibilityInfo(true)}>
+                <Icon name="info" size={13} color="#999" />
+              </TouchableOpacity>
+            </S.MenuLabelRow>
+            <Switch
+              value={showBadge}
+              onValueChange={handleToggleBadge}
+              disabled={!hasBadge || isUpdatingBadge}
+              style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+            />
           </S.MenuItem>
           <S.MenuItem
             onPress={handleSupportPurchase}
-            disabled={!SUPPORT_PAYMENT_ENABLED}
+            disabled={!SUPPORT_PAYMENT_ENABLED || isPurchasingSupport}
             activeOpacity={SUPPORT_PAYMENT_ENABLED ? 0.7 : 1}>
             <S.MenuLabelRow>
-              <MaterialCommunityIcon
-                name="star-shooting-outline"
-                size={20}
-                color="#191919"
-              />
+             
               <S.MenuText>응원하기</S.MenuText>
             </S.MenuLabelRow>
             <S.MenuArrow>›</S.MenuArrow>
@@ -213,6 +278,10 @@ const Mypage = () => {
       <SupportInfoSheet
         visible={showSupportInfo}
         onClose={() => setShowSupportInfo(false)}
+      />
+      <BadgeVisibilityInfoSheet
+        visible={showBadgeVisibilityInfo}
+        onClose={() => setShowBadgeVisibilityInfo(false)}
       />
     </S.Container>
   );

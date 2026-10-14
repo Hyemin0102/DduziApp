@@ -1,12 +1,13 @@
 export const SUPPORT_PRICE_LABEL = '4,400원';
+// Apple/Google 양쪽에 동일하게 등록한 상품 ID (supabase/functions/verify-supporter-purchase와 일치해야 함)
+export const SUPPORT_PRODUCT_ID = 'dduzi_support_single';
 
 // 결제 연결 전까지 응원하기 버튼을 비활성화해두는 플래그
-export const SUPPORT_PAYMENT_ENABLED = false;
+export const SUPPORT_PAYMENT_ENABLED = true;
 
 // 응원 유도 모달 노출 조건
 // 기존 유저는 "이 버전을 처음 실행한 날"부터, 신규 유저는 가입일부터 기준일을 잡음
-// TODO: 응원 기능이 실제로 포함된 배포 버전으로 교체할 것 (package.json의 version과 맞출 것)
-export const SUPPORT_FEATURE_MIN_VERSION = '0.0.1';
+export const SUPPORT_FEATURE_MIN_VERSION = '1.0.7';
 export const SUPPORT_MODAL_BASELINE_WAIT_DAYS = 3;
 export const SUPPORT_MODAL_STAGE2_GAP_DAYS = 30;
 export const SUPPORT_MODAL_STAGE3_GAP_DAYS = 60;

@@ -3,6 +3,7 @@ import {ActivityIndicator, Dimensions, FlatList} from 'react-native';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import {supabase} from '@/lib/supabase';
 import {profileUrl} from '@/lib/imageTransform';
+import AvatarLevelBadge from './AvatarLevelBadge';
 import * as S from './PostLikersSheet.style';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
@@ -12,6 +13,8 @@ interface Liker {
   nickname: string;
   profile_image: string | null;
   bio: string | null;
+  supporter_level: 1 | 2 | 3 | null;
+  show_supporter_badge: boolean;
 }
 
 interface PostLikersSheetProps {
@@ -31,7 +34,9 @@ export default function PostLikersSheet({visible, onClose, postId}: PostLikersSh
       try {
         const {data, error} = await supabase
           .from('likes')
-          .select('created_at, users(id, nickname, profile_image, bio)')
+          .select(
+            'created_at, users(id, nickname, profile_image, bio, supporter_level, show_supporter_badge)',
+          )
           .eq('post_id', postId)
           .order('created_at', {ascending: false});
         if (error) throw error;
@@ -66,15 +71,19 @@ export default function PostLikersSheet({visible, onClose, postId}: PostLikersSh
               const avatar = profileUrl(item.profile_image) ?? item.profile_image;
               return (
                 <S.Row>
-                  {avatar ? (
-                    <S.Avatar source={{uri: avatar}} />
-                  ) : (
-                    <S.AvatarPlaceholder>
-                      <S.AvatarPlaceholderText>
-                        {item.nickname?.charAt(0) ?? '?'}
-                      </S.AvatarPlaceholderText>
-                    </S.AvatarPlaceholder>
-                  )}
+                  <AvatarLevelBadge
+                    size={40}
+                    level={item.show_supporter_badge ? item.supporter_level : null}>
+                    {avatar ? (
+                      <S.Avatar source={{uri: avatar}} />
+                    ) : (
+                      <S.AvatarPlaceholder>
+                        <S.AvatarPlaceholderText>
+                          {item.nickname?.charAt(0) ?? '?'}
+                        </S.AvatarPlaceholderText>
+                      </S.AvatarPlaceholder>
+                    )}
+                  </AvatarLevelBadge>
                   <S.TextColumn>
                     <S.Nickname numberOfLines={1} ellipsizeMode="tail">
                       {item.nickname}

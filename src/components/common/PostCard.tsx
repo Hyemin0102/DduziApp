@@ -14,7 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import LikeBurst from './LikeBurst';
-import SupporterBadge from './SupporterBadge';
+import AvatarLevelBadge from './AvatarLevelBadge';
 import * as S from './PostCard.style';
 import {thumbnailUrl, profileUrl} from '@/lib/imageTransform';
 import {supabase} from '@/lib/supabase';
@@ -117,27 +117,28 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
         onPress={() =>
           navigation.push(POST_ROUTES.POSTS_MAIN, {userId: post.user_id})
         }>
-        {post.users.profile_image ? (
-          <S.ProfileImage
-            source={{
-              uri:
-                profileUrl(post.users.profile_image) ??
-                post.users.profile_image,
-            }}
-            resizeMode="cover"
-          />
-        ) : (
-          <S.ProfileImagePlaceholder>
-            <S.ProfileImagePlaceholderText>
-              {profileInitial}
-            </S.ProfileImagePlaceholderText>
-          </S.ProfileImagePlaceholder>
-        )}
+        <AvatarLevelBadge
+          size={40}
+          level={post.users.show_supporter_badge ? post.users.supporter_level : null}>
+          {post.users.profile_image ? (
+            <S.ProfileImage
+              source={{
+                uri:
+                  profileUrl(post.users.profile_image) ??
+                  post.users.profile_image,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <S.ProfileImagePlaceholder>
+              <S.ProfileImagePlaceholderText>
+                {profileInitial}
+              </S.ProfileImagePlaceholderText>
+            </S.ProfileImagePlaceholder>
+          )}
+        </AvatarLevelBadge>
         <S.UsernameRow>
           <S.Username>{post.users.nickname}</S.Username>
-          {post.users.show_supporter_badge && post.users.supporter_level ? (
-            <SupporterBadge level={post.users.supporter_level} size={20} />
-          ) : null}
         </S.UsernameRow>
       </S.ProfileSection>
 
