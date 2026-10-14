@@ -20,6 +20,7 @@ import PostCreateForProjectScreen from '../PostCreate/PostCreateForProjectScreen
 import SearchScreen from '../Search/Search';
 import Icon from 'react-native-vector-icons/Feather';
 import {TAB_ROUTES} from '@/constants/navigation.constant';
+import {PATTERN_SEARCH_TAB_ENABLED} from '@/constants/feature.constant';
 import ProjectsScreen from '../Projects/ProjectsScreen';
 import ProjectsStack from './stacks/ProjectsStack';
 import HouseSimple from '../../assets/icons/tab_HouseSimple.svg';
@@ -154,38 +155,40 @@ const TabNavigator = () => {
             },
           })}
         />
-        <Tab.Screen
-          name="ExploreTab"
-          component={ExploreStack}
-          options={{
-            tabBarIcon: ({focused}) => (
-              <View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 4,
-                  width: '100%',
-                  flex: 1,
-                }}>
-                <Icon
-                  name="compass"
-                  size={24}
-                  color={focused ? '#000' : '#82879B'}
-                />
-                <Text
+        {PATTERN_SEARCH_TAB_ENABLED && (
+          <Tab.Screen
+            name="ExploreTab"
+            component={ExploreStack}
+            options={{
+              tabBarIcon: ({focused}) => (
+                <View
                   style={{
-                    color: focused ? '#000' : '#82879B',
-                    fontWeight: focused ? 'bold' : 'normal',
-                    fontSize: 10,
-                    marginTop: 4,
-                    textAlign: 'center',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 4,
+                    width: '100%',
+                    flex: 1,
                   }}>
-                  탐색
-                </Text>
-              </View>
-            ),
-          }}
-        />
+                  <Icon
+                    name="compass"
+                    size={24}
+                    color={focused ? '#000' : '#82879B'}
+                  />
+                  <Text
+                    style={{
+                      color: focused ? '#000' : '#82879B',
+                      fontWeight: focused ? 'bold' : 'normal',
+                      fontSize: 10,
+                      marginTop: 4,
+                      textAlign: 'center',
+                    }}>
+                    탐색
+                  </Text>
+                </View>
+              ),
+            }}
+          />
+        )}
         <Tab.Screen
           name="PostTab"
           component={PostsStack}

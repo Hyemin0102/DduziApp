@@ -37,7 +37,7 @@ import LikeBurst from '@/components/common/LikeBurst';
 import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save_new.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
-import LikeIcon from '@/assets/icons/likes.svg';
+import LikeIcon from '@/assets/icons/like.svg';
 import CommentIcon from '@/assets/icons/comments.svg';
 import {POST_IMAGE_ASPECT_RATIO} from '@/constants/postImage.constant';
 import {REPORT_REASONS} from '@/constants/report.constant';
