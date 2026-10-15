@@ -20,9 +20,9 @@ export default function SupportInfoSheet({visible, onClose}: SupportInfoSheetPro
   return (
     <ActionSheetModal visible={visible} onClose={onClose} showCancel={false}>
       <View style={{paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32}}>
-        <S.Title>뜨지 응원이 무엇인가요?</S.Title>
+        <S.Title>뜨지를 응원해주세요!</S.Title>
         <S.Body>
-          뜨지는 1인이 개발하는 앱이에요. 뜨지 응원은 광고 없는 앱과 서버 운영에 큰 도움이 됩니다.
+          뜨지는 뜨사장 혼자 운영하고 있는 앱이예요. 여러분의 응원은 광고 없는 앱과 서버 운영에 큰 도움이 됩니다.
         </S.Body>
 
         <S.BulletRow>

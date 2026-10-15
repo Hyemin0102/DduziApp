@@ -9,7 +9,8 @@ import Animated, {
 import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 
 const PARTICLE_COUNT = 6;
-const COLORS = ['#FF3B30', '#FF6B81', '#FF9EB3', '#FFC2CF'];
+// liked.svg 하트 채우기색(#F5D6D6)과 같은 톤으로 맞춘 팔레트
+const COLORS = ['#F1C3C3', '#F5D6D6', '#F8E2E2', '#FBEFEF'];
 
 interface ParticleConfig {
   angle: number;

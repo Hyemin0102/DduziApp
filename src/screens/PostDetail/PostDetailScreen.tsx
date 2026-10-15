@@ -38,6 +38,7 @@ import {trackEvent} from '@/lib/mixpanel';
 import SaveIcon from '@/assets/icons/save_new.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
 import LikeIcon from '@/assets/icons/like.svg';
+import LikedIcon from '@/assets/icons/liked.svg';
 import CommentIcon from '@/assets/icons/comments.svg';
 import {POST_IMAGE_ASPECT_RATIO} from '@/constants/postImage.constant';
 import {REPORT_REASONS} from '@/constants/report.constant';
@@ -563,7 +564,11 @@ export default function PostDetailScreen() {
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                 <S.LikeIconWrapper>
                   <Animated.View style={heartAnimatedStyle}>
-                    <LikeIcon width={22} height={22} />
+                    {isLiked ? (
+                      <LikedIcon width={22} height={22} />
+                    ) : (
+                      <LikeIcon width={24} height={24} />
+                    )}
                   </Animated.View>
                   {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
                 </S.LikeIconWrapper>
@@ -583,7 +588,7 @@ export default function PostDetailScreen() {
           {post.comments_enabled && (
             <S.ActionButton>
               <S.ActionIconPad>
-                <CommentIcon width={22} height={22} />
+                <CommentIcon width={24} height={24} />
               </S.ActionIconPad>
               {commentsCount > 0 && <S.ActionButtonText>{commentsCount}</S.ActionButtonText>}
             </S.ActionButton>
@@ -594,9 +599,9 @@ export default function PostDetailScreen() {
               disabled={isSaveLoading}
               hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
               {isSaved ? (
-                <SavedIcon width={26} height={26} color="#000000" />
+                <SavedIcon width={28} height={28} color="#000000" />
               ) : (
-                <SaveIcon width={26} height={26} color="#000000" />
+                <SaveIcon width={28} height={28} color="#000000" />
               )}
             </S.ActionBarSaveTouch>
           )}

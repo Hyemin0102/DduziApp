@@ -171,14 +171,14 @@ export const StatusBadgeText = styled.Text<{status: 'planned' | 'in_progress' | 
 export const ActionBar = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-left: auto;
 `;
 
 export const ActionButton = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 `;
 
 export const ActionTouch = styled.TouchableOpacity`

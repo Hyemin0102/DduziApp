@@ -40,7 +40,9 @@ import {
 } from '@/constants/navigation.constant';
 import {ProjectDetail, SimplePost} from '@/@types/database';
 import Icon from 'react-native-vector-icons/Feather';
-import FA5Icon from 'react-native-vector-icons/FontAwesome5';
+import LikeIcon from '@/assets/icons/like.svg';
+import LikedIcon from '@/assets/icons/liked.svg';
+import CommentIcon from '@/assets/icons/comments.svg';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
 import CalendarModal from '@/components/modal/CalendarModal';
 import * as S from './ProjectDetailScreen.styles';
@@ -1746,12 +1748,11 @@ export default function ProjectDetailScreen() {
                         <S.PostStatsRow>
                           {project?.likes_enabled && (
                             <S.PostStatItem>
-                              <FA5Icon
-                                name="heart"
-                                solid={post.is_liked}
-                                size={12}
-                                color={post.is_liked ? '#FF3B30' : '#666'}
-                              />
+                              {post.is_liked ? (
+                                <LikedIcon width={12} height={12} />
+                              ) : (
+                                <LikeIcon width={13} height={13} />
+                              )}
                               {(post.likes_count ?? 0) > 0 && (
                                 <S.PostStatText>{post.likes_count}</S.PostStatText>
                               )}
@@ -1759,7 +1760,7 @@ export default function ProjectDetailScreen() {
                           )}
                           {project?.comments_enabled && (
                             <S.PostStatItem>
-                              <FA5Icon name="comment" solid={false} size={12} color="#666" />
+                              <CommentIcon width={13} height={13} />
                               {(post.comments_count ?? 0) > 0 && (
                                 <S.PostStatText>{post.comments_count}</S.PostStatText>
                               )}

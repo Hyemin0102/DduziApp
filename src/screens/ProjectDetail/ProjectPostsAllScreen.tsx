@@ -14,7 +14,9 @@ import {thumbnailUrl} from '@/lib/imageTransform';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import Icon from 'react-native-vector-icons/Feather';
-import FA5Icon from 'react-native-vector-icons/FontAwesome5';
+import LikeIcon from '@/assets/icons/like.svg';
+import LikedIcon from '@/assets/icons/liked.svg';
+import CommentIcon from '@/assets/icons/comments.svg';
 
 const PAGE_SIZE = 20;
 
@@ -231,12 +233,11 @@ export default function ProjectPostsAllScreen() {
                   <View style={styles.statsRow}>
                     {projectFlags.likesEnabled && (
                       <View style={styles.statItem}>
-                        <FA5Icon
-                          name="heart"
-                          solid={item.is_liked}
-                          size={12}
-                          color={item.is_liked ? '#FF3B30' : '#999'}
-                        />
+                        {item.is_liked ? (
+                          <LikedIcon width={12} height={12} />
+                        ) : (
+                          <LikeIcon width={13} height={13} />
+                        )}
                         {(item.likes_count ?? 0) > 0 && (
                           <Text style={styles.statText}>{item.likes_count}</Text>
                         )}
@@ -244,7 +245,7 @@ export default function ProjectPostsAllScreen() {
                     )}
                     {projectFlags.commentsEnabled && (
                       <View style={styles.statItem}>
-                        <FA5Icon name="comment" solid={false} size={12} color="#999" />
+                        <CommentIcon width={13} height={13} />
                         {(item.comments_count ?? 0) > 0 && (
                           <Text style={styles.statText}>{item.comments_count}</Text>
                         )}

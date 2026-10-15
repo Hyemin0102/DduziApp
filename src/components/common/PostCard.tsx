@@ -5,7 +5,9 @@ import {Post} from '@/@types/database';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import PinchZoomImage from './PinchZoomImage';
 import Icon from 'react-native-vector-icons/Feather';
-import FA5Icon from 'react-native-vector-icons/FontAwesome5';
+import LikeIcon from '@/assets/icons/like.svg';
+import LikedIcon from '@/assets/icons/liked.svg';
+import CommentIcon from '@/assets/icons/comments.svg';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -225,12 +227,11 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
                       hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                       <S.LikeIconWrapper>
                         <Animated.View style={heartAnimatedStyle}>
-                          <FA5Icon
-                            name="heart"
-                            solid={post.is_liked}
-                            size={18}
-                            color={post.is_liked ? '#FF3B30' : '#000'}
-                          />
+                          {post.is_liked ? (
+                            <LikedIcon width={22} height={22} />
+                          ) : (
+                            <LikeIcon width={24} height={24} />
+                          )}
                         </Animated.View>
                         {likeBurstKey !== null && <LikeBurst key={likeBurstKey} />}
                       </S.LikeIconWrapper>
@@ -258,7 +259,7 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
                         onOpenComments?.(post);
                       }}
                       hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                      <FA5Icon name="comment" solid={false} size={18} color="#000" />
+                      <CommentIcon width={24} height={24} />
                     </S.ActionTouch>
                     {(post.comments_count ?? 0) > 0 && (
                       <S.ActionButtonText>{post.comments_count}</S.ActionButtonText>

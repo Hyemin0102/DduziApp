@@ -641,7 +641,7 @@ export const PostDateText = styled.Text`
 export const PostStatsRow = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   margin-left: auto;
 `;
 

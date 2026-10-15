@@ -50,6 +50,8 @@ export const BadgeItem = styled.View`
 export const BadgeItemLabel = styled.Text`
   font-size: 13px;
   color: #666;
+  margin-top: 10px;
+  //border: 1px solid red;
 `;
 
 export const AvatarPreview = styled.View`

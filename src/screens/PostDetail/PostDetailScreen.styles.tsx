@@ -198,10 +198,8 @@ export const ActionBar = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 8px;
   padding: 10px 20px;
-  //margin-bottom: 8px;
-  //border: 1px solid red;
 `;
 
 export const ActionBarSaveTouch = styled.TouchableOpacity`

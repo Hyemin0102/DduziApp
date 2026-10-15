@@ -192,23 +192,6 @@ const Mypage = () => {
         </S.SectionLabelRow>
         <S.MenuSection style={{marginTop: 4}}>
           <S.MenuItem activeOpacity={1}>
-            <S.MenuText>내 상태</S.MenuText>
-            <S.SupportCountBadge active={supportCount > 0}>
-              {supportCount !== 0 && 
-               <MaterialCommunityIcon
-               name="star-shooting-outline"
-               size={13}
-               color="#fff"
-             />
-              }
-           
-              <S.SupportCountBadgeText active={supportCount > 0}>
-            
-                {supportCount}회 응원
-              </S.SupportCountBadgeText>
-            </S.SupportCountBadge>
-          </S.MenuItem>
-          <S.MenuItem activeOpacity={1}>
             <S.MenuLabelRow>
               <S.MenuText>뱃지 보여주기</S.MenuText>
               <TouchableOpacity
@@ -229,8 +212,19 @@ const Mypage = () => {
             disabled={!SUPPORT_PAYMENT_ENABLED || isPurchasingSupport}
             activeOpacity={SUPPORT_PAYMENT_ENABLED ? 0.7 : 1}>
             <S.MenuLabelRow>
-             
               <S.MenuText>응원하기</S.MenuText>
+              {supportCount > 0 && (
+                <S.SupportCountBadge active>
+                  <MaterialCommunityIcon
+                    name="star-shooting-outline"
+                    size={13}
+                    color="#fff"
+                  />
+                  <S.SupportCountBadgeText active>
+                    {supportCount}회 응원
+                  </S.SupportCountBadgeText>
+                </S.SupportCountBadge>
+              )}
             </S.MenuLabelRow>
             <S.MenuArrow>›</S.MenuArrow>
           </S.MenuItem>
