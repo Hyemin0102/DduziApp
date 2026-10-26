@@ -4,6 +4,7 @@ import {
   purchaseUpdatedListener,
   purchaseErrorListener,
   finishTransaction,
+  isUserCancelledError,
   type Purchase,
 } from 'react-native-iap';
 import {supabase} from './supabase';
@@ -75,6 +76,14 @@ export async function purchaseSupport(): Promise<PurchaseSupportResult> {
     });
     errorSub = purchaseErrorListener(error => {
       cleanup();
+      if (isUserCancelledError(error)) {
+        // 사용자가 결제창에서 그냥 취소한 거라 "오류"가 아님 — 호출하는 쪽에서
+        // error.code로 구분해서 에러 알럿을 안 띄우게 함
+        const cancelError = new Error('User cancelled purchase');
+        (cancelError as Error & {code?: string}).code = 'USER_CANCELLED';
+        reject(cancelError);
+        return;
+      }
       reject(new Error(error.message));
     });
 
@@ -86,6 +95,12 @@ export async function purchaseSupport(): Promise<PurchaseSupportResult> {
       type: 'in-app',
     }).catch(error => {
       cleanup();
+      if (isUserCancelledError(error)) {
+        const cancelError = new Error('User cancelled purchase');
+        (cancelError as Error & {code?: string}).code = 'USER_CANCELLED';
+        reject(cancelError);
+        return;
+      }
       reject(error);
     });
   });

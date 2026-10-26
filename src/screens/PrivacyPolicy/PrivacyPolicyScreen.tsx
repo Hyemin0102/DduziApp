@@ -25,9 +25,17 @@ export default function PrivacyPolicyScreen() {
       <Text style={styles.body}>
         애플 로그인 이용 시 애플에서 기본 제공하는 정보(이름, 이메일)를 수집할 수 있습니다. 애플의 정책에 따라 이메일이 비공개(relay) 이메일로 제공될 수 있습니다.
       </Text>
+      <Text style={styles.subTitle}>푸시 알림</Text>
+      <Text style={styles.body}>
+        알림 수신에 동의한 이용자에 한해, 공지사항 및 좋아요·댓글 등 활동 알림 발송을 위한 기기의 푸시 알림 토큰(FCM 토큰)을 수집합니다.
+      </Text>
+      <Text style={styles.subTitle}>응원(인앱 결제)</Text>
+      <Text style={styles.body}>
+        서비스 내 "응원" 기능을 이용하는 경우, 결제 플랫폼(App Store/Google Play)으로부터 거래 ID, 결제 스토어 구분, 구매 시점의 닉네임을 수집합니다. 카드 번호 등 결제 수단 정보는 개발자가 직접 수집하지 않으며, 각 플랫폼(Apple/Google)이 자체적으로 처리합니다.
+      </Text>
       <Text style={styles.subTitle}>수집 방법</Text>
       <Text style={styles.body}>
-        개인정보는 이용자가 소셜 로그인을 통해 서비스에 접속할 때 해당 소셜 플랫폼으로부터 제공받는 방식으로 수집됩니다.
+        개인정보는 이용자가 소셜 로그인을 통해 서비스에 접속하거나, 알림 수신에 동의하거나, 응원 결제를 진행할 때 해당 플랫폼으로부터 제공받는 방식으로 수집됩니다.
       </Text>
 
       <Text style={styles.sectionTitle}>제2조 (개인정보의 수집 및 이용 목적)</Text>
@@ -35,13 +43,16 @@ export default function PrivacyPolicyScreen() {
         수집된 개인정보는 다음의 목적을 위해 이용됩니다.{'\n'}
         • 회원 식별 및 서비스 제공: 로그인 인증, 계정 관리{'\n'}
         • 서비스 개선: 서비스 품질 개선을 위한 이용 현황 분석{'\n'}
-        • 고객 지원: 이용자의 문의 및 불만 처리
+        • 고객 지원: 이용자의 문의 및 불만 처리{'\n'}
+        • 알림 발송: 공지사항, 좋아요·댓글 등 활동 관련 푸시 알림 발송{'\n'}
+        • 응원(후원) 처리: 결제 검증, 응원 등급·횟수 관리 및 뱃지 표시
       </Text>
 
       <Text style={styles.sectionTitle}>제3조 (개인정보의 보유 및 이용 기간)</Text>
       <Text style={styles.body}>
         개발자는 이용자의 개인정보를 서비스 이용 기간 동안 보유·이용합니다. 이용자가 계정 삭제를 요청하거나 서비스 탈퇴 시 해당 개인정보는 지체 없이 파기됩니다.{'\n\n'}
         단, 다음의 경우 법령에서 정한 기간 동안 보관합니다.{'\n'}
+        • 대금결제 및 재화 등의 공급에 관한 기록 (전자상거래법): 5년{'\n'}
         • 소비자 불만 또는 분쟁처리 기록 (전자상거래법): 3년{'\n'}
         • 서비스 이용 관련 로그 기록 (통신비밀보호법): 3개월
       </Text>
@@ -112,7 +123,7 @@ export default function PrivacyPolicyScreen() {
       </Text>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>본 개인정보처리방침은 2026년 6월 25일부터 시행됩니다.</Text>
+        <Text style={styles.footerText}>본 개인정보처리방침은 2026년 6월 25일부터 시행되며, 2026년 10월 26일 개정되었습니다.</Text>
       </View>
     </ScrollView>
   );

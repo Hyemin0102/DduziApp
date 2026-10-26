@@ -24,8 +24,8 @@ function generateParticles(): ParticleConfig[] {
   return Array.from({length: PARTICLE_COUNT}, (_, i) => ({
     // 위쪽 반원 방향으로만 퍼지게(-160~-20도), 완전 랜덤이면 아래로도 튀어서 어색함
     angle: -160 + Math.random() * 140,
-    distance: 26 + Math.random() * 22,
-    size: 8 + Math.random() * 7,
+    distance: 38 + Math.random() * 34,
+    size: 12 + Math.random() * 10,
     color: COLORS[i % COLORS.length],
     delay: Math.random() * 60,
   }));

@@ -3,7 +3,7 @@ buildscript {
         buildToolsVersion = "36.0.0"
         minSdkVersion = 24
         compileSdkVersion = 36
-        targetSdkVersion = 35
+        targetSdkVersion = 36
         ndkVersion = "27.1.12297006"
         // react-native-iap(openiap-google)이 Kotlin 2.2.x로 컴파일되어 있어서(3.5.0도 마찬가지)
         // 그보다 낮으면 "Module was compiled with an incompatible version of Kotlin" 에러 발생

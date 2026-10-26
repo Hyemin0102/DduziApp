@@ -28,13 +28,15 @@ export const CommentsSheetTitle = styled.Text`
 
 export const CommentsSheetList = styled.ScrollView`
   flex: 1;
+  min-height: 0px;
+  overflow: hidden;
   padding: 16px 20px 0 20px;
 `;
 
 export const CommentsEmptyText = styled.Text`
   font-size: 14px;
   color: #999;
-  padding: 40px 20px;
+  padding: 20px;
   text-align: left;
 `;
 

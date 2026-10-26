@@ -390,6 +390,8 @@ export default function PostDetailScreen() {
         reason,
         project_id: post.project_id,
         project_title: post.title,
+        reported_user_id: post.user_id,
+        reported_user_nickname: post.nickname,
       });
       if (insertError) {
         if (insertError.code === '23505') {
@@ -403,6 +405,8 @@ export default function PostDetailScreen() {
         body: {
           reporterId: user.id,
           reporterNickname: user.nickname ?? '알 수 없음',
+          authorId: post.user_id,
+          authorNickname: post.nickname,
           postId: post.id,
           postContent: post.content,
           projectId: post.project_id,
@@ -463,11 +467,7 @@ export default function PostDetailScreen() {
           <S.AuthorInfo>
             <AvatarLevelBadge
               size={48}
-              level={
-                isMyPost || post.show_supporter_badge
-                  ? post.supporter_level
-                  : null
-              }>
+              level={post.show_supporter_badge ? post.supporter_level : null}>
               {post.profile_image ? (
                 <S.ProfileImage source={{uri: post.profile_image}} />
               ) : (

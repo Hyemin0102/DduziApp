@@ -23,8 +23,6 @@ import * as HS from '../Navigator/stacks/HomeStack.style';
 import {trackEvent} from '@/lib/mixpanel';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
 import PostLikersSheet from '@/components/common/PostLikersSheet';
-import SupportPromptModal from '@/components/common/SupportPromptModal';
-import {getSupportModalStage, recordSupportModalShown} from '@/lib/supportModal';
 
 interface OpenComments {
   postId: string;
@@ -75,9 +73,10 @@ const Home = () => {
   const maxViewedIndexRef = useRef(0);
   const [openComments, setOpenComments] = useState<OpenComments | null>(null);
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
-  const [showSupportPrompt, setShowSupportPrompt] = useState(false);
-  const [supportPromptStage, setSupportPromptStage] = useState<1 | 2 | 3>(1);
-  const supportModalCheckedRef = useRef(false);
+  // 응원 유도 모달 상태/체크 로직은 App.tsx(전역)로 옮겨감 — 게시물/프로젝트 작성
+  // 완료 시점 등 Home이 아닌 다른 화면에서도 같은 모달을 띄워야 해서임.
+  // 이 ref는 __DEV__ 테스트 버튼이 1→2→3을 순환시키는 용도로만 씀
+  const devSupportStageRef = useRef<1 | 2 | 3>(1);
 
   const fetchBlockedIds = async (): Promise<string[]> => {
     const {data: {user}} = await supabase.auth.getUser();
@@ -289,22 +288,6 @@ const Home = () => {
   );
 
   useEffect(() => {
-    if (supportModalCheckedRef.current) return;
-    supportModalCheckedRef.current = true;
-    (async () => {
-      const {
-        data: {user},
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const stage = await getSupportModalStage(user.id);
-      if (!stage) return;
-      await recordSupportModalShown(user.id, stage);
-      setSupportPromptStage(stage);
-      setShowSupportPrompt(true);
-    })();
-  }, []);
-
-  useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
       if (nextState === 'background') {
         flushScrollDepth();
@@ -413,12 +396,13 @@ const Home = () => {
           </HS.NotificationButton>
           {__DEV__ && (
             // 응원 유도 모달 디자인 확인용 임시 버튼 — 실제 로직(getSupportModalStage)과 동일하게
-            // 볼 때마다 1→2→3단계 뱃지를 순서대로 보여줌 (실제 응원 등급과는 무관)
+            // 볼 때마다 1→2→3단계 뱃지를 순서대로 보여줌 (실제 응원 등급과는 무관).
+            // 모달 자체는 App.tsx(전역)가 들고 있어서 이벤트로 강제 노출을 요청함
             <HS.NotificationButton
               onPress={() => {
-                const nextStage = ((supportPromptStage % 3) + 1) as 1 | 2 | 3;
-                setSupportPromptStage(nextStage);
-                setShowSupportPrompt(true);
+                const nextStage = ((devSupportStageRef.current % 3) + 1) as 1 | 2 | 3;
+                devSupportStageRef.current = nextStage;
+                DeviceEventEmitter.emit('forceShowSupportModal', {stage: nextStage});
               }}>
               <Ionicons name="gift-outline" size={22} color="#000" />
             </HS.NotificationButton>
@@ -473,12 +457,6 @@ const Home = () => {
         visible={!!likersPostId}
         onClose={() => setLikersPostId(null)}
         postId={likersPostId ?? ''}
-      />
-
-      <SupportPromptModal
-        visible={showSupportPrompt}
-        onClose={() => setShowSupportPrompt(false)}
-        stage={supportPromptStage}
       />
 
       <PostCommentsSheet

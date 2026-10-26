@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export interface ActionSheetAction {
   label: string;
@@ -42,6 +43,11 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
 }) => {
   const translateY = useRef(new Animated.Value(SHEET_OFFSET)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  // 기존엔 iOS 홈 인디케이터 기준 34px을 고정값으로 썼는데, Android가 targetSdk 36부터
+  // edge-to-edge가 강제되면서 제스처 내비게이션 바 영역이 실제 화면 하단까지 그대로 포함돼서
+  // 고정값 대신 실제 safe area 하단 inset을 써야 기기별 제스처바/홈 인디케이터 높이에 안 가려짐
+  const sheetBottomPadding = Math.max(insets.bottom, 16);
 
   const handleShow = () => {
     Animated.parallel([
@@ -100,7 +106,11 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
       onShow={handleShow}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.root, {opacity}]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <Animated.View style={[styles.sheet, {transform: [{translateY}]}]}>
+        <Animated.View
+          style={[
+            styles.sheet,
+            {paddingBottom: sheetBottomPadding, transform: [{translateY}]},
+          ]}>
           {!hideHandle && <View style={styles.handle} />}
 
           {children}
@@ -160,7 +170,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 34,
   },
   handle: {
     width: 40,

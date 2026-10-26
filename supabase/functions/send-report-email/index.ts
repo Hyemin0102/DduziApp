@@ -46,6 +46,8 @@ Deno.serve(async (req: Request) => {
     const {
       reporterId,
       reporterNickname,
+      authorId,
+      authorNickname,
       postId,
       postContent,
       projectId,
@@ -73,6 +75,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const safeNickname = escapeHtml(reporterNickname ?? '');
+    const safeAuthorNickname = escapeHtml(authorNickname ?? '알 수 없음');
+    const safeAuthorId = escapeHtml(authorId ?? '');
+    const reportedAt = new Date().toLocaleString('ko-KR', {timeZone: 'Asia/Seoul'});
     const safePostId = escapeHtml(postId ?? '');
     const safeReason = escapeHtml(reason ?? '');
     const safeContent = escapeHtml(postContent ?? '(내용 없음)');
@@ -111,6 +116,14 @@ Deno.serve(async (req: Request) => {
             <tr>
               <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">신고자</td>
               <td style="padding:8px;border:1px solid #eee">${safeNickname} (${user.id})</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">작성자</td>
+              <td style="padding:8px;border:1px solid #eee">${safeAuthorNickname} (${safeAuthorId})</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">신고 시각</td>
+              <td style="padding:8px;border:1px solid #eee">${reportedAt}</td>
             </tr>
             <tr>
               <td style="padding:8px;border:1px solid #eee;background:#f9f9f9;font-weight:bold;white-space:nowrap">프로젝트</td>

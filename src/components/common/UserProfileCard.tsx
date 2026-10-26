@@ -77,21 +77,13 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   if (loading) return <ActivityIndicator size="small" color="#191919" />;
   if (!userId || !user) return <Text>프로필을 불러올 수 없습니다</Text>;
 
-  console.log('show_supporter_badge',user.show_supporter_badge);
-  console.log('supporter_level',user.supporter_level);
-  
-
   return (
     <S.Container>
       {/* 프로필 이미지 + 정보 */}
       <S.Wrapper>
         <AvatarLevelBadge
           size={72}
-          level={
-            isMyPage || user.show_supporter_badge
-              ? user.supporter_level
-              : null
-          }>
+          level={user.show_supporter_badge ? user.supporter_level : null}>
           {user.profile_image ? (
             <S.ProfileImage source={{uri: user.profile_image}} />
           ) : (

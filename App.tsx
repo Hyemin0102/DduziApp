@@ -34,6 +34,9 @@ import {
   fetchIosAppStoreId,
   STORE_URLS,
 } from './src/lib/appVersion';
+import SupportPromptModal from './src/components/common/SupportPromptModal';
+import {getSupportModalStage, recordSupportModalShown} from './src/lib/supportModal';
+import {supabase} from './src/lib/supabase';
 
 const ANDROID_PACKAGE_ID = 'com.dduziapp';
 
@@ -129,6 +132,47 @@ function App(): React.JSX.Element {
     return unsubscribe;
   }, []);
 
+  // 응원 유도 모달 — 앱 실행 조건은 최초 마운트 시 1회 체크하고, 게시물/프로젝트를
+  // 만든 "그 자리"에서 바로 뜨게 하려면 해당 화면에서 'checkSupportModal' 이벤트를
+  // 쏘면 됨(화면이 어디든 전역에서 처리). 전역에 둔 이유는 Home.tsx가 아닌 다른
+  // 화면(게시물/프로젝트 작성 완료 시점)에서도 같은 모달을 띄워야 하기 때문
+  const [showSupportPrompt, setShowSupportPrompt] = useState(false);
+  const [supportPromptStage, setSupportPromptStage] = useState<1 | 2 | 3>(1);
+
+  useEffect(() => {
+    const checkSupportModal = async () => {
+      const {
+        data: {user},
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const stage = await getSupportModalStage(user.id);
+      if (!stage) return;
+      await recordSupportModalShown(user.id, stage);
+      setSupportPromptStage(stage);
+      setShowSupportPrompt(true);
+    };
+
+    checkSupportModal();
+
+    const checkSub = DeviceEventEmitter.addListener(
+      'checkSupportModal',
+      checkSupportModal,
+    );
+    // 홈의 __DEV__ 전용 테스트 버튼이 실제 조건 체크를 건너뛰고 특정 단계를 강제로
+    // 띄워보기 위해 쏘는 이벤트(디자인 확인용, 실제 노출 로직과 무관)
+    const forceSub = DeviceEventEmitter.addListener(
+      'forceShowSupportModal',
+      (data: {stage: 1 | 2 | 3}) => {
+        setSupportPromptStage(data.stage);
+        setShowSupportPrompt(true);
+      },
+    );
+    return () => {
+      checkSub.remove();
+      forceSub.remove();
+    };
+  }, []);
+
   useEffect(() => {
     trackAppOpened();
 
@@ -159,6 +203,11 @@ function App(): React.JSX.Element {
           <ZoomOverlayProvider>
             <Navigator />
           </ZoomOverlayProvider>
+          <SupportPromptModal
+            visible={showSupportPrompt}
+            onClose={() => setShowSupportPrompt(false)}
+            stage={supportPromptStage}
+          />
         </AuthProvider>
         <InAppNotificationBanner />
       </SafeAreaProvider>

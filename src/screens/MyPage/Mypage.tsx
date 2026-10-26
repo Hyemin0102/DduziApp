@@ -66,6 +66,7 @@ const Mypage = () => {
       });
       Alert.alert('응원 완료', '뜨지를 응원해주셔서 감사해요!');
     } catch (error: any) {
+      if (error?.code === 'USER_CANCELLED') return;
       console.error('❌ 응원 결제 실패:', error);
       Alert.alert('오류', error?.message ?? '결제 중 문제가 발생했어요.');
     } finally {

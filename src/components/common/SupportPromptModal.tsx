@@ -1,11 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
+import {ActivityIndicator, Alert} from 'react-native';
 import AvatarLevelBadge from './AvatarLevelBadge';
 import ActionSheetModal from '@/components/modal/ActionSheetModal';
-import useCommonNavigation from '@/hooks/useCommonNavigation';
-import {ROOT_ROUTES, TAB_ROUTES, MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import {trackEvent} from '@/lib/mixpanel';
 import {useAuth} from '@/contexts/AuthContext';
 import {profileUrl} from '@/lib/imageTransform';
+import {purchaseSupport} from '@/lib/iap';
+import {SUPPORT_PAYMENT_ENABLED} from '@/constants/support.constant';
 import * as S from './SupportPromptModal.style';
 
 interface SupportPromptModalProps {
@@ -19,19 +20,32 @@ export default function SupportPromptModal({
   onClose,
   stage = 1,
 }: SupportPromptModalProps) {
-  const {rootNavigation} = useCommonNavigation<any>();
-  const {user} = useAuth();
+  const {user, updateUserProfile} = useAuth();
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const avatarUri = user?.profile_image
     ? profileUrl(user.profile_image) ?? user.profile_image
     : null;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!SUPPORT_PAYMENT_ENABLED || isPurchasing) return;
     trackEvent('support_modal_confirmed');
-    onClose();
-    rootNavigation.navigate(ROOT_ROUTES.TAB_NAVIGATOR, {
-      screen: TAB_ROUTES.MY_PAGE_TAB,
-      params: {screen: MY_PAGE_ROUTES.SUPPORT_STATUS},
-    });
+    setIsPurchasing(true);
+    try {
+      const result = await purchaseSupport();
+      updateUserProfile({
+        supporter_level: result.supporter_level,
+        supporter_count: result.supporter_count,
+      });
+      onClose();
+      Alert.alert('응원 완료', '뜨지를 응원해주셔서 감사해요!');
+    } catch (error: any) {
+      if (error?.code === 'USER_CANCELLED') return;
+      console.error('❌ 응원 결제 실패:', error);
+      onClose();
+      Alert.alert('오류', error?.message ?? '결제 중 문제가 발생했어요.');
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const handleDismiss = () => {
@@ -58,11 +72,15 @@ export default function SupportPromptModal({
           뜨지는 1인이 개발하는 앱이에요.{'\n'}광고 없이 운영하는 데 큰 힘이 돼요.
         </S.Message>
         <S.ButtonRow>
-          <S.DismissButton onPress={handleDismiss}>
+          <S.DismissButton onPress={handleDismiss} disabled={isPurchasing}>
             <S.DismissButtonText>다음에</S.DismissButtonText>
           </S.DismissButton>
-          <S.ConfirmButton onPress={handleConfirm}>
-            <S.ConfirmButtonText>응원하러 가기</S.ConfirmButtonText>
+          <S.ConfirmButton onPress={handleConfirm} disabled={isPurchasing}>
+            {isPurchasing ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <S.ConfirmButtonText>응원하러 가기</S.ConfirmButtonText>
+            )}
           </S.ConfirmButton>
         </S.ButtonRow>
       </S.Container>

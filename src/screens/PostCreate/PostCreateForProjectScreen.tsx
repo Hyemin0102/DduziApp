@@ -8,6 +8,7 @@ import {
   Dimensions,
   Platform,
   BackHandler,
+  DeviceEventEmitter,
 } from 'react-native';
 
 import KeyboardAvoid from '@/components/common/KeyboardAvoid';
@@ -529,6 +530,8 @@ export default function PostCreateForProjectScreen() {
           project_id: selectedProjectId,
           image_count: images.length,
         });
+        // 게시물 3번째 작성 완료 등 조건을 지금 막 채웠을 수 있으니 바로 체크
+        DeviceEventEmitter.emit('checkSupportModal');
 
         // 새 게시물 작성 시 images는 전부 새로 고른 이미지여야 하지만,
         // 혹시라도 kind가 'existing'인 항목이 섞여도 원격 URL을 로컬 파일로

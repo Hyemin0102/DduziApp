@@ -23,13 +23,13 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {POST_ROUTES} from '@/constants/navigation.constant';
 import {REPORT_REASONS} from '@/constants/report.constant';
 import {trackEvent} from '@/lib/mixpanel';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 const COMMENT_MAX_LENGTH = 1000;
 
 // ActionSheetModal의 시트 하단 safe-area 패딩(ActionSheetModal.tsx styles.sheet)과 동일한 값.
 // 키보드가 그 여백보다 더 올라온 만큼만 바텀시트를 밀어올려서, 패딩+키보드 간 빈 틈이 생기지 않게 함
-const SHEET_BOTTOM_PADDING = 34;
 
 function formatRelativeTime(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -77,6 +77,7 @@ export default function PostCommentsSheet({
 }: PostCommentsSheetProps) {
   const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
+  const safeAreaInsets = useSafeAreaInsets();
   const commentInputRef = useRef<TextInput>(null);
 
   const [comments, setComments] = useState<CommentWithReplies[]>([]);
@@ -87,10 +88,19 @@ export default function PostCommentsSheet({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentMenuTarget, setCommentMenuTarget] = useState<Comment | null>(null);
   const [showCommentActionSheet, setShowCommentActionSheet] = useState(false);
-  const [reportTarget, setReportTarget] = useState<{id: string; content: string} | null>(null);
+  const [reportTarget, setReportTarget] = useState<{
+    id: string;
+    content: string;
+    authorId: string;
+    authorNickname: string;
+  } | null>(null);
   const [showReportReasonSheet, setShowReportReasonSheet] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  // 입력창 실제 높이만큼 댓글 목록 하단에 여백을 줘야, 콘텐츠가 짧을 때도 마지막 댓글을
+  // 끝까지 스크롤해서 입력창 위로 올릴 수 있음(안 그러면 스크롤 가능 범위가 입력창 높이만큼
+  // 부족해서 마지막 줄이 입력창에 가려진 채로 더 이상 안 올라감)
+  const [inputBarHeight, setInputBarHeight] = useState(0);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -314,7 +324,12 @@ export default function PostCommentsSheet({
   };
 
   const handleOpenCommentReport = (comment: Comment) => {
-    setReportTarget({id: comment.id, content: comment.content});
+    setReportTarget({
+      id: comment.id,
+      content: comment.content,
+      authorId: comment.user_id,
+      authorNickname: comment.nickname,
+    });
     // InSheetActionSheet가 "신고하기" 탭 이후 자기 닫힘 애니메이션까지 기다렸다가
     // 이 함수를 호출해주므로, 여기서 또 지연시킬 필요 없이 바로 다음 시트를 열면 됨
     setShowReportReasonSheet(true);
@@ -332,6 +347,8 @@ export default function PostCommentsSheet({
         project_title: projectTitle,
         comment_id: reportTarget.id,
         reported_content_snapshot: reportTarget.content,
+        reported_user_id: reportTarget.authorId,
+        reported_user_nickname: reportTarget.authorNickname,
       });
       if (insertError) {
         if (insertError.code === '23505') {
@@ -345,6 +362,8 @@ export default function PostCommentsSheet({
         body: {
           reporterId: user.id,
           reporterNickname: user.nickname ?? '알 수 없음',
+          authorId: reportTarget.authorId,
+          authorNickname: reportTarget.authorNickname,
           postId,
           postContent,
           projectId,
@@ -386,7 +405,6 @@ export default function PostCommentsSheet({
     const avatarSizeStyle = isReply
       ? {width: 24, height: 24, borderRadius: 12}
       : undefined;
-    const isMyComment = !!user && user.id === comment.user_id;
 
     return (
       <S.CommentRow key={comment.id} style={isReply ? {marginLeft: 44} : undefined}>
@@ -397,11 +415,10 @@ export default function PostCommentsSheet({
             size={32}
             // 대댓글(24px)은 뱃지 아트 재조정 비용 대비 실익이 적어서 안 보여줌
             level={
-              !isReply && (isMyComment || comment.show_supporter_badge)
+              !isReply && comment.show_supporter_badge
                 ? comment.supporter_level
                 : null
-            }
-            >
+            }>
             {comment.profile_image ? (
               <S.CommentAvatar
                 source={{uri: comment.profile_image}}
@@ -453,7 +470,10 @@ export default function PostCommentsSheet({
   };
 
   const tabBarHeight = useBottomTabBarHeight();
-  const keyboardOverlap = Math.max(0, keyboardHeight - SHEET_BOTTOM_PADDING);
+  // ActionSheetModal의 sheetBottomPadding과 동일한 계산(실제 safe area 하단 inset)을 써야
+  // 둘이 어긋나지 않음 — 예전엔 iOS 홈 인디케이터 기준 34 고정값이었음
+  const sheetBottomPadding = Math.max(safeAreaInsets.bottom, 16);
+  const keyboardOverlap = Math.max(0, keyboardHeight - sheetBottomPadding);
   const inlineKeyboardOffset = Math.max(0, keyboardHeight - tabBarHeight);
 
   const isCommentMenuTargetAuthor =
@@ -583,7 +603,9 @@ export default function PostCommentsSheet({
       style={{flex: 1}}
     />
   ) : (
-    <S.CommentsSheetList keyboardShouldPersistTaps="handled">
+    <S.CommentsSheetList
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{paddingBottom: inputBarHeight}}>
       {emptyOrLoading ?? comments.map(renderThread)}
     </S.CommentsSheetList>
   );
@@ -607,7 +629,7 @@ export default function PostCommentsSheet({
           </TouchableOpacity>
         </S.ReplyingToChip>
       )}
-      <S.InputBar>
+      <S.InputBar onLayout={e => setInputBarHeight(e.nativeEvent.layout.height)}>
         <S.CommentInput
           ref={commentInputRef}
           value={commentText}

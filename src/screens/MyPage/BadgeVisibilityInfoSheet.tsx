@@ -25,7 +25,7 @@ export default function BadgeVisibilityInfoSheet({
         <S.BulletRow>
           <S.BulletDot>•</S.BulletDot>
           <S.Body style={{flex: 1}}>
-            뱃지를 끄면 나에게만 보이고 다른 사람에게는 보이지 않아요.
+            뱃지를 끄면 마이페이지에서 나에게만 보여요.
           </S.Body>
         </S.BulletRow>
       </View>

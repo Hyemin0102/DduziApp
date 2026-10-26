@@ -35,7 +35,7 @@ export default function SupportInfoSheet({visible, onClose}: SupportInfoSheetPro
         </S.BulletRow>
         <S.BulletRow>
           <S.BulletDot>•</S.BulletDot>
-          <S.Body style={{flex: 1}}>뱃지는 프로필과 게시물에 함께 보여요. 원하지 않으면 끌 수 있어요.</S.Body>
+          <S.Body style={{flex: 1}}>뱃지는 프로필, 게시물, 댓글에 함께 보여요. 원하지 않으면 끌 수 있어요.</S.Body>
         </S.BulletRow>
 
         <S.BadgeShowcase>

@@ -59,8 +59,9 @@ export default function FeedbackScreen() {
       <KeyboardAvoid>
         <S.Content>
           <S.Description>
-            불편했던 점이나 추가되었으면 하는 기능을 자유롭게 남겨주세요.{'\n'}
-            개발자가 직접 확인합니다. 👀
+            불편했던 점이나 추가되었으면 하는 기능을 자유롭게 남겨주세요.
+            뜨사장이 직접 확인하고 평일 1~2일 내에 답변 드리고있어요 👀{'\n'}{'\n'}
+            메일 문의: gkdlt7373@gmail.com
           </S.Description>
           <S.InputWrapper>
             <S.Input

@@ -739,6 +739,8 @@ export default function ProjectDetailScreen() {
         if (error) throw new Error('프로젝트 생성에 실패했습니다.');
         currentProjectId = newProject.id;
         trackEvent('project_created', {project_id: currentProjectId});
+        // 프로젝트 2번째 저장 완료 등 조건을 지금 막 채웠을 수 있으니 바로 체크
+        DeviceEventEmitter.emit('checkSupportModal');
       } else {
         // 폼을 채운 시점(updated_at) 이후로 다른 곳에서 먼저 저장했으면 0행이 반영되고
         // .single()이 에러(PGRST116)를 던짐 — 낡은 값으로 덮어쓰는 걸 방지
@@ -888,6 +890,8 @@ export default function ProjectDetailScreen() {
         new_project_id: newProject.id,
       });
       DeviceEventEmitter.emit('projectCreated', {projectId: newProject.id});
+      // 복사도 프로젝트 수를 늘리는 거라 동일하게 체크
+      DeviceEventEmitter.emit('checkSupportModal');
       navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
         projectId: newProject.id,
         projectTitle: newProject.title,
@@ -1850,7 +1854,10 @@ export default function ProjectDetailScreen() {
         initialDate={formStatus !== 'completed' ? startedAt : undefined}
         initialStart={formStatus === 'completed' ? startedAt : undefined}
         initialEnd={formStatus === 'completed' ? completedAt : undefined}
-        maxDate={new Date().toISOString().split('T')[0]}
+        maxDate={(() => {
+          const today = new Date();
+          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        })()}
         onConfirm={handleCalendarConfirm}
         onClose={() => setShowCalendar(false)}
       />

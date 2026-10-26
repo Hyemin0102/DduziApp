@@ -51,36 +51,45 @@ export default function TermsOfServiceScreen() {
         • 기타 관계 법령에 위반된다고 판단되는 행위
       </Text>
 
-      <Text style={styles.sectionTitle}>제6조 (서비스 중단)</Text>
+      <Text style={styles.sectionTitle}>제6조 (유료 서비스 및 결제)</Text>
+      <Text style={styles.body}>
+        이용자는 서비스 내 "응원" 기능을 통해 유료 결제를 할 수 있습니다.{'\n\n'}
+        • 결제는 Apple App Store 또는 Google Play의 인앱결제 시스템을 통해 이루어지며, 결제 수단 등록·관리는 각 플랫폼의 정책을 따릅니다.{'\n'}
+        • 응원은 서비스 운영을 돕기 위한 후원 성격의 결제로, 결제 즉시 등급(뱃지) 표시 등 서비스 내 기능이 제공되며 별도의 물품 배송이나 구독형 서비스를 포함하지 않습니다.{'\n'}
+        • 환불은 Apple 또는 Google의 환불 정책 및 절차에 따르며, 개발자가 직접 환불을 처리하지 않습니다. 환불이 확인되는 경우 해당 응원 내역 및 등급은 서비스에서 조정될 수 있습니다.{'\n'}
+        • 결제 관련 문의는 각 플랫폼의 고객센터 또는 아래 이메일(hyeminjo0102@gmail.com)로 연락해 주시기 바랍니다.
+      </Text>
+
+      <Text style={styles.sectionTitle}>제7조 (서비스 중단)</Text>
       <Text style={styles.body}>
         개발자는 서비스 유지·보수, 교체 및 고장, 통신 두절 등의 사유로 서비스 제공이 일시적으로 중단될 수 있습니다. 이 경우 가능한 한 사전에 앱 내 공지를 통해 이용자에게 알립니다.
       </Text>
 
-      <Text style={styles.sectionTitle}>제7조 (지식재산권)</Text>
+      <Text style={styles.sectionTitle}>제8조 (지식재산권)</Text>
       <Text style={styles.body}>
         서비스 내 개발자가 제공하는 콘텐츠(텍스트, 이미지, 디자인 등)에 대한 지식재산권은 개발자에게 있습니다. 이용자는 개발자의 사전 승낙 없이 이를 복제, 배포 등의 방법으로 이용하거나 제3자에게 이용하게 하여서는 안 됩니다.{'\n\n'}
         이용자가 서비스에 업로드한 도안 파일(PDF), 사진, 게시물 등 콘텐츠에 대한 저작권 등 권리는 해당 콘텐츠의 원저작권자 또는 업로드한 이용자 본인에게 있습니다. 개발자는 서비스 제공(저장, 전송, 화면 표시 등)에 필요한 범위 내에서만 해당 콘텐츠를 처리하며, 이용자의 별도 동의 없이 콘텐츠를 열람·이용하거나 제3자에게 제공하지 않습니다. 이용자는 본인이 업로드하는 콘텐츠가 제3자의 지식재산권을 침해하지 않아야 하며, 이를 위반하여 발생한 책임은 이용자 본인에게 있습니다.
       </Text>
 
-      <Text style={styles.sectionTitle}>제8조 (면책조항)</Text>
+      <Text style={styles.sectionTitle}>제9조 (면책조항)</Text>
       <Text style={styles.body}>
         개발자는 천재지변 등 불가항력적 사유로 서비스를 제공할 수 없는 경우에는 책임이 면제됩니다.{'\n\n'}
         개발자는 이용자의 귀책사유로 인한 서비스 이용 장애 및 손해에 대하여 책임을 지지 않습니다.
       </Text>
 
-      <Text style={styles.sectionTitle}>제9조 (준거법 및 관할)</Text>
+      <Text style={styles.sectionTitle}>제10조 (준거법 및 관할)</Text>
       <Text style={styles.body}>
         이 약관의 해석 및 적용은 대한민국 법령에 따릅니다. 서비스 이용 중 발생한 분쟁에 관한 소는 개발자의 소재지를 관할하는 법원을 제1심 법원으로 합니다.
       </Text>
 
-      <Text style={styles.sectionTitle}>제10조 (문의)</Text>
+      <Text style={styles.sectionTitle}>제11조 (문의)</Text>
       <Text style={styles.body}>
         서비스 이용약관에 대한 문의는 아래 이메일로 연락해 주시기 바랍니다.{'\n'}
         이메일: hyeminjo0102@gmail.com
       </Text>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>본 약관은 2026년 6월 25일부터 시행됩니다.</Text>
+        <Text style={styles.footerText}>본 약관은 2026년 6월 25일부터 시행되며, 2026년 10월 26일 개정되었습니다.</Text>
       </View>
     </ScrollView>
   );

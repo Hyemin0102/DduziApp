@@ -10,10 +10,16 @@ export const SUPPORT_PAYMENT_ENABLED = true;
 export const SUPPORT_FEATURE_MIN_VERSION = '1.0.7';
 export const SUPPORT_MODAL_BASELINE_WAIT_DAYS = 3;
 export const SUPPORT_MODAL_STAGE2_GAP_DAYS = 30;
-export const SUPPORT_MODAL_STAGE3_GAP_DAYS = 60;
+export const SUPPORT_MODAL_STAGE3_GAP_DAYS = 30;
 export const SUPPORT_MODAL_MIN_APP_OPENS = 5;
 export const SUPPORT_MODAL_MIN_POSTS = 3;
 export const SUPPORT_MODAL_MIN_PROJECTS = 2;
+
+// 2·3단계는 날짜 간격(STAGE2/3_GAP_DAYS)만으로 판단하면, 오래 안 쓰다가 어쩌다 한 번
+// 들어온 사람한테도 뜰 수 있어서, 마지막 노출 이후의 활동도 같이 확인함(1단계보다 완화된 기준)
+export const SUPPORT_MODAL_RETURN_MIN_APP_OPENS = 2;
+export const SUPPORT_MODAL_RETURN_MIN_POSTS = 2;
+export const SUPPORT_MODAL_RETURN_MIN_PROJECTS = 1;
 
 export const getSupportMessage = (count: number): string => {
   if (count <= 0) return '뜨지가 마음에 드셨다면, 응원해주실래요?';

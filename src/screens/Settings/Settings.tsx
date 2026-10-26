@@ -15,12 +15,15 @@ import {
   compareVersions,
   STORE_URLS,
 } from '@/lib/appVersion';
+import useCommonNavigation from '@/hooks/useCommonNavigation';
+import {MY_PAGE_ROUTES} from '@/constants/navigation.constant';
 import * as S from './Settings.style';
 
 const APP_VERSION = DeviceInfo.getVersion();
 const ANDROID_PACKAGE_ID = 'com.dduziapp';
 
 const Settings = () => {
+  const {navigation} = useCommonNavigation();
   const {user, provider, updateUserProfile} = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
@@ -144,15 +147,11 @@ const Settings = () => {
   };
 
   const handleTermsOfService = () => {
-    Linking.openURL(
-      'https://amenable-shelf-49d.notion.site/38adaa46954d8089a9cdf7d6d68e55b0?pvs=73',
-    );
+    navigation.navigate(MY_PAGE_ROUTES.TERMS_OF_SERVICE);
   };
 
   const handlePrivacyPolicy = () => {
-    Linking.openURL(
-      'https://amenable-shelf-49d.notion.site/34adaa46954d80318ddacb8802c866e1',
-    );
+    navigation.navigate(MY_PAGE_ROUTES.PRIVACY_POLICY);
   };
 
   const confirmDeleteAccount = async () => {
