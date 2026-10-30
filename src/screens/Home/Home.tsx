@@ -20,9 +20,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {HOME_ROUTES} from '@/constants/navigation.constant';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import * as HS from '../Navigator/stacks/HomeStack.style';
-import {trackEvent} from '@/lib/mixpanel';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
 import PostLikersSheet from '@/components/common/PostLikersSheet';
+import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface OpenComments {
   postId: string;
@@ -70,13 +70,10 @@ const Home = () => {
   const pageRef = useRef(0);
   const blockedIdsRef = useRef<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
-  const maxViewedIndexRef = useRef(0);
   const [openComments, setOpenComments] = useState<OpenComments | null>(null);
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
   // 응원 유도 모달 상태/체크 로직은 App.tsx(전역)로 옮겨감 — 게시물/프로젝트 작성
   // 완료 시점 등 Home이 아닌 다른 화면에서도 같은 모달을 띄워야 해서임.
-  // 이 ref는 __DEV__ 테스트 버튼이 1→2→3을 순환시키는 용도로만 씀
-  const devSupportStageRef = useRef<1 | 2 | 3>(1);
 
   const fetchBlockedIds = async (): Promise<string[]> => {
     const {data: {user}} = await supabase.auth.getUser();
@@ -251,53 +248,14 @@ const Home = () => {
     };
   }, [refreshUnreadCount]);
 
-  // 홈 피드 스크롤 깊이 트래킹 — 화면에 보인 게시물 중 가장 마지막 인덱스를
-  // 계속 갱신해두고, 화면을 벗어날 때 한 번만 요약 이벤트로 남김
-  const onViewableItemsChanged = useRef(
-    ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
-      const indices = viewableItems
-        .map(v => v.index)
-        .filter((i): i is number => i !== null);
-      if (indices.length === 0) return;
-      maxViewedIndexRef.current = Math.max(
-        maxViewedIndexRef.current,
-        ...indices,
-      );
-    },
-  ).current;
-  const viewabilityConfig = useRef({viewAreaCoveragePercentThreshold: 50}).current;
-
-  // 지금까지 기록된 스크롤 깊이를 이벤트로 보내고 카운터 리셋 — 화면 이탈
-  // (다른 화면으로 이동)과 앱 백그라운드 전환 양쪽에서 공용으로 씀
-  const flushScrollDepth = useCallback(() => {
-    if (maxViewedIndexRef.current >= 0) {
-      trackEvent('home_feed_scroll_depth', {
-        posts_viewed: maxViewedIndexRef.current + 1,
-      });
-    }
-    maxViewedIndexRef.current = -1;
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      maxViewedIndexRef.current = -1;
-      return () => {
-        flushScrollDepth();
-      };
-    }, [flushScrollDepth]),
-  );
-
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState === 'background') {
-        flushScrollDepth();
-      } else if (nextState === 'active') {
-        maxViewedIndexRef.current = -1;
+      if (nextState === 'active') {
         refreshUnreadCount();
       }
     });
     return () => subscription.remove();
-  }, [flushScrollDepth, refreshUnreadCount]);
+  }, [refreshUnreadCount]);
 
   useEffect(() => {
     const homeTabSub = DeviceEventEmitter.addListener('homeTabRepress', () => {
@@ -394,19 +352,12 @@ const Home = () => {
             <Ionicons name="notifications-outline" size={22} color="#000" />
             {unreadNotificationCount > 0 && <HS.NotificationBadge />}
           </HS.NotificationButton>
-          {__DEV__ && (
-            // 응원 유도 모달 디자인 확인용 임시 버튼 — 실제 로직(getSupportModalStage)과 동일하게
-            // 볼 때마다 1→2→3단계 뱃지를 순서대로 보여줌 (실제 응원 등급과는 무관).
-            // 모달 자체는 App.tsx(전역)가 들고 있어서 이벤트로 강제 노출을 요청함
-            <HS.NotificationButton
-              onPress={() => {
-                const nextStage = ((devSupportStageRef.current % 3) + 1) as 1 | 2 | 3;
-                devSupportStageRef.current = nextStage;
-                DeviceEventEmitter.emit('forceShowSupportModal', {stage: nextStage});
-              }}>
-              <Ionicons name="gift-outline" size={22} color="#000" />
-            </HS.NotificationButton>
-          )}
+          <HS.NotificationButton
+            onPress={() => {
+              DeviceEventEmitter.emit('forceShowSupportModal', {stage: 1});
+            }}>
+            <Ionicons name="gift-outline" size={22} color="#000" />
+          </HS.NotificationButton>
         </HS.RightActions>
       </HS.HeaderContainer>
       <S.Container>
@@ -439,8 +390,6 @@ const Home = () => {
             windowSize={5}
             maxToRenderPerBatch={5}
             removeClippedSubviews={true}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
             ListFooterComponent={renderFooter}
             ListEmptyComponent={
               <S.EmptyContainer>

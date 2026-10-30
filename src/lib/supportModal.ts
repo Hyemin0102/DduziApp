@@ -51,7 +51,6 @@ export async function getSupportModalStage(userId: string): Promise<SupportModal
     if ((userRes.data.supporter_count ?? 0) > 0) return null;
 
     const lastLog = lastLogRes.data?.[0] ?? null;
-    console.log('🐛 [supportModal] lastLog', lastLog);
 
     if (!lastLog) {
       const [opensRes, postsRes, projectsRes, featureFirstSeen] = await Promise.all([
@@ -65,15 +64,7 @@ export async function getSupportModalStage(userId: string): Promise<SupportModal
       const signupTime = new Date(userRes.data.created_at).getTime();
       const featureTime = featureFirstSeen ? new Date(featureFirstSeen).getTime() : 0;
       const baselineIso = new Date(Math.max(signupTime, featureTime)).toISOString();
-      console.log('🐛 [supportModal] baseline', {
-        signup: userRes.data.created_at,
-        featureFirstSeen,
-        baselineIso,
-        daysSinceBaseline: daysSince(baselineIso),
-        needed: SUPPORT_MODAL_BASELINE_WAIT_DAYS,
-      });
       if (daysSince(baselineIso) < SUPPORT_MODAL_BASELINE_WAIT_DAYS) {
-        console.log('🐛 [supportModal] blocked: baseline wait not met');
         return null;
       }
 
@@ -81,12 +72,6 @@ export async function getSupportModalStage(userId: string): Promise<SupportModal
         (opensRes.count ?? 0) >= SUPPORT_MODAL_MIN_APP_OPENS ||
         (postsRes.count ?? 0) >= SUPPORT_MODAL_MIN_POSTS ||
         (projectsRes.count ?? 0) >= SUPPORT_MODAL_MIN_PROJECTS;
-      console.log('🐛 [supportModal] activity', {
-        opens: opensRes.count,
-        posts: postsRes.count,
-        projects: projectsRes.count,
-        meetsActivity,
-      });
 
       return meetsActivity ? 1 : null;
     }
@@ -95,10 +80,6 @@ export async function getSupportModalStage(userId: string): Promise<SupportModal
     const gapDays =
       lastLog.stage === 1 ? SUPPORT_MODAL_STAGE2_GAP_DAYS : SUPPORT_MODAL_STAGE3_GAP_DAYS;
     if (daysSince(lastLog.shown_at) < gapDays) {
-      console.log('🐛 [supportModal] blocked: gap days not met', {
-        daysSinceShown: daysSince(lastLog.shown_at),
-        gapDays,
-      });
       return null;
     }
 
@@ -127,12 +108,6 @@ export async function getSupportModalStage(userId: string): Promise<SupportModal
       (returnOpensRes.count ?? 0) >= SUPPORT_MODAL_RETURN_MIN_APP_OPENS ||
       (returnPostsRes.count ?? 0) >= SUPPORT_MODAL_RETURN_MIN_POSTS ||
       (returnProjectsRes.count ?? 0) >= SUPPORT_MODAL_RETURN_MIN_PROJECTS;
-    console.log('🐛 [supportModal] return activity', {
-      opens: returnOpensRes.count,
-      posts: returnPostsRes.count,
-      projects: returnProjectsRes.count,
-      meetsReturnActivity,
-    });
     if (!meetsReturnActivity) return null;
 
     return (lastLog.stage + 1) as SupportModalStage;

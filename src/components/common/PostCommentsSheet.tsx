@@ -58,6 +58,13 @@ interface PostCommentsSheetProps {
   onCommentsCountChange?: (count: number) => void;
   inline?: boolean;
   headerComponent?: React.ReactNode;
+  // 댓글이 꺼진 프로젝트의 게시물(inline 모드)에서는 입력창을 안 보여주기 위함.
+  // 기본값 true — 다른 호출부(홈/검색)는 애초에 댓글 허용된 게시물에서만 이 시트를
+  // 여는 버튼이 보여서 영향 없음
+  commentsEnabled?: boolean;
+  // 비공개 게시물: 기존 댓글은 그대로 보여주되(글쓴이 본인만 보는 화면이라 읽기는
+  // 허용) 새 댓글/답글 작성만 막기 위함 — commentsEnabled와 달리 목록/제목은 안 숨김
+  canWriteComment?: boolean;
 }
 
 // 게시물 상세, 홈 피드 등 여러 화면에서 공용으로 쓰는 댓글 바텀시트.
@@ -74,6 +81,8 @@ export default function PostCommentsSheet({
   onCommentsCountChange,
   inline = false,
   headerComponent,
+  commentsEnabled = true,
+  canWriteComment = true,
 }: PostCommentsSheetProps) {
   const {navigation} = useCommonNavigation<any>();
   const {user} = useAuth();
@@ -275,6 +284,7 @@ export default function PostCommentsSheet({
           try {
             const {error} = await supabase.from('comments').delete().eq('id', commentId);
             if (error) throw error;
+            trackEvent('comment_deleted', {post_id: postId, comment_id: commentId});
             await fetchComments();
           } catch (error) {
             console.error('❌ 댓글 삭제 실패:', error);
@@ -461,9 +471,11 @@ export default function PostCommentsSheet({
             {restContent}
             {comment.is_edited && <S.CommentEditedMark>  (수정됨)</S.CommentEditedMark>}
           </S.CommentContent>
-          <S.CommentReplyButton onPress={() => handleStartReply(comment)}>
-            <S.CommentReplyButtonText>답글</S.CommentReplyButtonText>
-          </S.CommentReplyButton>
+          {canWriteComment && (
+            <S.CommentReplyButton onPress={() => handleStartReply(comment)}>
+              <S.CommentReplyButtonText>답글</S.CommentReplyButtonText>
+            </S.CommentReplyButton>
+          )}
         </S.CommentBody>
       </S.CommentRow>
     );
@@ -579,7 +591,9 @@ export default function PostCommentsSheet({
 
   const commentSection = inline ? (
     <FlatList
-      data={comments}
+      // 댓글 기능이 꺼진 프로젝트의 게시물은 홈 피드에서 댓글 바텀시트 자체를 못 여는 것과
+      // 동일하게, 이미 달린 댓글도 포함해서 전부 숨김(입력창만 가리는 게 아님)
+      data={commentsEnabled ? comments : []}
       keyExtractor={item => item.id}
       renderItem={({item, index}) => (
         <S.InlineThread
@@ -593,12 +607,14 @@ export default function PostCommentsSheet({
       ListHeaderComponent={
         <>
           {headerComponent}
-          <S.CommentsSheetHeader>
-            <S.CommentsSheetTitle>댓글</S.CommentsSheetTitle>
-          </S.CommentsSheetHeader>
+          {commentsEnabled && (
+            <S.CommentsSheetHeader>
+              <S.CommentsSheetTitle>댓글</S.CommentsSheetTitle>
+            </S.CommentsSheetHeader>
+          )}
         </>
       }
-      ListEmptyComponent={emptyOrLoading}
+      ListEmptyComponent={commentsEnabled ? emptyOrLoading : null}
       keyboardShouldPersistTaps="handled"
       style={{flex: 1}}
     />
@@ -619,7 +635,7 @@ export default function PostCommentsSheet({
         </S.CommentsSheetHeader>
       )}
       {commentSection}
-      {(replyingTo || editingTarget) && (
+      {commentsEnabled && canWriteComment && (replyingTo || editingTarget) && (
         <S.ReplyingToChip>
           <S.ReplyingToText>
             {editingTarget ? '댓글 수정 중' : `@${replyingTo?.nickname}님에게 답글`}
@@ -629,28 +645,30 @@ export default function PostCommentsSheet({
           </TouchableOpacity>
         </S.ReplyingToChip>
       )}
-      <S.InputBar onLayout={e => setInputBarHeight(e.nativeEvent.layout.height)}>
-        <S.CommentInput
-          ref={commentInputRef}
-          value={commentText}
-          onChangeText={setCommentText}
-          placeholder="댓글을 입력하세요"
-          placeholderTextColor="#999"
-          multiline
-          maxLength={
-            replyingTo && !editingTarget
-              ? COMMENT_MAX_LENGTH - `@${replyingTo.nickname} `.length
-              : COMMENT_MAX_LENGTH
-          }
-        />
-        <S.CommentSendButton
-          onPress={handleSubmitComment}
-          disabled={!commentText.trim() || isSubmittingComment}>
-          <S.CommentSendButtonText>
-            {editingTarget ? '수정' : '게시'}
-          </S.CommentSendButtonText>
-        </S.CommentSendButton>
-      </S.InputBar>
+      {commentsEnabled && canWriteComment && (
+        <S.InputBar onLayout={e => setInputBarHeight(e.nativeEvent.layout.height)}>
+          <S.CommentInput
+            ref={commentInputRef}
+            value={commentText}
+            onChangeText={setCommentText}
+            placeholder="댓글을 입력하세요"
+            placeholderTextColor="#999"
+            multiline
+            maxLength={
+              replyingTo && !editingTarget
+                ? COMMENT_MAX_LENGTH - `@${replyingTo.nickname} `.length
+                : COMMENT_MAX_LENGTH
+            }
+          />
+          <S.CommentSendButton
+            onPress={handleSubmitComment}
+            disabled={!commentText.trim() || isSubmittingComment}>
+            <S.CommentSendButtonText>
+              {editingTarget ? '수정' : '게시'}
+            </S.CommentSendButtonText>
+          </S.CommentSendButton>
+        </S.InputBar>
+      )}
 
       {isSubmittingComment && (
         <S.CommentSubmitOverlay>

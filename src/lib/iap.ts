@@ -9,6 +9,7 @@ import {
 } from 'react-native-iap';
 import {supabase} from './supabase';
 import {SUPPORT_PRODUCT_ID} from '@/constants/support.constant';
+import {trackEvent} from './mixpanel';
 
 let isConnected = false;
 
@@ -61,12 +62,18 @@ export async function purchaseSupport(): Promise<PurchaseSupportResult> {
         await finishTransaction({purchase, isConsumable: true});
 
         cleanup();
+        trackEvent('support_purchase_completed', {
+          store: isApple ? 'app_store' : 'google_play',
+          supporter_level: data?.supporter_level ?? null,
+          supporter_count: data?.supporter_count ?? 0,
+        });
         resolve({
           supporter_level: data?.supporter_level ?? null,
           supporter_count: data?.supporter_count ?? 0,
         });
-      } catch (error) {
+      } catch (error: any) {
         cleanup();
+        trackEvent('support_purchase_failed', {message: error?.message});
         reject(error);
       }
     };
@@ -84,6 +91,7 @@ export async function purchaseSupport(): Promise<PurchaseSupportResult> {
         reject(cancelError);
         return;
       }
+      trackEvent('support_purchase_failed', {message: error.message});
       reject(new Error(error.message));
     });
 
@@ -101,6 +109,7 @@ export async function purchaseSupport(): Promise<PurchaseSupportResult> {
         reject(cancelError);
         return;
       }
+      trackEvent('support_purchase_failed', {message: error?.message});
       reject(error);
     });
   });

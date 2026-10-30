@@ -9,6 +9,8 @@ export const AvatarImage = styled.Image`
   width: 64px;
   height: 64px;
   border-radius: 32px;
+  border-width: 1px;
+  border-color: #e9e9e7;
 `;
 
 export const AvatarPlaceholder = styled.View`

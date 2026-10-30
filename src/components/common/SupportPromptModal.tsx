@@ -13,18 +13,27 @@ interface SupportPromptModalProps {
   visible: boolean;
   onClose: () => void;
   stage?: 1 | 2 | 3;
+  // true면 "지금 응원하면 받을 뱃지"(현재 응원 횟수+1 기준)를 보여줌 — 홈 선물
+  // 아이콘으로 직접 열었을 때만 씀. 주기적으로 자동으로 뜨는 유도 모달은 이 값
+  // 없이(false) stage(유도 단계, 실제 응원 등급과 무관)를 그대로 보여줌
+  previewMode?: boolean;
 }
 
 export default function SupportPromptModal({
   visible,
   onClose,
   stage = 1,
+  previewMode = false,
 }: SupportPromptModalProps) {
   const {user, updateUserProfile} = useAuth();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const avatarUri = user?.profile_image
     ? profileUrl(user.profile_image) ?? user.profile_image
     : null;
+  const nextSupportCount = (user?.supporter_count ?? 0) + 1;
+  const nextLevel: 1 | 2 | 3 =
+    nextSupportCount >= 3 ? 3 : nextSupportCount === 2 ? 2 : 1;
+  const displayLevel = previewMode ? nextLevel : stage;
 
   const handleConfirm = async () => {
     if (!SUPPORT_PAYMENT_ENABLED || isPurchasing) return;
@@ -56,7 +65,7 @@ export default function SupportPromptModal({
   return (
     <ActionSheetModal visible={visible} onClose={handleDismiss} showCancel={false}>
       <S.Container>
-        <AvatarLevelBadge size={64} level={stage}>
+        <AvatarLevelBadge size={64} level={displayLevel}>
           {avatarUri ? (
             <S.AvatarImage source={{uri: avatarUri}} />
           ) : (

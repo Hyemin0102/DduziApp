@@ -1,26 +1,42 @@
 event_name,category,description,properties,trigger_location,file
 app_opened,lifecycle,"앱 콜드스타트, 또는 5초 이상 백그라운드에 있다가 포그라운드로 복귀할 때 (카메라/사진첩/OAuth 로그인 등 짧은 왕복은 제외)",(없음),useEffect + AppState 'active',App.tsx
-screen_viewed,navigation,화면 진입,screen_name,NavigationContainer onStateChange,src/screens/Navigator/Navigator.tsx
+screen_view_summary,navigation,"앱이 백그라운드로 전환될 때, 세션 동안 화면별 방문 횟수를 모아서 한 번에 전송(무료플랜 이벤트 한도 때문에 화면 진입마다 쏘지 않음)",counts (화면명→방문횟수 맵),mixpanel.ts AppState 'background' flushScreenViewSummary(),src/lib/mixpanel.ts
 login_completed,auth,로그인 성공,provider,AuthContext login(),src/contexts/AuthContext.tsx
 logout_completed,auth,로그아웃 성공,provider,AuthContext logout(),src/contexts/AuthContext.tsx
 search_performed,search,검색 실행,query,Search handleSearch(),src/screens/Search/Search.tsx
-trending_keyword_tapped,search,"""지금 많이 뜨고있어요"" 태그 탭",keyword,Search 트렌드 태그 onPress,src/screens/Search/Search.tsx
-most_saved_project_tapped,search,"""뜨개함에 많이 저장됐어요"" 카드 탭",project_id,Search 카드 onPress,src/screens/Search/Search.tsx
 project_created,project,프로젝트 생성 완료,project_id,ProjectDetailScreen handleSave() (create),src/screens/ProjectDetail/ProjectDetailScreen.tsx
 project_completed,project,프로젝트 진행중→완료 전환,project_id,ProjectDetailScreen handleSave() (update),src/screens/ProjectDetail/ProjectDetailScreen.tsx
-project_viewed,project,프로젝트 상세 진입 (같은 프로젝트 재진입 시 중복 없음),"project_id, owner_id, is_own_content",ProjectDetailScreen fetchData(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
 pattern_pdf_uploaded,project,도안 PDF 업로드,project_id,ProjectDetailScreen handleSave(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
 knitting_log_added,project,뜨개 로그 추가 버튼 클릭,project_id,ProjectDetailScreen addPendingLog(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
-project_view_all_tapped,project,뜨개로그/게시물 전체보기 클릭,"type (logs/posts), project_id",ProjectDetailScreen 전체보기 버튼,src/screens/ProjectDetail/ProjectDetailScreen.tsx
 project_saved,project,뜨개함에 프로젝트 저장,project_id,PostDetailScreen handleToggleSave(),src/screens/PostDetail/PostDetailScreen.tsx
 project_unsaved,project,뜨개함에서 프로젝트 저장 취소,project_id,PostDetailScreen handleToggleSave(),src/screens/PostDetail/PostDetailScreen.tsx
-projects_tab_switched,project,진행중/완료/뜨개함 탭 전환,tab,ProjectsScreen switchTab(),src/screens/Projects/ProjectsScreen.tsx
-post_create_started,post,게시물 작성 화면 진입 시작,"source (project_detail/posts_screen), project_id (project_detail일 때만)",ProjectDetailScreen/PostsScreen 게시물 추가 버튼,"src/screens/ProjectDetail/ProjectDetailScreen.tsx, src/screens/Posts/PostsScreen.tsx"
 post_created,post,게시물 작성 완료,"project_id, image_count",PostCreateForProjectScreen handleSubmit() (create),src/screens/PostCreate/PostCreateForProjectScreen.tsx
-post_viewed,post,게시물 상세 진입 (같은 게시물 재진입 시 중복 없음),"post_id, owner_id, is_own_content",PostDetailScreen fetchPostDetail(),src/screens/PostDetail/PostDetailScreen.tsx
 post_reported,moderation,게시물 신고 제출,"post_id, reason",PostDetailScreen handleReport(),src/screens/PostDetail/PostDetailScreen.tsx
-user_blocked,moderation,유저 차단,blocked_id,PostsScreen handleBlock(),src/screens/Posts/PostsScreen.tsx
+user_blocked,moderation,"유저 차단(게시물 작성자 또는 댓글 작성자)",blocked_id,"PostsScreen handleBlock(), PostCommentsSheet handleBlockCommenter()","src/screens/Posts/PostsScreen.tsx, src/components/common/PostCommentsSheet.tsx"
 app_review_tapped,feedback,앱 리뷰 작성하기 탭,(없음),Settings handleAppReview(),src/screens/Settings/Settings.tsx
 feedback_button_tapped,feedback,피드백 보내기 탭,(없음),Settings handleContact(),src/screens/Settings/Settings.tsx
 notice_tapped,settings,공지사항 목록에서 개별 공지 탭,"notice_id, title",NoticeListScreen handlePress(),src/screens/Notice/NoticeListScreen.tsx
 profile_updated,settings,프로필 저장 완료 (최초 설정/수정 공통),is_initial_setup,Profile handleSave(),src/screens/Profile/Profile.tsx
+comment_posted,comment,댓글/대댓글 작성 완료,"post_id, is_reply",PostCommentsSheet handleSubmitComment(),src/components/common/PostCommentsSheet.tsx
+comment_edited,comment,댓글 수정 완료,"post_id, comment_id",PostCommentsSheet handleSubmitComment() (수정 분기),src/components/common/PostCommentsSheet.tsx
+comment_deleted,comment,댓글 삭제,"post_id, comment_id",PostCommentsSheet handleDeleteComment(),src/components/common/PostCommentsSheet.tsx
+comment_reported,moderation,댓글 신고 제출,"post_id, reason, comment_id",PostCommentsSheet handleReport(),src/components/common/PostCommentsSheet.tsx
+support_modal_shown,support,응원 유도 모달이 실제로 화면에 노출되는 시점(1~3단계),stage,App checkSupportModal(),App.tsx
+support_modal_confirmed,support,"응원 유도 모달에서 ""응원하러 가기"" 탭",(없음),SupportPromptModal handleConfirm(),src/components/common/SupportPromptModal.tsx
+support_modal_dismissed,support,"응원 유도 모달에서 ""다음에"" 탭 또는 닫기",(없음),SupportPromptModal handleDismiss(),src/components/common/SupportPromptModal.tsx
+support_purchase_completed,support,응원 인앱결제 성공(영수증 검증 통과),"store, supporter_level, supporter_count",iap purchaseSupport(),src/lib/iap.ts
+support_purchase_failed,support,응원 인앱결제 실패(사용자 취소는 제외 — 별도 트래킹 안 함),message,iap purchaseSupport(),src/lib/iap.ts
+supporter_badge_visibility_toggled,support,마이페이지에서 뱃지 보여주기 토글,enabled,"Mypage handleToggleBadge(), SupportStatusScreen handleToggleBadge()","src/screens/MyPage/Mypage.tsx, src/screens/MyPage/SupportStatusScreen.tsx"
+in_app_notification_tapped,notification,인앱 알림 배너 탭,type (notice/post),InAppNotificationBanner handlePress(),src/components/common/InAppNotificationBanner.tsx
+notification_opened,notification,시스템 푸시 알림을 탭해서 앱 진입(콜드스타트 또는 백그라운드 복귀),source (cold_start/background),App 알림 탭 처리 useEffect,App.tsx
+notifications_toggled,settings,설정에서 전체 알림 받기 토글,enabled,Settings handleToggleNotifications(),src/screens/Settings/Settings.tsx
+like_notifications_toggled,settings,설정에서 좋아요 알림 토글,enabled,Settings handleToggleLikeNotifications(),src/screens/Settings/Settings.tsx
+comment_notifications_toggled,settings,설정에서 댓글 알림 토글,enabled,Settings handleToggleCommentNotifications(),src/screens/Settings/Settings.tsx
+settings_update_clicked,settings,설정 화면에서 앱 업데이트 안내 탭,(없음),Settings handleUpdatePress(),src/screens/Settings/Settings.tsx
+account_deleted,auth,회원 탈퇴 완료,provider,Settings confirmDeleteAccount(),src/screens/Settings/Settings.tsx
+feedback_submitted,feedback,피드백 제출 완료(DB 저장 + 이메일 발송),(없음),FeedbackScreen handleSubmit(),src/screens/Feedback/FeedbackScreen.tsx
+project_copied,project,프로젝트 복사 완료,"project_id, new_project_id",ProjectDetailScreen handleCopyProject(),src/screens/ProjectDetail/ProjectDetailScreen.tsx
+update_modal_shown,lifecycle,앱 업데이트 안내/강제 모달 노출,forced,App checkForUpdate(),App.tsx
+update_modal_update_clicked,lifecycle,"업데이트 모달에서 ""업데이트 하기"" 탭",forced,App handleUpdatePress(),App.tsx
+update_modal_dismissed,lifecycle,업데이트 모달 닫기(강제 업데이트일 때는 닫기 불가),forced,App handleUpdateModalClose(),App.tsx
+weekly_top_poster_tapped,search,"[미사용] 위클리 뜨개왕 카드 탭 — 기능 자체가 출시 보류 상태라 해당 JSX가 주석 처리돼있어 실제로는 발생하지 않음","user_id, rank",Search (주석 처리됨),src/screens/Search/Search.tsx

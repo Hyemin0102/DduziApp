@@ -80,7 +80,6 @@ export default function PostDetailScreen() {
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const hasFetchedRef = useRef(false);
-  const viewTrackedRef = useRef(false);
   const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 좋아요
@@ -116,7 +115,6 @@ export default function PostDetailScreen() {
 
   useEffect(() => {
     hasFetchedRef.current = false;
-    viewTrackedRef.current = false;
   }, [postId]);
 
 
@@ -220,15 +218,6 @@ export default function PostDetailScreen() {
       setPost(postDetail);
       hasFetchedRef.current = true;
 
-      if (!viewTrackedRef.current) {
-        viewTrackedRef.current = true;
-        trackEvent('post_viewed', {
-          post_id: postDetail.id,
-          owner_id: postDetail.user_id,
-          is_own_content: user ? postDetail.user_id === user.id : false,
-        });
-      }
-
       // 저장 여부 조회 (본인 프로젝트도 뜨개함에 보관 가능)
       if (user && project?.id) {
         const {data: savedData} = await supabase
@@ -295,7 +284,6 @@ export default function PostDetailScreen() {
           .eq('post_id', post.id)
           .eq('user_id', user.id);
         if (error) throw error;
-        trackEvent('post_unliked', {post_id: post.id});
       } else {
         setIsLiked(true);
         setLikesCount(c => c + 1);
@@ -304,7 +292,6 @@ export default function PostDetailScreen() {
           .from('likes')
           .insert({post_id: post.id, user_id: user.id});
         if (error && error.code !== '23505') throw error;
-        trackEvent('post_liked', {post_id: post.id});
       }
     } catch (error: any) {
       setIsLiked(wasLiked);
@@ -456,6 +443,8 @@ export default function PostDetailScreen() {
         postContent={post.content ?? null}
         projectId={post.project_id}
         projectTitle={post.title}
+        commentsEnabled={post.comments_enabled}
+        canWriteComment={post.visibility !== 'private'}
         onCommentsCountChange={setCommentsCount}
         headerComponent={
           <View>
@@ -557,10 +546,11 @@ export default function PostDetailScreen() {
         {/* 좋아요/댓글/뜨개함 저장 액션 바 */}
         <S.ActionBar>
           {post.likes_enabled && (
-            <S.ActionButton>
+            <S.ActionButton
+              style={{opacity: post.visibility === 'private' ? 0.4 : 1}}>
               <S.ActionTouch
                 onPress={handleToggleLike}
-                disabled={isLikeLoading}
+                disabled={isLikeLoading || post.visibility === 'private'}
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                 <S.LikeIconWrapper>
                   <Animated.View style={heartAnimatedStyle}>
@@ -586,7 +576,8 @@ export default function PostDetailScreen() {
             </S.ActionButton>
           )}
           {post.comments_enabled && (
-            <S.ActionButton>
+            <S.ActionButton
+              style={{opacity: post.visibility === 'private' ? 0.4 : 1}}>
               <S.ActionIconPad>
                 <CommentIcon width={24} height={24} />
               </S.ActionIconPad>

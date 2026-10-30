@@ -173,7 +173,9 @@ export const SectionLabelRow = styled.TouchableOpacity`
 
 export const SectionLabelText = styled.Text`
   font-size: 13px;
+  //font-weight: 600;
   color: #999;
+  text-decoration-line: underline;
 `;
 
 export const MenuLabelRow = styled.View`

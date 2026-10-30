@@ -10,6 +10,7 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ForegroundNotification} from '@/lib/notifications';
 import {navigateFromNotificationData} from '@/lib/navigationRef';
+import {trackEvent} from '@/lib/mixpanel';
 
 const AUTO_DISMISS_MS = 4000;
 const ANIMATION_DURATION = 250;
@@ -60,6 +61,9 @@ export default function InAppNotificationBanner() {
   if (!notification) return null;
 
   const handlePress = () => {
+    trackEvent('in_app_notification_tapped', {
+      type: notification.data?.noticeId ? 'notice' : 'post',
+    });
     navigateFromNotificationData(notification.data);
     hide();
   };

@@ -244,6 +244,13 @@ export default function ProjectDetailScreen() {
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showPlannedToast, setShowPlannedToast] = useState(false);
+  const plannedToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showPlannedStatusToast = () => {
+    setShowPlannedToast(true);
+    if (plannedToastTimerRef.current) clearTimeout(plannedToastTimerRef.current);
+    plannedToastTimerRef.current = setTimeout(() => setShowPlannedToast(false), 2000);
+  };
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -258,7 +265,6 @@ export default function ProjectDetailScreen() {
   const [isEditingYarnInfo, setIsEditingYarnInfo] = useState(false);
   const [isEditingNeedleInfo, setIsEditingNeedleInfo] = useState(false);
   const hasFetchedRef = useRef(false);
-  const viewTrackedRef = useRef(false);
   const [focusedLogId, setFocusedLogId] = useState<string | null>(null);
   const [logInputHeights, setLogInputHeights] = useState<
     Record<string, number>
@@ -271,9 +277,9 @@ export default function ProjectDetailScreen() {
   const [needleInfo, setNeedleInfo] = useState('');
   const [patternInfo, setPatternInfo] = useState('');
   const [patternUrl, setPatternUrl] = useState('');
-  const [formStatus, setFormStatus] = useState<'planned' | 'in_progress' | 'completed'>('planned');
+  const [formStatus, setFormStatus] = useState<'planned' | 'in_progress' | 'completed'>('in_progress');
   const [formVisibility, setFormVisibility] = useState<'public' | 'private'>(
-    'private',
+    'public',
   );
   const [formLikesEnabled, setFormLikesEnabled] = useState(true);
   const [formCommentsEnabled, setFormCommentsEnabled] = useState(true);
@@ -302,6 +308,7 @@ export default function ProjectDetailScreen() {
   useEffect(() => {
     return () => {
       if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+      if (plannedToastTimerRef.current) clearTimeout(plannedToastTimerRef.current);
     };
   }, []);
 
@@ -400,10 +407,6 @@ export default function ProjectDetailScreen() {
   }, [projectId]);
 
   const handleAddPostPress = useCallback(() => {
-    trackEvent('post_create_started', {
-      source: 'project_detail',
-      project_id: projectId,
-    });
     navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {
       projectId,
       projectTitle: project?.title,
@@ -615,14 +618,6 @@ export default function ProjectDetailScreen() {
         populateForm(p);
       }
 
-      if (!viewTrackedRef.current) {
-        viewTrackedRef.current = true;
-        trackEvent('project_viewed', {
-          project_id: p.id,
-          owner_id: p.user_id,
-          is_own_content: p.user_id === currentUserId,
-        });
-      }
 
       const {data: postsData, error: postsError} = await supabase
         .from('posts')
@@ -653,7 +648,6 @@ export default function ProjectDetailScreen() {
 
   useEffect(() => {
     hasFetchedRef.current = false;
-    viewTrackedRef.current = false;
   }, [projectId]);
 
   // ── 저장
@@ -1546,9 +1540,15 @@ export default function ProjectDetailScreen() {
               </S.MetaRowLeft>
               <Switch
                 value={formVisibility === 'public'}
-                onValueChange={v =>
-                  setField('formVisibility', v ? 'public' : 'private')
-                }
+                onValueChange={v => {
+                  setField('formVisibility', v ? 'public' : 'private');
+                  // 비공개로 전환하면 좋아요/댓글은 어차피 DB에서도 전부 막히니
+                  // 토글도 같이 꺼서 실제 상태와 안 어긋나게 맞춤
+                  if (!v) {
+                    setField('formLikesEnabled', false);
+                    setField('formCommentsEnabled', false);
+                  }
+                }}
                 style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
               />
             </S.MetaRow>
@@ -1562,6 +1562,7 @@ export default function ProjectDetailScreen() {
               <Switch
                 value={formLikesEnabled}
                 onValueChange={v => setField('formLikesEnabled', v)}
+                disabled={formVisibility === 'private'}
                 style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
               />
             </S.MetaRow>
@@ -1575,6 +1576,7 @@ export default function ProjectDetailScreen() {
               <Switch
                 value={formCommentsEnabled}
                 onValueChange={v => setField('formCommentsEnabled', v)}
+                disabled={formVisibility === 'private'}
                 style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
               />
             </S.MetaRow>
@@ -1589,9 +1591,11 @@ export default function ProjectDetailScreen() {
             </S.Label>
             {canEdit && !isCreateMode && pendingLogs.length > 0 && (
               <S.AddButton
-                onPress={addPendingLog}
-                disabled={hasTodayLog}
-                style={{opacity: hasTodayLog ? 0.4 : 1}}>
+                onPress={() =>
+                  formStatus === 'planned' ? showPlannedStatusToast() : addPendingLog()
+                }
+                disabled={hasTodayLog && formStatus !== 'planned'}
+                style={{opacity: hasTodayLog || formStatus === 'planned' ? 0.4 : 1}}>
                 <Icon name="plus" size={16} color="#fff" />
                 <S.AddButtonText>로그 추가</S.AddButtonText>
               </S.AddButton>
@@ -1604,8 +1608,12 @@ export default function ProjectDetailScreen() {
             </S.EmptyPosts>
           ) : pendingLogs.length === 0 ? (
             <S.EmptyPosts>
-              <S.EmptyText>아직 기록이 없어요</S.EmptyText>
-              {canEdit && (
+              <S.EmptyText>
+                {formStatus === 'planned'
+                  ? '예정 상태에서는 기록을 추가할 수 없어요'
+                  : '아직 기록이 없어요'}
+              </S.EmptyText>
+              {canEdit && formStatus !== 'planned' && (
                 <S.EmptyAddButton onPress={addPendingLog}>
                   <S.EmptyAddButtonText>첫 로그 추가하기</S.EmptyAddButtonText>
                 </S.EmptyAddButton>
@@ -1672,10 +1680,6 @@ export default function ProjectDetailScreen() {
               {pendingLogs.length > MAX_LENGTH_LOG && (
                 <S.ViewAllButton
                   onPress={() => {
-                    trackEvent('project_view_all_tapped', {
-                      type: 'logs',
-                      project_id: projectId,
-                    });
                     navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
                       projectId: projectId!,
                       projectTitle: project?.title,
@@ -1695,7 +1699,11 @@ export default function ProjectDetailScreen() {
           <S.PostHeaderRow>
             <S.Label>게시물 ({posts.length})</S.Label>
             {isMyProject && posts.length > 0 && (
-              <S.AddButton onPress={handleAddPostPress}>
+              <S.AddButton
+                onPress={() =>
+                  formStatus === 'planned' ? showPlannedStatusToast() : handleAddPostPress()
+                }
+                style={{opacity: formStatus === 'planned' ? 0.4 : 1}}>
                 <Icon name="plus" size={16} color="#fff" />
                 <S.AddButtonText>게시물 추가</S.AddButtonText>
               </S.AddButton>
@@ -1708,8 +1716,12 @@ export default function ProjectDetailScreen() {
             </S.EmptyPosts>
           ) : posts.length === 0 ? (
             <S.EmptyPosts>
-              <S.EmptyText>아직 게시물이 없어요</S.EmptyText>
-              {isMyProject && (
+              <S.EmptyText>
+                {formStatus === 'planned'
+                  ? '예정 상태에서는 게시물을 추가할 수 없어요'
+                  : '아직 게시물이 없어요'}
+              </S.EmptyText>
+              {isMyProject && formStatus !== 'planned' && (
                 <S.EmptyAddButton onPress={handleAddPostPress}>
                   <S.EmptyAddButtonText>
                     첫 게시물 추가하기
@@ -1781,10 +1793,6 @@ export default function ProjectDetailScreen() {
               {posts.length > MAX_LENGTH_POST && (
                 <S.ViewAllButton
                   onPress={() => {
-                    trackEvent('project_view_all_tapped', {
-                      type: 'posts',
-                      project_id: projectId,
-                    });
                     navigation.navigate(PROJECTS_ROUTES.PROJECT_POSTS_ALL, {
                       projectId: projectId!,
                       projectTitle: project?.title,
@@ -1807,6 +1815,13 @@ export default function ProjectDetailScreen() {
         <S.SaveToast onPress={handleGoToSavedProjects} activeOpacity={0.85}>
           <S.SaveToastText>내 뜨개함에 담았어요.</S.SaveToastText>
           <S.SaveToastAction>바로가기</S.SaveToastAction>
+        </S.SaveToast>
+      )}
+
+      {/* 예정 상태 추가 불가 토스트 */}
+      {showPlannedToast && (
+        <S.SaveToast activeOpacity={1}>
+          <S.SaveToastText>예정 상태인 프로젝트는 추가할 수 없어요.</S.SaveToastText>
         </S.SaveToast>
       )}
 

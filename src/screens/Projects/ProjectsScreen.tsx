@@ -18,7 +18,6 @@ import Icon from 'react-native-vector-icons/Feather';
 import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import SavedProjectCard from '@/components/common/SavedProjectCard';
-import {trackEvent} from '@/lib/mixpanel';
 
 type TabType = 'planned' | 'inProgress' | 'completed' | 'saved';
 
@@ -189,7 +188,6 @@ export default function ProjectsScreen() {
     setActiveTab(tab);
     setIsEditMode(false);
     setSelectedIds([]);
-    trackEvent('projects_tab_switched', {tab});
   };
 
   const toggleSelect = (id: string) => {

@@ -3,7 +3,7 @@
 // 호출하도록 스케줄을 걸어서 씀(마이그레이션으로 cron 등록, 이 파일은 함수 본체만).
 //
 // 필요한 환경변수(Secrets):
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, INTERNAL_FUNCTION_SECRET
 //   GOOGLE_IAP_CLIENT_EMAIL, GOOGLE_IAP_PRIVATE_KEY, GOOGLE_PACKAGE_NAME
 //
 // TODO: 지금은 매번 최근 30일치를 다시 훑는 방식이라 느슨함(조회만 하고 상태 변경은
@@ -86,6 +86,17 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // 이 함수는 pg_cron(net.http_post)만 호출해야 함 — Supabase의 새 API 키 포맷
+    // (sb_secret_...)은 verify_jwt 게이트웨이 체크를 못 통과하므로, send-push-fcm과
+    // 동일하게 --no-verify-jwt로 배포하고 여기서 자체 비밀값으로 검증함
+    const providedSecret = req.headers.get('x-internal-secret');
+    if (!providedSecret || providedSecret !== Deno.env.get('INTERNAL_FUNCTION_SECRET')) {
+      return new Response(JSON.stringify({error: 'Forbidden'}), {
+        status: 403,
+        headers: corsHeaders,
+      });
+    }
+
     const packageName = Deno.env.get('GOOGLE_PACKAGE_NAME')!;
     const accessToken = await getGoogleAccessToken();
 

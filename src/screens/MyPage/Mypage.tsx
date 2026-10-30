@@ -187,9 +187,11 @@ const Mypage = () => {
           </S.AccountItem>
         </S.AccountSection>
 
-        <S.SectionLabelRow onPress={() => setShowSupportInfo(true)}>
+        <S.SectionLabelRow
+          onPress={() => setShowSupportInfo(true)}
+          activeOpacity={0.7}>
           <S.SectionLabelText>뜨지 응원</S.SectionLabelText>
-          <Icon name="info" size={13} color="#000" />
+          <Icon name="info" size={13} color="#999" />
         </S.SectionLabelRow>
         <S.MenuSection style={{marginTop: 4}}>
           <S.MenuItem activeOpacity={1}>
@@ -198,7 +200,7 @@ const Mypage = () => {
               <TouchableOpacity
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
                 onPress={() => setShowBadgeVisibilityInfo(true)}>
-                <Icon name="info" size={13} color="#999" />
+                <Icon name="info" size={13} color="#191919" />
               </TouchableOpacity>
             </S.MenuLabelRow>
             <Switch
@@ -259,7 +261,7 @@ const Mypage = () => {
           </S.MenuItem>
         </S.MenuSection>
 
-        <S.MenuSection>
+        <S.MenuSection style={{marginBottom: 20}}>
           <S.MenuItem onPress={handleSettings}>
             <S.MenuText>설정</S.MenuText>
             <S.MenuArrow>›</S.MenuArrow>

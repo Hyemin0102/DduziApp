@@ -36,14 +36,20 @@ export async function requestNotificationPermission(): Promise<boolean> {
   );
 }
 
+// userId 파라미터는 호출부 하위호환을 위해 남겨두지만 실제로는 안 씀 — 토큰
+// 소유자는 claim_device_token 안에서 auth.uid()로 서버가 직접 판별함(RLS 우회).
+// 같은 기기를 다른 계정이 로그인하면(로그아웃 후 재로그인) 토큰 소유권이 그 계정으로
+// 강제 재할당되어야 하는데, 클라이언트가 직접 upsert하면 RLS(user_id = auth.uid())가
+// "이미 다른 계정 소유인 토큰 행"의 재할당을 막아서 조용히 실패하는 버그가 있었음.
 export async function registerDeviceToken(userId: string): Promise<void> {
   try {
     const token = await getToken(getMessagingInstance());
     const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-    await supabase.from('device_tokens').upsert(
-      {user_id: userId, token, platform, updated_at: new Date().toISOString()},
-      {onConflict: 'token'},
-    );
+    const {error} = await supabase.rpc('claim_device_token', {
+      p_token: token,
+      p_platform: platform,
+    });
+    if (error) throw error;
   } catch (error) {
     console.error('디바이스 토큰 등록 실패:', error);
   }
@@ -53,10 +59,7 @@ export async function registerDeviceToken(userId: string): Promise<void> {
 export function subscribeToTokenRefresh(userId: string): () => void {
   return onTokenRefresh(getMessagingInstance(), async token => {
     const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-    await supabase.from('device_tokens').upsert(
-      {user_id: userId, token, platform, updated_at: new Date().toISOString()},
-      {onConflict: 'token'},
-    );
+    await supabase.rpc('claim_device_token', {p_token: token, p_platform: platform});
   });
 }
 

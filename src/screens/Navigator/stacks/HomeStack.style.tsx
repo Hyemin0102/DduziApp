@@ -35,7 +35,7 @@ export const SearchButton = styled.TouchableOpacity`
 
 export const NotificationButton = styled.TouchableOpacity`
   position: relative;
-  padding: 4px;
+  padding: 0px;
 `;
 
 export const NotificationBadge = styled.View`

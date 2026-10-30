@@ -237,7 +237,6 @@ export default function PostsScreen({route}: PostsScreenProps) {
   const completedCount = visiblePosts.filter(p => getIsCompleted(p)).length;
 
   const handleAddPost = () => {
-    trackEvent('post_create_started', {source: 'posts_screen'});
     navigation.navigate(POST_ROUTES.CREATE_POST_FOR_PROJECT, {});
   };
 
