@@ -1,5 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {Alert, Linking, Platform, Switch, TouchableOpacity} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAuth} from '../../contexts/AuthContext';
@@ -26,6 +27,24 @@ const Mypage = () => {
   const [showBadgeVisibilityInfo, setShowBadgeVisibilityInfo] = useState(false);
   const [isPurchasingSupport, setIsPurchasingSupport] = useState(false);
   const [isUpdatingBadge, setIsUpdatingBadge] = useState(false);
+
+  // context의 supporter 필드는 앱 완전 재시작 시에만 새로 fetch되고, 화면
+  // 이동/포그라운드 복귀만으로는 안 갱신됨. 그런데 응원 등급/횟수는 환불 웹훅
+  // 등으로 앱 바깥(서버)에서 직접 바뀔 수 있어서, 마이페이지 진입마다 DB에서
+  // 다시 읽어와 어긋나지 않게 동기화함
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      supabase
+        .from('users')
+        .select('supporter_level, supporter_count, show_supporter_badge')
+        .eq('id', user.id)
+        .single()
+        .then(({data}) => {
+          if (data) updateUserProfile(data);
+        });
+    }, [user?.id]),
+  );
 
   useEffect(() => {
     fetch(`https://itunes.apple.com/lookup?bundleId=${IOS_BUNDLE_ID}&country=kr`)
@@ -150,6 +169,7 @@ const Mypage = () => {
    const supportCount = user.supporter_count ?? 0;
   const hasBadge = !!user.supporter_level;
   const showBadge = hasBadge && !!user.show_supporter_badge;
+  
 
   return (
     <S.Container>

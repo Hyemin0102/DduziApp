@@ -1,5 +1,6 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {Alert, ActivityIndicator, Linking, Platform, View, Switch} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import DeviceInfo from 'react-native-device-info';
 import {useAuth} from '../../contexts/AuthContext';
 import {deleteAccount} from '@/lib/auth/deleteAccount';
@@ -42,6 +43,24 @@ const Settings = () => {
       );
     });
   }, []);
+
+  // 로그인 직후 자동 권한요청(AuthContext)이 notifications_enabled를 DB에 쓰는 것과
+  // 거의 동시에 onAuthStateChange의 checkAuthStatus()도 유저를 다시 fetch해서
+  // setUser하는 레이스가 있어서, context의 알림 설정 값이 DB와 어긋날 수 있음.
+  // 화면 진입마다 DB에서 직접 다시 읽어와 context를 맞춤
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      supabase
+        .from('users')
+        .select('notifications_enabled, like_notifications_enabled, comment_notifications_enabled')
+        .eq('id', user.id)
+        .single()
+        .then(({data}) => {
+          if (data) updateUserProfile(data);
+        });
+    }, [user?.id]),
+  );
 
   const handleToggleNotifications = async (value: boolean) => {
     if (!user || isUpdatingNotifications) return;

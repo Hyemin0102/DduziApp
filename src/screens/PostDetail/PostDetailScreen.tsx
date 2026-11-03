@@ -551,7 +551,7 @@ export default function PostDetailScreen() {
               <S.ActionTouch
                 onPress={handleToggleLike}
                 disabled={isLikeLoading || post.visibility === 'private'}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                hitSlop={{top: 14, bottom: 14, left: 14, right: 14}}>
                 <S.LikeIconWrapper>
                   <Animated.View style={heartAnimatedStyle}>
                     {isLiked ? (
@@ -567,7 +567,7 @@ export default function PostDetailScreen() {
                 (isMyPost ? (
                   <S.ActionTouch
                     onPress={() => setShowLikersSheet(true)}
-                    hitSlop={{top: 8, bottom: 8, left: 0, right: 8}}>
+                    hitSlop={{top: 14, bottom: 14, left: 0, right: 14}}>
                     <S.ActionButtonText>{likesCount}</S.ActionButtonText>
                   </S.ActionTouch>
                 ) : (
@@ -588,7 +588,7 @@ export default function PostDetailScreen() {
             <S.ActionBarSaveTouch
               onPress={handleToggleSave}
               disabled={isSaveLoading}
-              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              hitSlop={{top: 14, bottom: 14, left: 14, right: 14}}>
               {isSaved ? (
                 <SavedIcon width={28} height={28} color="#000000" />
               ) : (

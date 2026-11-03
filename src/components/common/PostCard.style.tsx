@@ -112,11 +112,24 @@ export const ContentSection = styled.TouchableOpacity`
   padding: 10px 12px 14px;
 `;
 
+// Android에서 flex-wrap + margin-left: auto 조합으로 오른쪽 정렬된 터치 영역이
+// 줄바꿈 시 실제 보이는 위치와 어긋나는 버그가 있어서(완료 상태처럼 제목+뱃지
+// 길이 조합으로 줄바꿈이 생기면 좋아요/댓글 탭이 게시물 상세로 새는 문제로
+// 나타남), 뱃지 그룹과 액션바를 구조적으로 분리 — 이 Row 자체는 줄바꿈 없이
+// space-between으로만 정렬하고, 줄바꿈은 안쪽 BadgeGroup에서만 일어나게 함
 export const BadgeRow = styled.View`
   flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+`;
+
+export const BadgeGroup = styled.View`
+  flex-direction: row;
+  align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  flex-shrink: 1;
 `;
 
 export const ProjectBadge = styled.View`
@@ -172,7 +185,7 @@ export const ActionBar = styled.View`
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
+  flex-shrink: 0;
 `;
 
 export const ActionButton = styled.View`

@@ -40,8 +40,8 @@ export const NotificationButton = styled.TouchableOpacity`
 
 export const NotificationBadge = styled.View`
   position: absolute;
-  top: 3px;
-  right: 6px;
+  top: 0px;
+  right: 2px;
   min-width: 8px;
   height: 8px;
   border-radius: 4px;

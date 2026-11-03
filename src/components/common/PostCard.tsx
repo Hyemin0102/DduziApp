@@ -78,8 +78,8 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
     post.is_liked !== undefined &&
     post.comments_count !== undefined;
 
-  const handleToggleLike = async (e: any) => {
-    e.stopPropagation?.();
+  const handleToggleLike = async (e?: any) => {
+    e?.stopPropagation?.();
     if (!user || isLikeLoading) return;
     setIsLikeLoading(true);
     const wasLiked = !!post.is_liked;
@@ -202,21 +202,23 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
         }>
         {post.projects && (
           <S.BadgeRow>
-            <S.ProjectBadge>
-              <S.ProjectBadgeText numberOfLines={1}>
-                <Icon name="folder" size={12} color="#555" />{' '}
-                {post.projects.title}
-              </S.ProjectBadgeText>
-            </S.ProjectBadge>
-            <S.StatusBadge status={post.projects.status}>
-              <S.StatusBadgeText status={post.projects.status}>
-                {post.projects.status === 'planned'
-                  ? '예정'
-                  : post.projects.status === 'completed'
-                  ? '완료'
-                  : '진행 중'}
-              </S.StatusBadgeText>
-            </S.StatusBadge>
+            <S.BadgeGroup>
+              <S.ProjectBadge>
+                <S.ProjectBadgeText numberOfLines={1}>
+                  <Icon name="folder" size={12} color="#555" />{' '}
+                  {post.projects.title}
+                </S.ProjectBadgeText>
+              </S.ProjectBadge>
+              <S.StatusBadge status={post.projects.status}>
+                <S.StatusBadgeText status={post.projects.status}>
+                  {post.projects.status === 'planned'
+                    ? '예정'
+                    : post.projects.status === 'completed'
+                    ? '완료'
+                    : '진행 중'}
+                </S.StatusBadgeText>
+              </S.StatusBadge>
+            </S.BadgeGroup>
             {showActionBar && (
               <S.ActionBar>
                 {post.projects.likes_enabled && (
@@ -224,7 +226,7 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
                     <S.ActionTouch
                       onPress={handleToggleLike}
                       disabled={isLikeLoading}
-                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                      hitSlop={{top: 14, bottom: 14, left: 14, right: 14}}>
                       <S.LikeIconWrapper>
                         <Animated.View style={heartAnimatedStyle}>
                           {post.is_liked ? (
@@ -239,11 +241,11 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
                     {(post.likes_count ?? 0) > 0 &&
                       (isMyPost ? (
                         <S.ActionTouch
-                          onPress={e => {
-                            e.stopPropagation?.();
+                          onPress={(e?: any) => {
+                            e?.stopPropagation?.();
                             onOpenLikers?.(post);
                           }}
-                          hitSlop={{top: 8, bottom: 8, left: 0, right: 8}}>
+                          hitSlop={{top: 14, bottom: 14, left: 0, right: 14}}>
                           <S.ActionButtonText>{post.likes_count}</S.ActionButtonText>
                         </S.ActionTouch>
                       ) : (
@@ -254,11 +256,11 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
                 {post.projects.comments_enabled && (
                   <S.ActionButton>
                     <S.ActionTouch
-                      onPress={e => {
-                        e.stopPropagation?.();
+                      onPress={(e?: any) => {
+                        e?.stopPropagation?.();
                         onOpenComments?.(post);
                       }}
-                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                      hitSlop={{top: 14, bottom: 14, left: 14, right: 14}}>
                       <CommentIcon width={24} height={24} />
                     </S.ActionTouch>
                     {(post.comments_count ?? 0) > 0 && (

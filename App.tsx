@@ -142,7 +142,6 @@ function App(): React.JSX.Element {
   // 화면(게시물/프로젝트 작성 완료 시점)에서도 같은 모달을 띄워야 하기 때문
   const [showSupportPrompt, setShowSupportPrompt] = useState(false);
   const [supportPromptStage, setSupportPromptStage] = useState<1 | 2 | 3>(1);
-  const [supportPromptPreviewMode, setSupportPromptPreviewMode] = useState(false);
 
   useEffect(() => {
     const checkSupportModal = async () => {
@@ -155,7 +154,6 @@ function App(): React.JSX.Element {
       await recordSupportModalShown(user.id, stage);
       trackEvent('support_modal_shown', {stage});
       setSupportPromptStage(stage);
-      setSupportPromptPreviewMode(false);
       setShowSupportPrompt(true);
     };
 
@@ -165,20 +163,8 @@ function App(): React.JSX.Element {
       'checkSupportModal',
       checkSupportModal,
     );
-    // 홈 헤더의 선물 아이콘(운영에서도 항상 보임 — 사용자가 눌러서 응원 기능을
-    // 미리 볼 수 있는 진입점)이 쏘는 이벤트. 자동 유도 로직(getSupportModalStage)과
-    // 무관하게 즉시 열리고, 지금 응원하면 받을 뱃지를 보여주도록 previewMode를 켬
-    const forceSub = DeviceEventEmitter.addListener(
-      'forceShowSupportModal',
-      (data: {stage: 1 | 2 | 3}) => {
-        setSupportPromptStage(data.stage);
-        setSupportPromptPreviewMode(true);
-        setShowSupportPrompt(true);
-      },
-    );
     return () => {
       checkSub.remove();
-      forceSub.remove();
     };
   }, []);
 
@@ -216,7 +202,6 @@ function App(): React.JSX.Element {
             visible={showSupportPrompt}
             onClose={() => setShowSupportPrompt(false)}
             stage={supportPromptStage}
-            previewMode={supportPromptPreviewMode}
           />
         </AuthProvider>
         <InAppNotificationBanner />

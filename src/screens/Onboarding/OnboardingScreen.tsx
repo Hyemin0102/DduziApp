@@ -44,7 +44,7 @@ const slides: Slide[] = [
   },
   {
     headline: '완성했으면 자랑해야죠!',
-    description1: '좋아요, 댓글이 사라진 피드에\n사람들의 반응 걱정없이 내작품 자랑만 해요.',
+    description1: '좋아요, 댓글은 선택할 수 있어요.\n작품 자랑하고 사람들의 반응을 받아보세요.',
     description2: '자, 이제 뜨지를 시작해볼까요?',
     image: {
       source: require('../../assets/images/3_onboarding.png'),

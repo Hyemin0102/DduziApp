@@ -455,7 +455,7 @@ export default function PostCommentsSheet({
                   setCommentMenuTarget(comment);
                   setShowCommentActionSheet(true);
                 }}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                hitSlop={{top: 14, bottom: 14, left: 14, right: 14}}>
                 <S.CommentMoreButton>⋯</S.CommentMoreButton>
               </TouchableOpacity>
             )}

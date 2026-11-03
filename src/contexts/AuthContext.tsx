@@ -127,7 +127,17 @@ const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     (async () => {
       try {
         const granted = await requestNotificationPermission();
-        if (!granted) return;
+        if (!granted) {
+          // 최초 권한 팝업에서 거부하면 notifications_enabled 기본값(true)이
+          // 실제 OS 권한 상태와 어긋난 채로 남아, 설정 화면엔 전부 켜진 것처럼
+          // 보이는 버그가 있었음 — 거부 시점에 바로 꺼서 실제 상태와 맞춤
+          await supabase
+            .from('users')
+            .update({notifications_enabled: false})
+            .eq('id', user.id);
+          await updateUserProfile({notifications_enabled: false});
+          return;
+        }
         await registerDeviceToken(user.id);
         unsubscribeTokenRefresh = subscribeToTokenRefresh(user.id);
       } catch (error) {

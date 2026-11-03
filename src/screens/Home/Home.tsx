@@ -22,6 +22,7 @@ import useCommonNavigation from '@/hooks/useCommonNavigation';
 import * as HS from '../Navigator/stacks/HomeStack.style';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
 import PostLikersSheet from '@/components/common/PostLikersSheet';
+import SupportPromptModal from '@/components/common/SupportPromptModal';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface OpenComments {
@@ -74,6 +75,11 @@ const Home = () => {
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
   // 응원 유도 모달 상태/체크 로직은 App.tsx(전역)로 옮겨감 — 게시물/프로젝트 작성
   // 완료 시점 등 Home이 아닌 다른 화면에서도 같은 모달을 띄워야 해서임.
+  // 선물 아이콘의 "미리보기"는 여기서만 열리므로 전역 모달과 공유하지 않고
+  // 로컬 상태 + 별도 인스턴스로 완전히 분리함 — 공유했을 때 isPurchasing 같은
+  // 내부 state가 전역 인스턴스와 꼬이거나, 자동 유도 체크와 동시에 열려서
+  // 내용이 서로 덮어써지는 문제가 있었음
+  const [showSupportPreview, setShowSupportPreview] = useState(false);
 
   const fetchBlockedIds = async (): Promise<string[]> => {
     const {data: {user}} = await supabase.auth.getUser();
@@ -352,10 +358,7 @@ const Home = () => {
             <Ionicons name="notifications-outline" size={22} color="#000" />
             {unreadNotificationCount > 0 && <HS.NotificationBadge />}
           </HS.NotificationButton>
-          <HS.NotificationButton
-            onPress={() => {
-              DeviceEventEmitter.emit('forceShowSupportModal', {stage: 1});
-            }}>
+          <HS.NotificationButton onPress={() => setShowSupportPreview(true)}>
             <Ionicons name="gift-outline" size={22} color="#000" />
           </HS.NotificationButton>
         </HS.RightActions>
@@ -423,6 +426,12 @@ const Home = () => {
             prev.map(p => (p.id === postId ? {...p, comments_count: count} : p)),
           );
         }}
+      />
+
+      <SupportPromptModal
+        visible={showSupportPreview}
+        onClose={() => setShowSupportPreview(false)}
+        previewMode
       />
     </SafeAreaView>
   );
