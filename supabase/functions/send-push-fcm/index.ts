@@ -69,6 +69,7 @@ async function sendFcmMessage(
   token: string,
   title: string,
   body: string,
+  badge: number,
   data?: Record<string, string>,
 ): Promise<Response> {
   return fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
@@ -78,7 +79,16 @@ async function sendFcmMessage(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      message: {token, notification: {title, body}, data: data ?? {}},
+      message: {
+        token,
+        notification: {title, body},
+        data: data ?? {},
+        // iOS 앱 아이콘 뱃지는 OS가 자동으로 올려주지 않고, 매 푸시마다 서버가
+        // "지금 몇 개여야 하는지" 절대값을 넣어줘야만 표시됨 — 그래서 안읽은
+        // 알림 총 개수를 매번 다시 계산해서 넣음(Android는 이 필드 무시하고
+        // 알림함에 쌓인 개수로 자체 처리하므로 영향 없음)
+        apns: {payload: {aps: {badge}}},
+      },
     }),
   });
 }
@@ -116,7 +126,7 @@ Deno.serve(async (req: Request) => {
 
     const {data: tokenRows, error} = await supabaseAdmin
       .from('device_tokens')
-      .select('token')
+      .select('token, user_id')
       .in('user_id', userIds);
     if (error) throw error;
     if (!tokenRows || tokenRows.length === 0) {
@@ -125,6 +135,19 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // 유저별 안읽은 알림 개수를 미리 집계해서 뱃지 숫자로 사용(이 함수가 호출되는
+    // 시점엔 이번에 보낼 알림이 이미 DB에 insert된 뒤이므로 그 알림도 포함됨)
+    const {data: unreadRows, error: unreadError} = await supabaseAdmin
+      .from('notifications')
+      .select('user_id')
+      .eq('is_read', false)
+      .in('user_id', userIds);
+    if (unreadError) throw unreadError;
+    const badgeByUser = new Map<string, number>();
+    (unreadRows ?? []).forEach(({user_id}) => {
+      badgeByUser.set(user_id, (badgeByUser.get(user_id) ?? 0) + 1);
+    });
+
     const clientEmail = Deno.env.get('FIREBASE_CLIENT_EMAIL')!;
     const privateKey = Deno.env.get('FIREBASE_PRIVATE_KEY')!.replace(/\\n/g, '\n');
     const projectId = Deno.env.get('FIREBASE_PROJECT_ID')!;
@@ -132,9 +155,22 @@ Deno.serve(async (req: Request) => {
     const accessToken = await getAccessToken(clientEmail, privateKey);
 
     const results = await Promise.allSettled(
-      tokenRows.map(({token}) =>
-        sendFcmMessage(accessToken, projectId, token, title, body, data),
-      ),
+      tokenRows.map(async ({token, user_id}) => {
+        const res = await sendFcmMessage(
+          accessToken,
+          projectId,
+          token,
+          title,
+          body,
+          badgeByUser.get(user_id) ?? 0,
+          data,
+        );
+        // badge가 왜 안 뜨는지 추적하려고 FCM 응답을 항상 로그에 남김(성공 응답이어도
+        // apns 관련 필드가 조용히 무시/거부될 수 있어서 바디까지 확인 필요)
+        const resText = await res.clone().text();
+        console.log(`FCM response (user=${user_id}, badge=${badgeByUser.get(user_id) ?? 0}): ${res.status} ${resText}`);
+        return res;
+      }),
     );
 
     const sent = results.filter(r => r.status === 'fulfilled' && r.value.ok).length;

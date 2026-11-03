@@ -108,9 +108,14 @@ export const Dot = styled.View<{active: boolean}>`
   background-color: ${({active}) => (active ? '#191919' : '#d4d4d4')};
 `;
 
-export const ContentSection = styled.TouchableOpacity`
+// 좋아요/댓글 버튼(BadgeRow)을 이 안에 중첩시키면 hitSlop을 아무리 키워도 안드로이드에서
+// 가끔 바깥쪽(게시물 상세 이동) 터치로 새는 레이스가 남아서, BadgeRow를 이 터치 영역
+// 밖(형제 요소)으로 완전히 분리함 — 패딩은 둘을 감싸는 CardBody가 가짐
+export const CardBody = styled.View`
   padding: 10px 12px 14px;
 `;
+
+export const ContentSection = styled.TouchableOpacity``;
 
 // Android에서 flex-wrap + margin-left: auto 조합으로 오른쪽 정렬된 터치 영역이
 // 줄바꿈 시 실제 보이는 위치와 어긋나는 버그가 있어서(완료 상태처럼 제목+뱃지

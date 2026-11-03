@@ -18,7 +18,9 @@ buildscript {
         // 이게 AGP 8.9.1 이상 + compileSdk 36을 요구함(RN이 기본으로 묶어놓은 AGP 8.8.2로는 빌드 실패).
         classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // 버전 안 박으면 RN 자체 Gradle 플러그인이 기본으로 묶어놓은(더 낮은) Kotlin 버전이
+        // 쓰여서, 위 kotlinVersion(2.2.20)을 읽는 다른 모듈들과 버전이 어긋나 컴파일러가 깨짐
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
         classpath("com.google.gms:google-services:4.5.0")
     }
 }

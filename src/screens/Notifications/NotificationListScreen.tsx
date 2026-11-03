@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Platform,
   RefreshControl,
   Text,
   TouchableOpacity,
@@ -10,6 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
+import notifee from '@notifee/react-native';
 import {supabase} from '@/lib/supabase';
 import {thumbnailUrl} from '@/lib/imageTransform';
 import {useAuth} from '@/contexts/AuthContext';
@@ -127,6 +129,11 @@ export default function NotificationListScreen() {
         } else {
           setNotifications(prev => prev.map(n => ({...n, is_read: true})));
         }
+
+        // 알림 목록을 직접 확인한 시점에만 앱 아이콘 배지/알림센터를 지움 —
+        // 앱에 들어오기만 해도 지워지면 실제로 안 본 알림까지 사라져버림
+        notifee.cancelAllNotifications().catch(() => {});
+        if (Platform.OS === 'ios') notifee.setBadgeCount(0).catch(() => {});
       }
       setLoading(false);
       setRefreshing(false);

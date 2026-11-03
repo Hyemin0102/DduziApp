@@ -196,10 +196,7 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
       )}
 
       {/* 콘텐츠 */}
-      <S.ContentSection
-        onPress={() =>
-          navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: post.id})
-        }>
+      <S.CardBody>
         {post.projects && (
           <S.BadgeRow>
             <S.BadgeGroup>
@@ -272,19 +269,24 @@ const PostCard: React.FC<PostCardProps> = ({post, onLikeToggled, onOpenComments,
             )}
           </S.BadgeRow>
         )}
-        <S.Content numberOfLines={2} ellipsizeMode="clip">
-          {content}
-        </S.Content>
-        <S.Content
-          style={{position: 'absolute', opacity: 0, pointerEvents: 'none'}}
-          onTextLayout={e => {
-            setIsTruncated(e.nativeEvent.lines.length > 2);
-          }}>
-          {content}
-        </S.Content>
-        {isTruncated && <S.More>...더보기</S.More>}
-        <S.Date>{new Date(post.created_at).toLocaleDateString('ko-KR')}</S.Date>
-      </S.ContentSection>
+        <S.ContentSection
+          onPress={() =>
+            navigation.navigate(POST_ROUTES.POST_DETAIL, {postId: post.id})
+          }>
+          <S.Content numberOfLines={2} ellipsizeMode="clip">
+            {content}
+          </S.Content>
+          <S.Content
+            style={{position: 'absolute', opacity: 0, pointerEvents: 'none'}}
+            onTextLayout={e => {
+              setIsTruncated(e.nativeEvent.lines.length > 2);
+            }}>
+            {content}
+          </S.Content>
+          {isTruncated && <S.More>...더보기</S.More>}
+          <S.Date>{new Date(post.created_at).toLocaleDateString('ko-KR')}</S.Date>
+        </S.ContentSection>
+      </S.CardBody>
     </S.CardContainer>
   );
 };
