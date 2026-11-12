@@ -1,5 +1,7 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+> dev/prod 환경 구성(Supabase 프로젝트 분리, `.env` 설정, 배포 순서)은 [`docs/environments.md`](docs/environments.md) 참고.
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
