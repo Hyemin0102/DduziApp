@@ -179,14 +179,19 @@ export const SavedHeaderActionText = styled.Text`
 
 /* ─── 하단 플로팅 바 ─── */
 
+// 뜨개함 관리 모드 하단 바 — 배경을 깔아서 뒤로 스크롤되는 목록과 버튼이 겹쳐 보이지 않게 함
 export const FloatingBar = styled.View`
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  padding: 12px 16px 16px;
+  background-color: #fff;
+  border-top-width: 0.5px;
+  border-top-color: #eee;
 `;
 
 export const FloatingCancelButton = styled.TouchableOpacity`

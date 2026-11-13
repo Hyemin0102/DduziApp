@@ -8,6 +8,7 @@ import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjec
 import {PostsStackParamList} from '@/@types/navigation';
 import {MY_PAGE_ROUTES, POST_ROUTES, PROJECTS_ROUTES} from '@/constants/navigation.constant';
 import AppHeader from '@/components/Header/AppHeader';
+import drawerItemScreens from './drawerItemScreens';
 import ProjectDetailScreen from '@/screens/ProjectDetail/ProjectDetailScreen';
 import ProjectLogsAllScreen from '@/screens/ProjectDetail/ProjectLogsAllScreen';
 import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen';
@@ -73,6 +74,8 @@ const PostsStack = () => {
         component={PdfViewerScreen}
         options={{headerShown: false}}
       />
+      {/* 프로젝트 상세에서 연결된 실/바늘 보기·추가 */}
+      {drawerItemScreens(Stack)}
     </Stack.Navigator>
   );
 };

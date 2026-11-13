@@ -16,6 +16,7 @@ import {
   MY_PAGE_ROUTES,
 } from '@/constants/navigation.constant';
 import AppHeader from '@/components/Header/AppHeader';
+import drawerItemScreens from './drawerItemScreens';
 
 const Stack = createNativeStackNavigator<ProjectsStackParamList>();
 
@@ -85,6 +86,8 @@ const ProjectsStack = () => {
         component={PdfViewerScreen}
         options={{headerShown: false}}
       />
+      {/* 프로젝트 상세에서 연결된 실/바늘 보기·추가 */}
+      {drawerItemScreens(Stack)}
     </Stack.Navigator>
   );
 };

@@ -20,9 +20,13 @@ import PostCreateForProjectScreen from '../PostCreate/PostCreateForProjectScreen
 import SearchScreen from '../Search/Search';
 import Icon from 'react-native-vector-icons/Feather';
 import {TAB_ROUTES} from '@/constants/navigation.constant';
-import {PATTERN_SEARCH_TAB_ENABLED} from '@/constants/feature.constant';
+import {
+  DRAWER_TAB_ENABLED,
+  PATTERN_SEARCH_TAB_ENABLED,
+} from '@/constants/feature.constant';
 import ProjectsScreen from '../Projects/ProjectsScreen';
 import ProjectsStack from './stacks/ProjectsStack';
+import DrawerStack from './stacks/DrawerStack';
 import HouseSimple from '../../assets/icons/tab_HouseSimple.svg';
 import HouseColor from '../../assets/icons/tab_HouseColor.svg';
 import PostSimple from '../../assets/icons/tab_MyPosts.svg';
@@ -219,6 +223,41 @@ const TabNavigator = () => {
             ),
           }}
         />
+        {DRAWER_TAB_ENABLED && (
+          <Tab.Screen
+            name="DrawerTab"
+            component={DrawerStack}
+            options={{
+              // TODO: 디자인 확정 시 다른 탭처럼 Simple/Color SVG 아이콘으로 교체
+              tabBarIcon: ({focused}) => (
+                <View
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 4,
+                    width: '100%',
+                    flex: 1,
+                  }}>
+                  <Icon
+                    name="archive"
+                    size={24}
+                    color={focused ? '#000' : '#82879B'}
+                  />
+                  <Text
+                    style={{
+                      color: focused ? '#000' : '#82879B',
+                      fontWeight: focused ? 'bold' : 'normal',
+                      fontSize: 10,
+                      marginTop: 4,
+                      textAlign: 'center',
+                    }}>
+                    서랍장
+                  </Text>
+                </View>
+              ),
+            }}
+          />
+        )}
         <Tab.Screen
           name="MyPageTab"
           component={MyPageStack}

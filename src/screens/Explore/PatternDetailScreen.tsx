@@ -368,8 +368,8 @@ export default function PatternDetailScreen() {
               onPress={() => Linking.openURL(downloadUrl)}>
               <S.DownloadButtonText>
                 {pattern.free
-                  ? 'Ravelry에서 무료로 받기'
-                  : `Ravelry에서 구매하기`}
+                  ? 'Ravelry 에서 무료로 받기'
+                  : `Ravelry 에서 구매하기`}
               </S.DownloadButtonText>
             </S.DownloadButton>
           )}

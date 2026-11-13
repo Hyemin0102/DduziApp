@@ -49,6 +49,23 @@ dev에만 배포돼 있고 prod에는 배포하면 안 됨 — 재오픈하기�
 
 ---
 
+## 2. 서랍장(실/바늘) 탭 — 🚧 개발 중
+
+**아직 prod 배포 대상 아님.** 클라이언트는 `DRAWER_TAB_ENABLED` 플래그로 제어 — prod 함수 배포 전까지 스토어 빌드에선 false로 둘 것.
+
+- **Edge Function** (prod 미배포):
+  - `ravelry-yarn-search` (신규, 실 검색 `GET /yarns/search.json` 프록시)
+  - `ravelry-yarn-detail` (섹션 1과 공유 — 섹션 1을 보류하더라도 서랍장 출시 시엔 이 함수는 prod 배포 필요)
+  - `RAVELRY_USERNAME`/`RAVELRY_PASSWORD` 시크릿 필요(섹션 1과 동일)
+- **DB**: `20261112000000_add_user_yarns.sql` (dev 적용 완료, prod 미적용) — `user_yarns`, `user_yarn_projects` 테이블 + `yarn-images` Storage 버킷/정책
+- **DB**: `20261112000001_add_user_needles.sql` (dev 미적용, prod 미적용) — `user_needles`, `user_needle_projects` 테이블 + `needle-images` Storage 버킷/정책
+- **DB**: `20261112000002_add_project_drawer_items_rpc.sql` (dev 미적용, prod 미적용) — `user_yarn_projects.used_grams`·`purpose_tags`(프로젝트별 실 사용량·용도) 컬럼 추가 + `get_project_drawer_items` RPC (공개 프로젝트에 연결된 실/바늘 조회 — 메모 항상 제외, 작성자 외엔 구매 정보·구매량도 제외). `is_blocked_either_way()` 필요(이미 prod에 있음)
+- **DB**: `20261112000003_add_project_gauges.sql` (dev 미적용, prod 미적용) — `project_gauges` 테이블 (프로젝트별 게이지 여러 개, 공개 프로젝트면 조회 가능)
+- **참고**: 프로젝트 상세의 실/바늘 연결 UI·RPC 호출도 `DRAWER_TAB_ENABLED`로 같이 꺼짐
+- **클라이언트 코드**: `src/screens/Drawer/*`, `DrawerStack`, 하단 탭 4번째 "서랍장"
+
+---
+
 ## 참고: dev에만 있고 prod에 없는 함수 중 `send-inquiry-notification`
 
 의도적 보류가 아니라 **완전히 죽은 레거시 함수**임 — 클라이언트 어디서도 호출 안 하고, 이 함수가 쓰던 `inquiries` 테이블도 이미 삭제됨(`20260625040000_drop_inquiries_table.sql`). "피드백" 기능(`send-feedback-email`)으로 대체됨. prod에 배포할 필요 없음, dev에서도 정리 대상이면 추후 삭제 고려.

@@ -56,20 +56,34 @@ import {
   MAX_PDF_SIZE_BYTES,
 } from '@/lib/uploadPdf';
 import {thumbnailUrl as toThumbnailUrl} from '@/lib/imageTransform';
-import {
-  uploadImage,
-  removeProjectThumbnail,
-  deletePostImageFiles,
-} from '@/lib/uploadImage';
+import {uploadImage, removeProjectThumbnail} from '@/lib/uploadImage';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import {trackEvent} from '@/lib/mixpanel';
 import {getProjectDateLabel} from '@/lib/projectDate';
-import { Text } from 'react-native';
+import {Text} from 'react-native';
 import SaveIcon from '@/assets/icons/save.svg';
 import SavedIcon from '@/assets/icons/saved.svg';
 import BottomBannerAd from '@/components/common/BottomBannerAd';
 import SavedCheckIcon from '@/assets/icons/saved_check.svg';
+import {DRAWER_TAB_ENABLED} from '@/constants/feature.constant';
+import {ProjectLinkedYarn, PublicUserNeedle} from '@/@types/database';
+import {YarnProjectUsage, updateYarnUsage} from '@/lib/userYarns';
+import {
+  DrawerKind,
+  fetchProjectDrawerItems,
+  syncProjectDrawerLinks,
+} from '@/lib/projectDrawerLinks';
+import ProjectDrawerLinks from './ProjectDrawerLinks';
+import ProjectGauges, {GaugeItem} from './ProjectGauges';
+import {
+  GaugeDraft,
+  addProjectGauges,
+  deleteProjectGauge,
+  fetchProjectGauges,
+  updateProjectGauge,
+} from '@/lib/projectGauges';
+import {deleteProjects} from '@/lib/deleteProjects';
 
 type RouteProps = RouteProp<
   {
@@ -102,7 +116,9 @@ const MAX_TITLE_LENGTH = 50;
 function getCopyTitle(title: string): string {
   const match = title.match(/^(.*)_복사(\d*)$/);
   const base = match ? match[1] : title;
-  const suffix = match ? `_복사${match[2] ? parseInt(match[2], 10) + 1 : 2}` : '_복사';
+  const suffix = match
+    ? `_복사${match[2] ? parseInt(match[2], 10) + 1 : 2}`
+    : '_복사';
   const truncatedBase =
     base.length + suffix.length > MAX_TITLE_LENGTH
       ? base.slice(0, MAX_TITLE_LENGTH - suffix.length)
@@ -181,7 +197,11 @@ function PostContentPreview({content}: {content: string}) {
   );
 }
 
-function PostImageCarousel({images}: {images: {id: string; image_url: string}[]}) {
+function PostImageCarousel({
+  images,
+}: {
+  images: {id: string; image_url: string}[];
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const pageWidth = SCREEN_WIDTH - 36;
   return (
@@ -245,11 +265,17 @@ export default function ProjectDetailScreen() {
   const [showSaveToast, setShowSaveToast] = useState(false);
   const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showPlannedToast, setShowPlannedToast] = useState(false);
-  const plannedToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const plannedToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const showPlannedStatusToast = () => {
     setShowPlannedToast(true);
-    if (plannedToastTimerRef.current) clearTimeout(plannedToastTimerRef.current);
-    plannedToastTimerRef.current = setTimeout(() => setShowPlannedToast(false), 2000);
+    if (plannedToastTimerRef.current)
+      clearTimeout(plannedToastTimerRef.current);
+    plannedToastTimerRef.current = setTimeout(
+      () => setShowPlannedToast(false),
+      2000,
+    );
   };
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [pdfInfoVisible, setPdfInfoVisible] = useState(false);
@@ -277,7 +303,9 @@ export default function ProjectDetailScreen() {
   const [needleInfo, setNeedleInfo] = useState('');
   const [patternInfo, setPatternInfo] = useState('');
   const [patternUrl, setPatternUrl] = useState('');
-  const [formStatus, setFormStatus] = useState<'planned' | 'in_progress' | 'completed'>('in_progress');
+  const [formStatus, setFormStatus] = useState<
+    'planned' | 'in_progress' | 'completed'
+  >('in_progress');
   const [formVisibility, setFormVisibility] = useState<'public' | 'private'>(
     'public',
   );
@@ -285,19 +313,29 @@ export default function ProjectDetailScreen() {
   const [formCommentsEnabled, setFormCommentsEnabled] = useState(true);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [startedAt, setStartedAt] = useState('');
-  
+
   const [completedAt, setCompletedAt] = useState('');
   const [pendingThumbnail, setPendingThumbnail] = useState<string | null>(null);
 
   // ── 캘린더 / 썸네일 UI 상태
-  const [calendarMode, setCalendarMode] = useState<'single' | 'range'>('single');
-  const [calendarTarget, setCalendarTarget] = useState<'started' | 'completed'>('started');
+  const [calendarMode, setCalendarMode] = useState<'single' | 'range'>(
+    'single',
+  );
+  const [calendarTarget, setCalendarTarget] = useState<'started' | 'completed'>(
+    'started',
+  );
   const [showCalendar, setShowCalendar] = useState(false);
   const [showThumbnailSheet, setShowThumbnailSheet] = useState(false);
   const [showPostImagePicker, setShowPostImagePicker] = useState(false);
 
   const MAX_LENGTH_LOG = 5;
   const MAX_LENGTH_POST = 3;
+
+  // ── 서랍장에서 연결한 실/바늘 (작성 모드에선 저장 전까지 화면 상태로만 보관)
+  const [linkedYarns, setLinkedYarns] = useState<ProjectLinkedYarn[]>([]);
+  const [linkedNeedles, setLinkedNeedles] = useState<PublicUserNeedle[]>([]);
+  // 프로젝트 게이지 (작성 모드에선 저장 전까지 화면 상태로만 보관, id는 임시값)
+  const [gauges, setGauges] = useState<GaugeItem[]>([]);
 
   // ── 뜨개 로그
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
@@ -308,7 +346,8 @@ export default function ProjectDetailScreen() {
   useEffect(() => {
     return () => {
       if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
-      if (plannedToastTimerRef.current) clearTimeout(plannedToastTimerRef.current);
+      if (plannedToastTimerRef.current)
+        clearTimeout(plannedToastTimerRef.current);
     };
   }, []);
 
@@ -400,7 +439,13 @@ export default function ProjectDetailScreen() {
   const addPendingLog = useCallback(() => {
     const tempId = Date.now().toString();
     setPendingLogs(prev => [
-      {id: tempId, key: tempId, content: '', isExisting: false, isEditable: true},
+      {
+        id: tempId,
+        key: tempId,
+        content: '',
+        isExisting: false,
+        isEditable: true,
+      },
       ...prev,
     ]);
     trackEvent('knitting_log_added', {project_id: projectId});
@@ -565,10 +610,14 @@ export default function ProjectDetailScreen() {
   // ── fetch
   // 게시물 목록의 좋아요/댓글 카운트+좋아요 여부를 배치 조회해서 머지
   // (게시물당 쿼리 날리면 N+1이라 post_id in (...)으로 한 번씩만, Home.tsx와 동일 패턴)
-  const attachLikesAndComments = async (posts: SimplePost[]): Promise<SimplePost[]> => {
+  const attachLikesAndComments = async (
+    posts: SimplePost[],
+  ): Promise<SimplePost[]> => {
     if (posts.length === 0) return posts;
     const postIds = posts.map(p => p.id);
-    const {data: {user}} = await supabase.auth.getUser();
+    const {
+      data: {user},
+    } = await supabase.auth.getUser();
 
     const [{data: likesData}, {data: commentsData}] = await Promise.all([
       supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
@@ -618,7 +667,6 @@ export default function ProjectDetailScreen() {
         populateForm(p);
       }
 
-
       const {data: postsData, error: postsError} = await supabase
         .from('posts')
         .select(
@@ -650,6 +698,122 @@ export default function ProjectDetailScreen() {
     hasFetchedRef.current = false;
   }, [projectId]);
 
+  // 연결된 실/바늘 — 서랍장 상세에서 수정/삭제하거나 새로 추가하고 돌아왔을 때도 반영되도록 포커스마다 조회
+  const loadDrawerItems = useCallback(async () => {
+    if (!DRAWER_TAB_ENABLED || isCreateMode || !projectId) return;
+    try {
+      const {yarns, needles} = await fetchProjectDrawerItems(projectId);
+      setLinkedYarns(yarns);
+      setLinkedNeedles(needles);
+    } catch (e) {
+      console.error('프로젝트 실/바늘 조회 실패:', e);
+    }
+  }, [isCreateMode, projectId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDrawerItems();
+    }, [loadDrawerItems]),
+  );
+
+  const loadGauges = useCallback(async () => {
+    if (!DRAWER_TAB_ENABLED || isCreateMode || !projectId) return;
+    try {
+      setGauges(await fetchProjectGauges(projectId));
+    } catch (e) {
+      console.error('프로젝트 게이지 조회 실패:', e);
+    }
+  }, [isCreateMode, projectId]);
+
+  useEffect(() => {
+    loadGauges();
+  }, [loadGauges]);
+
+  // 게이지 추가/수정/삭제 — 기존 프로젝트는 바로 DB 반영, 작성 모드는 저장 직후 일괄 추가
+  const handleGaugeSave = useCallback(
+    async (id: string | null, gauge: GaugeDraft) => {
+      if (isCreateMode || !projectId) {
+        setGauges(prev =>
+          id
+            ? prev.map(g => (g.id === id ? {...g, ...gauge} : g))
+            : [...prev, {...gauge, id: `temp-${Date.now()}`}],
+        );
+        return;
+      }
+      if (id) await updateProjectGauge(id, gauge);
+      else await addProjectGauges(projectId, [gauge]);
+      await loadGauges();
+    },
+    [isCreateMode, projectId, loadGauges],
+  );
+
+  const handleGaugeDelete = useCallback(
+    async (id: string) => {
+      if (isCreateMode || !projectId) {
+        setGauges(prev => prev.filter(g => g.id !== id));
+        return;
+      }
+      await deleteProjectGauge(id);
+      await loadGauges();
+    },
+    [isCreateMode, projectId, loadGauges],
+  );
+
+  const handleDrawerSelection = useCallback(
+    (kind: DrawerKind) =>
+      async (
+        ids: string[],
+        items: (ProjectLinkedYarn | PublicUserNeedle)[],
+      ) => {
+        if (isCreateMode || !projectId) {
+          // 작성 모드: 프로젝트 저장 직후 연결 (이미 입력한 사용량은 유지)
+          if (kind === 'yarn') {
+            setLinkedYarns(
+              (items as ProjectLinkedYarn[]).map(y => ({
+                ...y,
+                used_grams:
+                  linkedYarns.find(prev => prev.id === y.id)?.used_grams ??
+                  null,
+                purpose_tags:
+                  linkedYarns.find(prev => prev.id === y.id)?.purpose_tags ??
+                  [],
+              })),
+            );
+          } else setLinkedNeedles(items as PublicUserNeedle[]);
+          return;
+        }
+        const previousIds = (kind === 'yarn' ? linkedYarns : linkedNeedles).map(
+          i => i.id,
+        );
+        await syncProjectDrawerLinks(kind, projectId, previousIds, ids);
+        await loadDrawerItems();
+      },
+    [isCreateMode, projectId, linkedYarns, linkedNeedles, loadDrawerItems],
+  );
+
+  // 실 용도/사용량 저장 — 작성 모드면 화면 상태에만 두고 프로젝트 저장 직후 반영
+  const handleYarnUsage = useCallback(
+    async (yarnId: string, usage: YarnProjectUsage) => {
+      if (isCreateMode || !projectId) {
+        setLinkedYarns(prev =>
+          prev.map(y =>
+            y.id === yarnId
+              ? {
+                  ...y,
+                  used_grams: usage.usedGrams,
+                  purpose_tags: usage.purposeTags,
+                }
+              : y,
+          ),
+        );
+        return;
+      }
+      await updateYarnUsage(yarnId, projectId, usage);
+      await loadDrawerItems();
+    },
+    [isCreateMode, projectId, loadDrawerItems],
+  );
+
   // ── 저장
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
@@ -659,11 +823,15 @@ export default function ProjectDetailScreen() {
     setIsSubmitting(true);
     try {
       const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const finalCompletedAt = formStatus === 'completed' ? (completedAt || todayStr) : null;
+      const todayStr = `${today.getFullYear()}-${String(
+        today.getMonth() + 1,
+      ).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const finalCompletedAt =
+        formStatus === 'completed' ? completedAt || todayStr : null;
       // 예정 상태는 아직 안 시작한 거라 시작일을 자동으로 채우면 안 됨(DB 컬럼 기본값도 우회해야
       // 하므로 명시적으로 null을 보냄 — 컬럼을 생략하면 DEFAULT current_date가 적용돼버림)
-      const finalStartedAt = formStatus === 'planned' ? null : startedAt || todayStr;
+      const finalStartedAt =
+        formStatus === 'planned' ? null : startedAt || todayStr;
 
       // 썸네일 업로드
       let finalThumbnailUrl = thumbnailUrl;
@@ -733,6 +901,35 @@ export default function ProjectDetailScreen() {
         if (error) throw new Error('프로젝트 생성에 실패했습니다.');
         currentProjectId = newProject.id;
         trackEvent('project_created', {project_id: currentProjectId});
+        // 작성 중에 고른 서랍장 실/바늘 연결 (실패해도 프로젝트 저장은 유지)
+        try {
+          await syncProjectDrawerLinks(
+            'yarn',
+            currentProjectId,
+            [],
+            linkedYarns.map(y => y.id),
+          );
+          await syncProjectDrawerLinks(
+            'needle',
+            currentProjectId,
+            [],
+            linkedNeedles.map(n => n.id),
+          );
+          await addProjectGauges(
+            currentProjectId,
+            gauges.map(({stitches, rows, needle_mm, pattern}) => ({stitches, rows, needle_mm, pattern})),
+          );
+          for (const y of linkedYarns) {
+            if (y.used_grams != null || y.purpose_tags?.length) {
+              await updateYarnUsage(y.id, currentProjectId, {
+                usedGrams: y.used_grams ?? null,
+                purposeTags: y.purpose_tags ?? [],
+              });
+            }
+          }
+        } catch (linkError) {
+          console.error('프로젝트 실/바늘 연결 실패:', linkError);
+        }
         // 프로젝트 2번째 저장 완료 등 조건을 지금 막 채웠을 수 있으니 바로 체크
         DeviceEventEmitter.emit('checkSupportModal');
       } else {
@@ -844,6 +1041,9 @@ export default function ProjectDetailScreen() {
     fetchData,
     project?.status,
     setField,
+    linkedYarns,
+    linkedNeedles,
+    gauges,
   ]);
 
   handleSaveRef.current = handleSave;
@@ -869,7 +1069,9 @@ export default function ProjectDetailScreen() {
           needle_info: project.needle_info ?? null,
           pattern_info: project.pattern_info ?? null,
           pattern_url: copiedPatternUrl,
-          pattern_pdf_name: copiedPatternUrl ? project.pattern_pdf_name ?? null : null,
+          pattern_pdf_name: copiedPatternUrl
+            ? project.pattern_pdf_name ?? null
+            : null,
           content: null,
           thumbnail_url: null,
           status: 'in_progress',
@@ -912,38 +1114,8 @@ export default function ProjectDetailScreen() {
           onPress: async () => {
             try {
               setIsDeleting(true);
-              const postImageUrls = posts.flatMap(p =>
-                p.post_images.map(img => img.image_url),
-              );
-              const postIds = posts.map(p => p.id);
-
-              // 게시물 이미지의 Storage DELETE 정책이 posts.user_id 서브쿼리로
-              // 소유권을 확인하므로, posts 행을 지우기 전에 먼저 정리해야 함
-              // (다른 프로젝트가 이 파일을 재사용할 순 없는 구조라 재사용 체크는 불필요)
-              await deletePostImageFiles(postImageUrls);
-
-              if (postIds.length > 0) {
-                await supabase
-                  .from('post_images')
-                  .delete()
-                  .in('post_id', postIds);
-                await supabase.from('posts').delete().in('id', postIds);
-              }
-              await supabase
-                .from('knitting_logs')
-                .delete()
-                .eq('project_id', projectId);
-              const {error} = await supabase
-                .from('projects')
-                .delete()
-                .eq('id', projectId!);
-              if (error) throw error;
-
-              // 대표이미지/PDF는 project 행 삭제 후 정리 — project-thumbnails/pattern-pdfs
-              // 정책은 auth.uid() 직접 비교라 posts와 무관하지만, 대표이미지가 자기 게시물
-              // 이미지를 재사용 중이었다면 위에서 이미 postImageUrls에 포함되어 지워졌으므로 무해함
-              if (project?.thumbnail_url) removeProjectThumbnail(project.thumbnail_url);
-              if (project?.pattern_url) removePdf(project.pattern_url);
+              // 게시물/이미지/로그/대표이미지/PDF까지 정리 (프로젝트 목록 다중 삭제와 공통)
+              await deleteProjects([projectId!]);
 
               Alert.alert('삭제 완료', '프로젝트가 삭제되었습니다.', [
                 {text: '확인', onPress: () => navigation.goBack()},
@@ -963,12 +1135,20 @@ export default function ProjectDetailScreen() {
 
   //내 프로젝트거나 생성 모드일때
   const canEdit = isCreateMode || isMyProject;
+  const hasKnitInfo =
+    !!yarnInfo ||
+    !!needleInfo ||
+    !!patternInfo ||
+    linkedYarns.length > 0 ||
+    linkedNeedles.length > 0 ||
+    gauges.length > 0;
 
   // 대표이미지가 없으면 가장 먼저 올린 게시물의 첫 사진으로 대체
   const fallbackThumbnailUrl = (() => {
     if (posts.length === 0) return null;
     const firstPost = [...posts].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     )[0];
     const firstImage = [...(firstPost.post_images || [])].sort(
       (a, b) => a.display_order - b.display_order,
@@ -1015,7 +1195,10 @@ export default function ProjectDetailScreen() {
 
         setShowSaveToast(true);
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
-        saveToastTimerRef.current = setTimeout(() => setShowSaveToast(false), 3000);
+        saveToastTimerRef.current = setTimeout(
+          () => setShowSaveToast(false),
+          3000,
+        );
       }
     } catch (error) {
       console.error('❌ 뜨개함 저장 실패:', error);
@@ -1194,14 +1377,20 @@ export default function ProjectDetailScreen() {
           <ActivityIndicator size="large" color="#ffffff" />
         </S.LoadingOverlay>
       )}
-      <KeyboardAvoid>
-
+      {/* 게이지/실 사용량 바텀시트가 React 트리상 이 스크롤뷰 안에 있어서,
+          기본값(never)이면 키보드가 열린 상태의 첫 터치를 스크롤뷰가 가져가 키보드만 닫힘 */}
+      <KeyboardAvoid keyboardShouldPersistTaps="handled">
         {/* ══ SNS 스타일: 제목 + 설명 ══════════════════════ */}
         <S.PostArea>
           <S.TitleWithThumbnailRow>
-            {(canEdit || thumbnailUrl || pendingThumbnail || fallbackThumbnailUrl) && (
+            {(canEdit ||
+              thumbnailUrl ||
+              pendingThumbnail ||
+              fallbackThumbnailUrl) && (
               <S.ThumbnailWrapper
-                onPress={canEdit ? () => setShowThumbnailSheet(true) : undefined}
+                onPress={
+                  canEdit ? () => setShowThumbnailSheet(true) : undefined
+                }
                 activeOpacity={canEdit ? 0.7 : 1}
                 disabled={!canEdit}>
                 {pendingThumbnail ? (
@@ -1215,11 +1404,14 @@ export default function ProjectDetailScreen() {
                     <Icon name="camera" size={20} color="#ccc" />
                   </S.ThumbnailPlaceholder>
                 )}
-                {canEdit && (thumbnailUrl || pendingThumbnail || fallbackThumbnailUrl) && (
-                  <S.ThumbnailEditBadge>
-                    <Icon name="camera" size={10} color="#fff" />
-                  </S.ThumbnailEditBadge>
-                )}
+                {canEdit &&
+                  (thumbnailUrl ||
+                    pendingThumbnail ||
+                    fallbackThumbnailUrl) && (
+                    <S.ThumbnailEditBadge>
+                      <Icon name="camera" size={10} color="#fff" />
+                    </S.ThumbnailEditBadge>
+                  )}
               </S.ThumbnailWrapper>
             )}
             <View style={{flex: 1}}>
@@ -1261,11 +1453,19 @@ export default function ProjectDetailScreen() {
               {project.content ? <S.Body>{project.content}</S.Body> : null}
               <S.ProjectDate>
                 <S.StatusDateGroup>
-                  {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at) && (
+                  {getProjectDateLabel(
+                    project.is_completed,
+                    project.started_at,
+                    project.completed_at,
+                  ) && (
                     <S.DateChip activeOpacity={1} disabled>
                       <Icon name="calendar" size={12} color="#888" />
                       <S.DateChipText>
-                        {getProjectDateLabel(project.is_completed, project.started_at, project.completed_at)}
+                        {getProjectDateLabel(
+                          project.is_completed,
+                          project.started_at,
+                          project.completed_at,
+                        )}
                       </S.DateChipText>
                     </S.DateChip>
                   )}
@@ -1279,7 +1479,9 @@ export default function ProjectDetailScreen() {
                   ) : (
                     <SaveIcon width={16} height={16} color="#454545" />
                   )}
-                  <S.SaveBadgeText>{isSaved ? "뜨개함 보관 중" :"뜨개함 담기"} </S.SaveBadgeText>
+                  <S.SaveBadgeText>
+                    {isSaved ? '뜨개함 보관 중' : '뜨개함 담기'}{' '}
+                  </S.SaveBadgeText>
                 </S.SaveBadge>
               </S.ProjectDate>
             </>
@@ -1299,7 +1501,9 @@ export default function ProjectDetailScreen() {
           <S.MetaSection>
             <S.MetaRow style={{alignItems: 'flex-start', borderBottomWidth: 0}}>
               <S.MetaRowLeft>
-                <S.MetaRowTitle style={{paddingTop: 6}}>뜨개 상태</S.MetaRowTitle>
+                <S.MetaRowTitle style={{paddingTop: 6}}>
+                  뜨개 상태
+                </S.MetaRowTitle>
               </S.MetaRowLeft>
               <View style={{alignItems: 'flex-end', gap: 10}}>
                 <S.StatusSegment>
@@ -1326,23 +1530,38 @@ export default function ProjectDetailScreen() {
                   </S.StatusSegmentButton>
                 </S.StatusSegment>
                 {formStatus !== 'planned' && (
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}>
                     {formStatus === 'completed' ? (
                       <>
                         <S.DateChip onPress={() => openCalendar('started')}>
                           <Icon name="calendar" size={12} color="#888" />
-                          <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
+                          <S.DateChipText>
+                            {startedAt
+                              ? formatDateDisplay(startedAt)
+                              : todayDisplay}
+                          </S.DateChipText>
                         </S.DateChip>
                         <S.DateRangeSep>~</S.DateRangeSep>
                         <S.DateChip onPress={() => openCalendar('completed')}>
                           <Icon name="calendar" size={12} color="#888" />
-                          <S.DateChipText>{formatDateDisplay(completedAt, '종료일')}</S.DateChipText>
+                          <S.DateChipText>
+                            {formatDateDisplay(completedAt, '종료일')}
+                          </S.DateChipText>
                         </S.DateChip>
                       </>
                     ) : (
                       <S.DateChip onPress={() => openCalendar('started')}>
                         <Icon name="calendar" size={12} color="#888" />
-                        <S.DateChipText>{startedAt ? formatDateDisplay(startedAt) : todayDisplay}</S.DateChipText>
+                        <S.DateChipText>
+                          {startedAt
+                            ? formatDateDisplay(startedAt)
+                            : todayDisplay}
+                        </S.DateChipText>
                       </S.DateChip>
                     )}
                   </View>
@@ -1353,181 +1572,247 @@ export default function ProjectDetailScreen() {
         )}
 
         {/* ══ 정보 섹션: 실 · 바늘 · 도안 ══════════════════ */}
-        <S.InfoSection>
-          <S.InfoHeaderRow>
-            <S.Label>뜨개 정보</S.Label>
-          </S.InfoHeaderRow>
-          <S.InfoRow>
-            <S.InfoIconBox style={{backgroundColor: '#f3eeff'}}>
-              <S.InfoIcon>🧶</S.InfoIcon>
-            </S.InfoIconBox>
-            <S.InfoContent>
-              <S.InfoLabel>실</S.InfoLabel>
-              {isEditingYarnInfo ? (
-                <S.InfoInput
-                  autoFocus
-                  placeholder="어떤 실을 사용하셨나요?"
-                  value={yarnInfo}
-                  onChangeText={v => setField('yarnInfo', v)}
-                  placeholderTextColor="#ccc"
-                  multiline
-                  onBlur={() => setIsEditingYarnInfo(false)}
-                  maxLength={200}
-                />
-              ) : yarnInfo ? (
-                <S.LinkRow>
-                  <S.InfoValue style={{flex: 1}}>{yarnInfo}</S.InfoValue>
-                  {canEdit && (
-                    <TouchableOpacity
+        {/* 다른 사람 프로젝트는 값이 있는 항목만, 전부 비어 있으면 섹션 자체를 숨김 */}
+        {(canEdit || hasKnitInfo) && (
+          <S.InfoSection>
+            <S.InfoHeaderRow>
+              <S.Label>뜨개 정보</S.Label>
+            </S.InfoHeaderRow>
+            {(canEdit || !!yarnInfo || linkedYarns.length > 0) && (
+              <S.InfoRow>
+                <S.InfoIconBox style={{backgroundColor: '#f3eeff'}}>
+                  <S.InfoIcon>🧶</S.InfoIcon>
+                </S.InfoIconBox>
+                <S.InfoContent>
+                  {DRAWER_TAB_ENABLED ? (
+                    <ProjectDrawerLinks
+                      kind="yarn"
+                      label={
+                        <S.InfoLabel style={{marginBottom: 0}}>실</S.InfoLabel>
+                      }
+                      items={linkedYarns}
+                      editable={canEdit}
+                      isCreateMode={isCreateMode}
+                      projectId={projectId}
+                      onChangeSelection={handleDrawerSelection('yarn')}
+                      onChangeUsage={handleYarnUsage}
+                    />
+                  ) : (
+                    <S.InfoLabel>실</S.InfoLabel>
+                  )}
+                  {isEditingYarnInfo ? (
+                    <S.InfoInputBordered
+                      autoFocus
+                      placeholder="어떤 실을 사용하셨나요?"
+                      value={yarnInfo}
+                      onChangeText={v => setField('yarnInfo', v)}
+                      placeholderTextColor="#ccc"
+                      multiline
+                      onBlur={() => setIsEditingYarnInfo(false)}
+                      maxLength={200}
+                    />
+                  ) : yarnInfo ? (
+                    // 직접 입력한 내용 — 서랍장 카드와 같은 모양, 왼쪽 아이콘(✎)으로 구분
+                    <S.DirectInfoCard
+                      activeOpacity={0.7}
+                      disabled={!canEdit}
                       onPress={() => setIsEditingYarnInfo(true)}>
-                      <Icon name="edit-2" size={14} color="#bbb" />
-                    </TouchableOpacity>
-                  )}
-                </S.LinkRow>
-              ) : canEdit ? (
-                <TouchableOpacity onPress={() => setIsEditingYarnInfo(true)}>
-                  <S.InfoPlaceholder>어떤 실을 사용하셨나요?</S.InfoPlaceholder>
-                </TouchableOpacity>
-              ) : null}
-            </S.InfoContent>
-          </S.InfoRow>
+                      <Icon name="edit-3" size={13} color="#bbb" />
+                      <S.InfoValue style={{flex: 1}}>{yarnInfo}</S.InfoValue>
+                    </S.DirectInfoCard>
+                  ) : canEdit ? (
+                    <S.DashedAddButton
+                      onPress={() => setIsEditingYarnInfo(true)}>
+                      <Icon name="plus" size={13} color="#999" />
+                      <S.DashedAddButtonText>
+                        직접 입력하기
+                      </S.DashedAddButtonText>
+                    </S.DashedAddButton>
+                  ) : null}
+                </S.InfoContent>
+              </S.InfoRow>
+            )}
 
-          <S.InfoRow>
-            <S.InfoIconBox style={{backgroundColor: '#e8f5e9'}}>
-              <S.InfoIcon>🪡</S.InfoIcon>
-            </S.InfoIconBox>
-            <S.InfoContent>
-              <S.InfoLabel>바늘</S.InfoLabel>
-              {isEditingNeedleInfo ? (
-                <S.InfoInput
-                  autoFocus
-                  placeholder="어떤 바늘을 사용하셨나요?"
-                  value={needleInfo}
-                  onChangeText={v => setField('needleInfo', v)}
-                  placeholderTextColor="#ccc"
-                  multiline
-                  onBlur={() => setIsEditingNeedleInfo(false)}
-                  maxLength={200}
-                />
-              ) : needleInfo ? (
-                <S.LinkRow>
-                  <S.InfoValue style={{flex: 1}}>{needleInfo}</S.InfoValue>
-                  {canEdit && (
-                    <TouchableOpacity
+            {(canEdit || !!needleInfo || linkedNeedles.length > 0) && (
+              <S.InfoRow>
+                <S.InfoIconBox style={{backgroundColor: '#e8f5e9'}}>
+                  <S.InfoIcon>🪡</S.InfoIcon>
+                </S.InfoIconBox>
+                <S.InfoContent>
+                  {DRAWER_TAB_ENABLED ? (
+                    <ProjectDrawerLinks
+                      kind="needle"
+                      label={
+                        <S.InfoLabel style={{marginBottom: 0}}>
+                          바늘
+                        </S.InfoLabel>
+                      }
+                      items={linkedNeedles}
+                      editable={canEdit}
+                      isCreateMode={isCreateMode}
+                      projectId={projectId}
+                      onChangeSelection={handleDrawerSelection('needle')}
+                    />
+                  ) : (
+                    <S.InfoLabel>바늘</S.InfoLabel>
+                  )}
+                  {isEditingNeedleInfo ? (
+                    <S.InfoInputBordered
+                      autoFocus
+                      placeholder="어떤 바늘을 사용하셨나요?"
+                      value={needleInfo}
+                      onChangeText={v => setField('needleInfo', v)}
+                      placeholderTextColor="#ccc"
+                      multiline
+                      onBlur={() => setIsEditingNeedleInfo(false)}
+                      maxLength={200}
+                    />
+                  ) : needleInfo ? (
+                    // 직접 입력한 내용 — 서랍장 카드와 같은 모양, 왼쪽 아이콘(✎)으로 구분
+                    <S.DirectInfoCard
+                      activeOpacity={0.7}
+                      disabled={!canEdit}
                       onPress={() => setIsEditingNeedleInfo(true)}>
-                      <Icon name="edit-2" size={14} color="#bbb" />
-                    </TouchableOpacity>
-                  )}
-                </S.LinkRow>
-              ) : canEdit ? (
-                <TouchableOpacity onPress={() => setIsEditingNeedleInfo(true)}>
-                  <S.InfoPlaceholder>
-                    어떤 바늘을 사용하셨나요?
-                  </S.InfoPlaceholder>
-                </TouchableOpacity>
-              ) : null}
-            </S.InfoContent>
-          </S.InfoRow>
+                      <Icon name="edit-3" size={13} color="#bbb" />
+                      <S.InfoValue style={{flex: 1}}>{needleInfo}</S.InfoValue>
+                    </S.DirectInfoCard>
+                  ) : canEdit ? (
+                    <S.DashedAddButton
+                      onPress={() => setIsEditingNeedleInfo(true)}>
+                      <Icon name="plus" size={13} color="#999" />
+                      <S.DashedAddButtonText>
+                        직접 입력하기
+                      </S.DashedAddButtonText>
+                    </S.DashedAddButton>
+                  ) : null}
+                </S.InfoContent>
+              </S.InfoRow>
+            )}
 
+            {DRAWER_TAB_ENABLED && (canEdit || gauges.length > 0) && (
           <S.InfoRow>
-            <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
-              <S.InfoIcon>📄</S.InfoIcon>
+            <S.InfoIconBox style={{backgroundColor: '#e3f2fd'}}>
+              <S.InfoIcon>📏</S.InfoIcon>
             </S.InfoIconBox>
             <S.InfoContent>
-              <S.InfoLabel>도안</S.InfoLabel>
-              {isEditingPatternInfo ? (
-                <S.InfoInput
-                  autoFocus
-                  placeholder="어떤 도안을 참고하셨나요?"
-                  value={patternInfo}
-                  onChangeText={v => setField('patternInfo', v)}
-                  placeholderTextColor="#ccc"
-                  multiline
-                  onBlur={() => setIsEditingPatternInfo(false)}
-                  maxLength={1000}
-                />
-              ) : patternInfo ? (
-                <S.LinkRow>
-                  <View style={{flex: 1}}>
-                    {renderTextWithLinks(patternInfo)}
-                  </View>
-                  {canEdit && (
+              <S.InfoLabel>게이지</S.InfoLabel>
+              <ProjectGauges
+                gauges={gauges}
+                editable={canEdit}
+                onSave={handleGaugeSave}
+                onDelete={handleGaugeDelete}
+              />
+            </S.InfoContent>
+          </S.InfoRow>
+          )}
+
+          {(canEdit || !!patternInfo) && (
+              <S.InfoRow>
+                <S.InfoIconBox style={{backgroundColor: '#fff3e0'}}>
+                  <S.InfoIcon>📄</S.InfoIcon>
+                </S.InfoIconBox>
+                <S.InfoContent>
+                  <S.InfoLabel>도안</S.InfoLabel>
+                  {isEditingPatternInfo ? (
+                    <S.InfoInput
+                      autoFocus
+                      placeholder="어떤 도안을 참고하셨나요?"
+                      value={patternInfo}
+                      onChangeText={v => setField('patternInfo', v)}
+                      placeholderTextColor="#ccc"
+                      multiline
+                      onBlur={() => setIsEditingPatternInfo(false)}
+                      maxLength={1000}
+                    />
+                  ) : patternInfo ? (
+                    <S.LinkRow>
+                      <View style={{flex: 1}}>
+                        {renderTextWithLinks(patternInfo)}
+                      </View>
+                      {canEdit && (
+                        <TouchableOpacity
+                          onPress={() => setIsEditingPatternInfo(true)}>
+                          <Icon name="edit-2" size={14} color="#bbb" />
+                        </TouchableOpacity>
+                      )}
+                    </S.LinkRow>
+                  ) : canEdit ? (
                     <TouchableOpacity
                       onPress={() => setIsEditingPatternInfo(true)}>
-                      <Icon name="edit-2" size={14} color="#bbb" />
+                      <S.InfoPlaceholder>
+                        어떤 도안을 참고하셨나요?
+                      </S.InfoPlaceholder>
+                    </TouchableOpacity>
+                  ) : null}
+                </S.InfoContent>
+              </S.InfoRow>
+            )}
+
+            {(isMyProject || isCreateMode) && (
+              <S.InfoRow style={{borderBottomWidth: 0}}>
+                <S.InfoIconBox style={{backgroundColor: '#f1f1ef'}}>
+                  <S.InfoIcon>📎</S.InfoIcon>
+                </S.InfoIconBox>
+                <S.InfoContent>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}>
+                    <S.InfoLabel>도안 PDF</S.InfoLabel>
+                    <TouchableOpacity onPress={() => setPdfInfoVisible(true)}>
+                      <Icon
+                        name="info"
+                        size={14}
+                        color="#555"
+                        style={{marginBottom: 3}}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  {pendingPdf ? (
+                    <S.LinkRow>
+                      <S.Link
+                        style={{flex: 1}}
+                        onPress={() =>
+                          navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
+                            pdfUrl: pendingPdf.uri,
+                            title: pendingPdf.name,
+                          })
+                        }>
+                        {pendingPdf.name}
+                      </S.Link>
+                      <TouchableOpacity onPress={handleRemovePdf}>
+                        <Icon name="x" size={16} color="#bbb" />
+                      </TouchableOpacity>
+                    </S.LinkRow>
+                  ) : patternUrl ? (
+                    <S.LinkRow>
+                      <S.Link
+                        style={{flex: 1}}
+                        onPress={() =>
+                          navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
+                            pdfPath: patternUrl,
+                            title:
+                              patternPdfName || getPdfNameFromUrl(patternUrl),
+                          })
+                        }>
+                        {patternPdfName || getPdfNameFromUrl(patternUrl)}
+                      </S.Link>
+                      <TouchableOpacity onPress={handleRemovePdf}>
+                        <Icon name="x" size={16} color="#bbb" />
+                      </TouchableOpacity>
+                    </S.LinkRow>
+                  ) : (
+                    <TouchableOpacity onPress={handlePickPdf}>
+                      <S.InfoPlaceholder>PDF 파일 선택</S.InfoPlaceholder>
                     </TouchableOpacity>
                   )}
-                </S.LinkRow>
-              ) : canEdit ? (
-                <TouchableOpacity onPress={() => setIsEditingPatternInfo(true)}>
-                  <S.InfoPlaceholder>
-                    어떤 도안을 참고하셨나요?
-                  </S.InfoPlaceholder>
-                </TouchableOpacity>
-              ) : null}
-            </S.InfoContent>
-          </S.InfoRow>
-
-          {(isMyProject || isCreateMode) && (
-            <S.InfoRow style={{borderBottomWidth: 0}}>
-              <S.InfoIconBox style={{backgroundColor: '#f1f1ef'}}>
-                <S.InfoIcon>📎</S.InfoIcon>
-              </S.InfoIconBox>
-              <S.InfoContent>
-                <View
-                  style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-                  <S.InfoLabel>도안 PDF</S.InfoLabel>
-                  <TouchableOpacity onPress={() => setPdfInfoVisible(true)}>
-                    <Icon
-                      name="info"
-                      size={14}
-                      color="#555"
-                      style={{marginBottom: 3}}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {pendingPdf ? (
-                  <S.LinkRow>
-                    <S.Link
-                      style={{flex: 1}}
-                      onPress={() =>
-                        navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
-                          pdfUrl: pendingPdf.uri,
-                          title: pendingPdf.name,
-                        })
-                      }>
-                      {pendingPdf.name}
-                    </S.Link>
-                    <TouchableOpacity onPress={handleRemovePdf}>
-                      <Icon name="x" size={16} color="#bbb" />
-                    </TouchableOpacity>
-                  </S.LinkRow>
-                ) : patternUrl ? (
-                  <S.LinkRow>
-                    <S.Link
-                      style={{flex: 1}}
-                      onPress={() =>
-                        navigation.navigate(PROJECTS_ROUTES.PDF_VIEWER, {
-                          pdfPath: patternUrl,
-                          title:
-                            patternPdfName || getPdfNameFromUrl(patternUrl),
-                        })
-                      }>
-                      {patternPdfName || getPdfNameFromUrl(patternUrl)}
-                    </S.Link>
-                    <TouchableOpacity onPress={handleRemovePdf}>
-                      <Icon name="x" size={16} color="#bbb" />
-                    </TouchableOpacity>
-                  </S.LinkRow>
-                ) : (
-                  <TouchableOpacity onPress={handlePickPdf}>
-                    <S.InfoPlaceholder>PDF 파일 선택</S.InfoPlaceholder>
-                  </TouchableOpacity>
-                )}
-              </S.InfoContent>
-            </S.InfoRow>
-          )}
-        </S.InfoSection>
+                </S.InfoContent>
+              </S.InfoRow>
+            )}
+          </S.InfoSection>
+        )}
 
         {/* ══ 상태 설정 (내 프로젝트) ══════════════════════ */}
         {canEdit && (
@@ -1582,117 +1867,131 @@ export default function ProjectDetailScreen() {
             </S.MetaRow>
           </S.MetaSection>
         )}
-        
-        {/* ══ 뜨개 로그 ════════════════════════════════════ */}
-        <S.Section>
-          <S.PostHeaderRow>
-            <S.Label>
-              뜨개 로그({isCreateMode ? 0 : pendingLogs.length})
-            </S.Label>
-            {canEdit && !isCreateMode && pendingLogs.length > 0 && (
-              <S.AddButton
-                onPress={() =>
-                  formStatus === 'planned' ? showPlannedStatusToast() : addPendingLog()
-                }
-                disabled={hasTodayLog && formStatus !== 'planned'}
-                style={{opacity: hasTodayLog || formStatus === 'planned' ? 0.4 : 1}}>
-                <Icon name="plus" size={16} color="#fff" />
-                <S.AddButtonText>로그 추가</S.AddButtonText>
-              </S.AddButton>
-            )}
-          </S.PostHeaderRow>
 
-          {isCreateMode ? (
-            <S.EmptyPosts>
-              <S.EmptyText>프로젝트 저장 후 추가할 수 있어요</S.EmptyText>
-            </S.EmptyPosts>
-          ) : pendingLogs.length === 0 ? (
-            <S.EmptyPosts>
-              <S.EmptyText>
-                {formStatus === 'planned'
-                  ? '예정 상태에서는 기록을 추가할 수 없어요'
-                  : '아직 기록이 없어요'}
-              </S.EmptyText>
-              {canEdit && formStatus !== 'planned' && (
-                <S.EmptyAddButton onPress={addPendingLog}>
-                  <S.EmptyAddButtonText>첫 로그 추가하기</S.EmptyAddButtonText>
-                </S.EmptyAddButton>
-              )}
-            </S.EmptyPosts>
-          ) : (
-            <>
-              {pendingLogs.slice(0, MAX_LENGTH_LOG).map((log, index) => {
-                const isLast =
-                  index === Math.min(pendingLogs.length, MAX_LENGTH_LOG) - 1 &&
-                  pendingLogs.length <= MAX_LENGTH_LOG;
-                return (
-                  <S.LogTimelineRow key={log.key}>
-                    <S.LogTimelineDotCol>
-                      <S.LogTimelineDot active={log.isEditable} />
-                      {!isLast && <S.LogTimelineLine />}
-                    </S.LogTimelineDotCol>
-                    <S.LogTimelineContent>
-                      <S.LogTimelineDateRow>
-                        <S.LogTimelineDate active={log.isEditable}>
-                          {log.isEditable
-                            ? `오늘 · ${new Date().toLocaleDateString('ko-KR', {
-                                month: 'long',
-                                day: 'numeric',
-                              })}`
-                            : new Date(log.created_at!).toLocaleDateString(
-                                'ko-KR',
-                                {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                },
-                              )}
-                        </S.LogTimelineDate>
-                        {canEdit && log.isEditable && (
-                          <TouchableOpacity
-                            onPress={() => removePendingLog(log)}>
-                            <Icon name="x" size={14} color="#bbb" />
-                          </TouchableOpacity>
-                        )}
-                      </S.LogTimelineDateRow>
-                      {log.isEditable && isMyProject ? (
-                        <S.LogInputWrapper isFocused={focusedLogId === log.key}>
-                          <S.LogInput
-                            placeholder="오늘 뜬 내용을 기록해보세요"
-                            value={log.content}
-                            onChangeText={text =>
-                              updatePendingLog(log.id, text)
-                            }
-                            onFocus={() => setFocusedLogId(log.key)}
-                            onBlur={() => setFocusedLogId(null)}
-                            placeholderTextColor="#ccc"
-                            multiline
-                            maxLength={500}
-                          />
-                        </S.LogInputWrapper>
-                      ) : (
-                        <S.LogContent>{log.content}</S.LogContent>
-                      )}
-                    </S.LogTimelineContent>
-                  </S.LogTimelineRow>
-                );
-              })}
-              {pendingLogs.length > MAX_LENGTH_LOG && (
-                <S.ViewAllButton
-                  onPress={() => {
-                    navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
-                      projectId: projectId!,
-                      projectTitle: project?.title,
-                    });
+        {/* ══ 뜨개 로그 ════════════════════════════════════ */}
+        {/* 다른 사람 프로젝트는 로그가 있을 때만 */}
+        {(canEdit || pendingLogs.length > 0) && (
+          <S.Section>
+            <S.PostHeaderRow>
+              <S.Label>
+                뜨개 로그({isCreateMode ? 0 : pendingLogs.length})
+              </S.Label>
+              {canEdit && !isCreateMode && pendingLogs.length > 0 && (
+                <S.AddButton
+                  onPress={() =>
+                    formStatus === 'planned'
+                      ? showPlannedStatusToast()
+                      : addPendingLog()
+                  }
+                  disabled={hasTodayLog && formStatus !== 'planned'}
+                  style={{
+                    opacity: hasTodayLog || formStatus === 'planned' ? 0.4 : 1,
                   }}>
-                  <S.ViewAllButtonText>
-                    전체 보기 ({pendingLogs.length}개)
-                  </S.ViewAllButtonText>
-                </S.ViewAllButton>
+                  <Icon name="plus" size={16} color="#fff" />
+                  <S.AddButtonText>로그 추가</S.AddButtonText>
+                </S.AddButton>
               )}
-            </>
-          )}
-        </S.Section>
+            </S.PostHeaderRow>
+
+            {isCreateMode ? (
+              <S.EmptyPosts>
+                <S.EmptyText>프로젝트 저장 후 추가할 수 있어요</S.EmptyText>
+              </S.EmptyPosts>
+            ) : pendingLogs.length === 0 ? (
+              <S.EmptyPosts>
+                <S.EmptyText>
+                  {formStatus === 'planned'
+                    ? '예정 상태에서는 기록을 추가할 수 없어요'
+                    : '아직 기록이 없어요'}
+                </S.EmptyText>
+                {canEdit && formStatus !== 'planned' && (
+                  <S.EmptyAddButton onPress={addPendingLog}>
+                    <S.EmptyAddButtonText>
+                      첫 로그 추가하기
+                    </S.EmptyAddButtonText>
+                  </S.EmptyAddButton>
+                )}
+              </S.EmptyPosts>
+            ) : (
+              <>
+                {pendingLogs.slice(0, MAX_LENGTH_LOG).map((log, index) => {
+                  const isLast =
+                    index ===
+                      Math.min(pendingLogs.length, MAX_LENGTH_LOG) - 1 &&
+                    pendingLogs.length <= MAX_LENGTH_LOG;
+                  return (
+                    <S.LogTimelineRow key={log.key}>
+                      <S.LogTimelineDotCol>
+                        <S.LogTimelineDot active={log.isEditable} />
+                        {!isLast && <S.LogTimelineLine />}
+                      </S.LogTimelineDotCol>
+                      <S.LogTimelineContent>
+                        <S.LogTimelineDateRow>
+                          <S.LogTimelineDate active={log.isEditable}>
+                            {log.isEditable
+                              ? `오늘 · ${new Date().toLocaleDateString(
+                                  'ko-KR',
+                                  {
+                                    month: 'long',
+                                    day: 'numeric',
+                                  },
+                                )}`
+                              : new Date(log.created_at!).toLocaleDateString(
+                                  'ko-KR',
+                                  {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                  },
+                                )}
+                          </S.LogTimelineDate>
+                          {canEdit && log.isEditable && (
+                            <TouchableOpacity
+                              onPress={() => removePendingLog(log)}>
+                              <Icon name="x" size={14} color="#bbb" />
+                            </TouchableOpacity>
+                          )}
+                        </S.LogTimelineDateRow>
+                        {log.isEditable && isMyProject ? (
+                          <S.LogInputWrapper
+                            isFocused={focusedLogId === log.key}>
+                            <S.LogInput
+                              placeholder="오늘 뜬 내용을 기록해보세요"
+                              value={log.content}
+                              onChangeText={text =>
+                                updatePendingLog(log.id, text)
+                              }
+                              onFocus={() => setFocusedLogId(log.key)}
+                              onBlur={() => setFocusedLogId(null)}
+                              placeholderTextColor="#ccc"
+                              multiline
+                              maxLength={500}
+                            />
+                          </S.LogInputWrapper>
+                        ) : (
+                          <S.LogContent>{log.content}</S.LogContent>
+                        )}
+                      </S.LogTimelineContent>
+                    </S.LogTimelineRow>
+                  );
+                })}
+                {pendingLogs.length > MAX_LENGTH_LOG && (
+                  <S.ViewAllButton
+                    onPress={() => {
+                      navigation.navigate(PROJECTS_ROUTES.PROJECT_LOGS_ALL, {
+                        projectId: projectId!,
+                        projectTitle: project?.title,
+                      });
+                    }}>
+                    <S.ViewAllButtonText>
+                      전체 보기 ({pendingLogs.length}개)
+                    </S.ViewAllButtonText>
+                  </S.ViewAllButton>
+                )}
+              </>
+            )}
+          </S.Section>
+        )}
 
         {/* ══ 게시물 ════════════════════════════════════ */}
         <S.Section style={{borderBottomWidth: 0}}>
@@ -1701,7 +2000,9 @@ export default function ProjectDetailScreen() {
             {isMyProject && posts.length > 0 && (
               <S.AddButton
                 onPress={() =>
-                  formStatus === 'planned' ? showPlannedStatusToast() : handleAddPostPress()
+                  formStatus === 'planned'
+                    ? showPlannedStatusToast()
+                    : handleAddPostPress()
                 }
                 style={{opacity: formStatus === 'planned' ? 0.4 : 1}}>
                 <Icon name="plus" size={16} color="#fff" />
@@ -1761,29 +2062,33 @@ export default function ProjectDetailScreen() {
                           )}
                         </S.PostDateText>
                         {post.likes_count !== undefined && (
-                        <S.PostStatsRow>
-                          {project?.likes_enabled && (
-                            <S.PostStatItem>
-                              {post.is_liked ? (
-                                <LikedIcon width={12} height={12} />
-                              ) : (
-                                <LikeIcon width={13} height={13} />
-                              )}
-                              {(post.likes_count ?? 0) > 0 && (
-                                <S.PostStatText>{post.likes_count}</S.PostStatText>
-                              )}
-                            </S.PostStatItem>
-                          )}
-                          {project?.comments_enabled && (
-                            <S.PostStatItem>
-                              <CommentIcon width={13} height={13} />
-                              {(post.comments_count ?? 0) > 0 && (
-                                <S.PostStatText>{post.comments_count}</S.PostStatText>
-                              )}
-                            </S.PostStatItem>
-                          )}
-                        </S.PostStatsRow>
-                      )}
+                          <S.PostStatsRow>
+                            {project?.likes_enabled && (
+                              <S.PostStatItem>
+                                {post.is_liked ? (
+                                  <LikedIcon width={12} height={12} />
+                                ) : (
+                                  <LikeIcon width={13} height={13} />
+                                )}
+                                {(post.likes_count ?? 0) > 0 && (
+                                  <S.PostStatText>
+                                    {post.likes_count}
+                                  </S.PostStatText>
+                                )}
+                              </S.PostStatItem>
+                            )}
+                            {project?.comments_enabled && (
+                              <S.PostStatItem>
+                                <CommentIcon width={13} height={13} />
+                                {(post.comments_count ?? 0) > 0 && (
+                                  <S.PostStatText>
+                                    {post.comments_count}
+                                  </S.PostStatText>
+                                )}
+                              </S.PostStatItem>
+                            )}
+                          </S.PostStatsRow>
+                        )}
                       </S.PostDateRow>
                       <PostContentPreview content={post.content ?? ''} />
                     </TouchableOpacity>
@@ -1821,7 +2126,9 @@ export default function ProjectDetailScreen() {
       {/* 예정 상태 추가 불가 토스트 */}
       {showPlannedToast && (
         <S.SaveToast activeOpacity={1}>
-          <S.SaveToastText>예정 상태인 프로젝트는 추가할 수 없어요.</S.SaveToastText>
+          <S.SaveToastText>
+            예정 상태인 프로젝트는 추가할 수 없어요.
+          </S.SaveToastText>
         </S.SaveToast>
       )}
 
@@ -1871,7 +2178,9 @@ export default function ProjectDetailScreen() {
         initialEnd={formStatus === 'completed' ? completedAt : undefined}
         maxDate={(() => {
           const today = new Date();
-          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          return `${today.getFullYear()}-${String(
+            today.getMonth() + 1,
+          ).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         })()}
         onConfirm={handleCalendarConfirm}
         onClose={() => setShowCalendar(false)}
@@ -1896,7 +2205,8 @@ export default function ProjectDetailScreen() {
             label: '대표 이미지 초기화',
             onPress: handleRemoveThumbnail,
             isDestructive: true,
-            disabled: !thumbnailUrl && !pendingThumbnail && !fallbackThumbnailUrl,
+            disabled:
+              !thumbnailUrl && !pendingThumbnail && !fallbackThumbnailUrl,
           },
         ]}>
         <View style={{paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4}}>
@@ -1931,7 +2241,8 @@ export default function ProjectDetailScreen() {
                     style={{
                       flexDirection: 'row',
                       gap: POST_IMAGE_GRID_GAP,
-                      justifyContent: row.length === 3 ? 'center' : 'flex-start',
+                      justifyContent:
+                        row.length === 3 ? 'center' : 'flex-start',
                     }}>
                     {row.map((uri, idx) => (
                       <S.PostImageThumb

@@ -41,7 +41,11 @@ Deno.serve(async (req: Request) => {
       throw new Error('RAVELRY_USERNAME/RAVELRY_PASSWORD not set');
     }
 
-    const {ids} = await req.json().catch(() => ({}));
+    // include: Ravelry yarns/show의 추가 결과 (colorways, availability). 없으면 기존과 동일하게 동작
+    const {ids, include} = await req.json().catch(() => ({}));
+    const includeParam = (Array.isArray(include) ? include : include ? [include] : [])
+      .filter((v: unknown) => v === 'colorways' || v === 'availability')
+      .join(' ');
     if (!Array.isArray(ids) || ids.length === 0) {
       return new Response(JSON.stringify({error: 'ids required'}), {
         status: 400,
@@ -58,13 +62,19 @@ Deno.serve(async (req: Request) => {
     // 화면에는 소수만 보여줄 거라(최대 3개) 개별 조회를 병렬로 처리
     const results = await Promise.allSettled(
       ids.map(async (id: number) => {
-        const url = `${RAVELRY_BASE_URL}/yarns/${id}.json`;
+        const url = new URL(`${RAVELRY_BASE_URL}/yarns/${id}.json`);
+        if (includeParam) url.searchParams.set('include', includeParam);
         console.log(`[ravelry-yarn-detail] GET ${url}`);
         const res = await fetch(url, {headers});
         console.log(`[ravelry-yarn-detail] ${res.status} <- ${url}`);
         if (!res.ok) throw new Error(`${res.status}`);
         const data = await res.json();
-        return data.yarn;
+        // colorways/availability는 yarn 바깥에 따로 오므로 yarn 객체에 붙여서 반환
+        return {
+          ...data.yarn,
+          ...(data.colorways ? {colorways: data.colorways} : {}),
+          ...(data.availability ? {availability: data.availability} : {}),
+        };
       }),
     );
 

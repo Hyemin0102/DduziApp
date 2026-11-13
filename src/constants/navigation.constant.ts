@@ -18,6 +18,7 @@ export const TAB_ROUTES = {
   EXPLORE_TAB: 'ExploreTab',
   POST_TAB: 'PostTab',
   PROJECTS_TAB: 'ProjectsTab',
+  DRAWER_TAB: 'DrawerTab',
   MY_PAGE_TAB: 'MyPageTab',
 } as const;
 
@@ -35,6 +36,17 @@ export const PROJECTS_ROUTES = {
   PROJECT_LOGS_ALL: 'ProjectLogsAll',
   PROJECT_POSTS_ALL: 'ProjectPostsAll',
   PDF_VIEWER: 'PdfViewer',
+} as const;
+
+// ============= Drawer(서랍장) Stack Routes =============
+export const DRAWER_ROUTES = {
+  DRAWER_MAIN: 'DrawerMain',
+  YARN_RAVELRY_SEARCH: 'YarnRavelrySearch',
+  YARN_FORM: 'YarnForm',
+  YARN_DETAIL: 'YarnDetail',
+  YARN_COLORWAY: 'YarnColorway',
+  NEEDLE_FORM: 'NeedleForm',
+  NEEDLE_DETAIL: 'NeedleDetail',
 } as const;
 
 // ============= Home Stack Routes =============

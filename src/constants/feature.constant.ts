@@ -3,3 +3,7 @@
 
 // 레이블리 도안 탐색 탭. 재오픈 시점 미정 — 다시 켤 땐 이 값만 true로.
 export const PATTERN_SEARCH_TAB_ENABLED = false;
+
+// 서랍장(실/바늘) 탭. 개발 중 — ravelry-yarn-search/ravelry-yarn-detail Edge Function이
+// prod에 배포되기 전까지는 스토어 빌드에서 false로 둘 것 (supabase/PENDING_PROD_DEPLOY.md 2번 참고)
+export const DRAWER_TAB_ENABLED = true;

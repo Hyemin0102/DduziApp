@@ -47,7 +47,14 @@ export const BadgeRow = styled.View`
 `;
 
 export const StatusBadge = styled.View<{
-  variant: 'planned' | 'in_progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
+  variant:
+    | 'planned'
+    | 'in_progress'
+    | 'completed'
+    | 'public'
+    | 'private'
+    | 'on'
+    | 'off';
 }>`
   padding-horizontal: 10px;
   padding-vertical: 5px;
@@ -73,7 +80,14 @@ export const StatusBadge = styled.View<{
 `;
 
 export const StatusText = styled.Text<{
-  variant: 'planned' | 'in_progress' | 'completed' | 'public' | 'private' | 'on' | 'off';
+  variant:
+    | 'planned'
+    | 'in_progress'
+    | 'completed'
+    | 'public'
+    | 'private'
+    | 'on'
+    | 'off';
 }>`
   font-size: 13px;
   font-weight: 600;
@@ -405,8 +419,7 @@ export const SubmitText = styled.Text`
 // ─── SNS 스타일 상단 영역 ─────────────────────────────────
 
 export const PostArea = styled.View`
-  
-padding: 20px 20px 16px;
+  padding: 20px 20px 16px;
   border-bottom-width: 6px;
   border-bottom-color: #f5f5f5;
   position: relative;
@@ -489,7 +502,6 @@ export const MetaRow = styled.View`
   padding-vertical: 14px;
   border-bottom-width: 0.5px;
   border-bottom-color: #f0f0f0;
-
 `;
 
 /** 라벨 + 부연설명을 세로로 쌓는 왼쪽 영역 */
@@ -561,12 +573,60 @@ export const InfoPlaceholder = styled.Text`
   color: #ccc;
 `;
 
+// 실/바늘 직접 입력 진입 버튼 — 눌러야 입력칸이 열림
+export const DashedAddButton = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-style: dashed;
+  border-color: #d5d5d5;
+`;
+
+export const DashedAddButtonText = styled.Text`
+  font-size: 13px;
+  color: #999;
+`;
+
 export const InfoInput = styled.TextInput`
   font-size: 14px;
   color: #333;
   padding: 0;
   line-height: 20px;
   //flex-wrap: wrap;
+`;
+
+// 실/바늘 직접 입력 중 — 테두리로 입력 영역을 드러냄
+export const InfoInputBordered = styled.TextInput`
+  font-size: 14px;
+  color: #333;
+  line-height: 20px;
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-color: #191919;
+  background-color: #fff;
+`;
+
+// 실/바늘 직접 입력 결과 — 서랍장 연결 카드(ProjectDrawerLinks LinkedCard)와 같은 모양
+export const DirectInfoCard = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-color: #ebebeb;
+  background-color: #fafafa;
 `;
 
 export const LinkRow = styled.View`
@@ -851,7 +911,6 @@ export const PostImagePickerTitle = styled.Text`
   font-weight: 600;
   color: #111;
 `;
-
 
 export const PostImageGrid = styled.View`
   padding: 12px;

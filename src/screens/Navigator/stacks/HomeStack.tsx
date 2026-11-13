@@ -12,6 +12,7 @@ import ProjectPostsAllScreen from '@/screens/ProjectDetail/ProjectPostsAllScreen
 import PostCreateForProjectScreen from '@/screens/PostCreate/PostCreateForProjectScreen';
 import PdfViewerScreen from '@/screens/PdfViewer/PdfViewerScreen';
 import AppHeader from '@/components/Header/AppHeader';
+import drawerItemScreens from './drawerItemScreens';
 import PostsScreen from '@/screens/Posts/PostsScreen';
 import NotificationListScreen from '@/screens/Notifications/NotificationListScreen';
 
@@ -93,6 +94,8 @@ const HomeStack = () => {
         component={ProfileScreen}
         options={{title: '프로필 수정'}}
       />
+      {/* 프로젝트 상세에서 연결된 실/바늘 보기·추가 */}
+      {drawerItemScreens(Stack)}
     </Stack.Navigator>
   );
 };

@@ -18,8 +18,21 @@ import Icon from 'react-native-vector-icons/Feather';
 import {profileUrl} from '@/lib/imageTransform';
 import {getProjectDateLabel} from '@/lib/projectDate';
 import SavedProjectCard from '@/components/common/SavedProjectCard';
+import {deleteProjects} from '@/lib/deleteProjects';
 
 type TabType = 'planned' | 'inProgress' | 'completed' | 'saved';
+
+const TAB_STATUS = {
+  planned: 'planned',
+  inProgress: 'in_progress',
+  completed: 'completed',
+} as const;
+
+const TAB_LABEL = {
+  planned: '예정',
+  inProgress: '진행 중',
+  completed: '완료',
+} as const;
 
 interface SavedProject {
   savedId: string;
@@ -54,6 +67,7 @@ export default function ProjectsScreen() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -196,8 +210,13 @@ export default function ProjectsScreen() {
     );
   };
 
+  // 뜨개함은 저장 id, 내 프로젝트 탭은 프로젝트 id로 선택
   const handleSelectAll = () => {
-    setSelectedIds(savedProjects.map(p => p.savedId));
+    setSelectedIds(
+      activeTab === 'saved'
+        ? savedProjects.map(p => p.savedId)
+        : myProjects.filter(p => p.status === TAB_STATUS[activeTab]).map(p => p.id),
+    );
   };
 
   const handleCancelEdit = () => {
@@ -206,15 +225,29 @@ export default function ProjectsScreen() {
   };
 
   const handleConfirmDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
     try {
-      await supabase.from('saved_projects').delete().in('id', selectedIds);
-      setSavedProjects(prev => prev.filter(p => !selectedIds.includes(p.savedId)));
+      if (activeTab === 'saved') {
+        // 뜨개함: 저장만 해제
+        await supabase.from('saved_projects').delete().in('id', selectedIds);
+        setSavedProjects(prev => prev.filter(p => !selectedIds.includes(p.savedId)));
+      } else {
+        // 내 프로젝트: 게시물/로그/이미지/PDF까지 삭제 (프로젝트 상세 삭제와 동일)
+        await deleteProjects(selectedIds);
+        setMyProjects(prev => prev.filter(p => !selectedIds.includes(p.id)));
+      }
       setShowDeleteConfirm(false);
       setSelectedIds([]);
       setIsEditMode(false);
-    } catch {
+    } catch (e) {
+      console.error('프로젝트 삭제 실패:', e);
       setShowDeleteConfirm(false);
       Alert.alert('오류', '삭제 중 문제가 발생했습니다.');
+      // 일부만 지워졌을 수 있으니 목록 다시 조회
+      if (activeTab !== 'saved') fetchAll();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -226,18 +259,26 @@ export default function ProjectsScreen() {
 
   const renderMyProject = (item: ProjectItem) => {
     const dateLabel = getProjectDateLabel(item.is_completed, item.started_at, item.completed_at);
+    const isSelected = selectedIds.includes(item.id);
 
     return (
     <S.Card
       key={item.id}
       activeOpacity={0.75}
       onPress={() =>
-        navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
-          projectId: item.id,
-          projectTitle: item.title,
-        })
+        isEditMode
+          ? toggleSelect(item.id)
+          : navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
+              projectId: item.id,
+              projectTitle: item.title,
+            })
       }>
       <S.CardLeft>
+        {isEditMode && (
+          <S.SelectCircle selected={isSelected}>
+            {isSelected && <Icon name="check" size={11} color="#fff" />}
+          </S.SelectCircle>
+        )}
         <S.CardInfo>
           <S.TitleRow>
             <S.CardTitle numberOfLines={1}>{item.title}</S.CardTitle>
@@ -252,7 +293,7 @@ export default function ProjectsScreen() {
         {item.thumbnail_url ? (
           <S.CardThumbnail source={{uri: item.thumbnail_url}} />
         ) : null}
-        <Icon name="chevron-right" size={16} color="#ccc" />
+        {!isEditMode && <Icon name="chevron-right" size={16} color="#ccc" />}
       </S.CardRight>
     </S.Card>
   );
@@ -381,7 +422,22 @@ export default function ProjectsScreen() {
         <FlatList
           data={currentProjects}
           keyExtractor={item => item.id}
-          contentContainerStyle={{flexGrow: 1}}
+          contentContainerStyle={{flexGrow: 1, paddingBottom: isEditMode ? 88 : 0}}
+          ListHeaderComponent={
+            currentProjects.length > 0 ? (
+              <S.SavedHeaderRow>
+                <S.SavedHeaderTitle>
+                  {TAB_LABEL[activeTab as keyof typeof TAB_LABEL]} 프로젝트 {currentProjects.length}
+                </S.SavedHeaderTitle>
+                <S.SavedHeaderAction
+                  onPress={() => (isEditMode ? handleSelectAll() : setIsEditMode(true))}>
+                  <S.SavedHeaderActionText>
+                    {isEditMode ? '모두선택' : '관리'}
+                  </S.SavedHeaderActionText>
+                </S.SavedHeaderAction>
+              </S.SavedHeaderRow>
+            ) : null
+          }
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
@@ -411,14 +467,14 @@ export default function ProjectsScreen() {
         />
       )}
 
-      {activeTab !== 'saved' && (
+      {activeTab !== 'saved' && !isEditMode && (
         <S.AddButton onPress={handleCreateProject}>
           <S.AddButtonText>새 프로젝트</S.AddButtonText>
           <Icon name="plus" size={15} color="#fff" />
         </S.AddButton>
       )}
 
-      {activeTab === 'saved' && isEditMode && (
+      {isEditMode && (
         <S.FloatingBar>
           <S.FloatingCancelButton onPress={handleCancelEdit}>
             <S.FloatingCancelText>취소</S.FloatingCancelText>
@@ -440,14 +496,20 @@ export default function ProjectsScreen() {
           <S.ConfirmModalContainer>
             <S.ConfirmTitle>프로젝트를 삭제할까요?</S.ConfirmTitle>
             <S.ConfirmDescription>
-              프로젝트를 삭제하면 뜨개함에서 더는 확인할 수 없어요.
+              {activeTab === 'saved'
+                ? '프로젝트를 삭제하면 뜨개함에서 더는 확인할 수 없어요.'
+                : `선택한 프로젝트 ${selectedIds.length}개와 게시물, 뜨개 로그가 모두 삭제돼요. 삭제한 프로젝트는 되돌릴 수 없어요.`}
             </S.ConfirmDescription>
             <S.ConfirmButtonRow>
               <S.ConfirmCancelButton onPress={() => setShowDeleteConfirm(false)}>
                 <S.ConfirmCancelText>취소</S.ConfirmCancelText>
               </S.ConfirmCancelButton>
-              <S.ConfirmDeleteButton onPress={handleConfirmDelete}>
-                <S.ConfirmDeleteText>프로젝트 삭제</S.ConfirmDeleteText>
+              <S.ConfirmDeleteButton onPress={handleConfirmDelete} disabled={isDeleting}>
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <S.ConfirmDeleteText>프로젝트 삭제</S.ConfirmDeleteText>
+                )}
               </S.ConfirmDeleteButton>
             </S.ConfirmButtonRow>
           </S.ConfirmModalContainer>

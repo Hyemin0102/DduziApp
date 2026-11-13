@@ -165,3 +165,89 @@ export interface CreatePostInput {
   content?: string;
   images: Array<{uri: string; name?: string; type?: string}>;
 }
+
+// ================================
+// 서랍장 실 타입 (user_yarns 테이블)
+// ================================
+
+export interface UserYarn {
+  id: string;
+  user_id: string;
+  name: string;
+  brand: string | null;
+  color: string | null;
+  lot: string | null;
+  ply: string | null;
+  fiber: string | null;
+  gauge: string | null;
+  needle_size: string | null;
+  ball_count: number | null;
+  grams_per_ball: number | null;
+  meters_per_ball: number | null;
+  purchase_place: string | null;
+  purchased_at: string | null;
+  price: number | null;
+  memo: string | null;
+  custom_image_url: string | null;
+  ravelry_image_url: string | null;
+  ravelry_yarn_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// 실 상세용 (연결된 프로젝트 포함)
+export interface UserYarnWithProjects extends UserYarn {
+  // used_grams / purpose_tags: 그 프로젝트에서 사용한 양 / 용도 (user_yarn_projects)
+  projects: (Pick<ProjectBase, 'id' | 'title' | 'thumbnail_url' | 'status'> & {
+    used_grams: number | null;
+    purpose_tags: string[];
+  })[];
+}
+
+// ================================
+// 서랍장 바늘 타입 (user_needles 테이블)
+// ================================
+
+export type NeedleCategory = 'knitting' | 'crochet';
+export type NeedleType = 'circular' | 'interchangeable' | 'dpn' | 'straight' | 'crochet' | 'tunisian';
+
+export interface UserNeedle {
+  id: string;
+  user_id: string;
+  category: NeedleCategory;
+  needle_type: NeedleType;
+  is_set: boolean;
+  name: string | null;
+  brand: string | null;
+  sizes_mm: number[];
+  cable_lengths_cm: number[];
+  purchase_place: string | null;
+  purchased_at: string | null;
+  price: number | null;
+  memo: string | null;
+  image_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserNeedleWithProjects extends UserNeedle {
+  projects: Pick<ProjectBase, 'id' | 'title' | 'thumbnail_url' | 'status'>[];
+}
+
+// 프로젝트에 연결된 실/바늘 (get_project_drawer_items RPC) — 메모는 항상 제외,
+// 작성자가 아니면 구매 정보(구매처/구매일/가격)와 실의 구매량도 빠져서 옴(undefined)
+export type PublicUserYarn = Omit<UserYarn, 'memo' | 'user_id'>;
+// 프로젝트 상세에서 보는 연결된 실 — 해당 프로젝트에서의 사용량/용도 포함
+export type ProjectLinkedYarn = PublicUserYarn & {used_grams?: number | null; purpose_tags?: string[]};
+export type PublicUserNeedle = Omit<UserNeedle, 'memo' | 'user_id'>;
+
+// 프로젝트 게이지 (project_gauges) — 내가 실제로 뜬 게이지, 기준 10cm
+export interface ProjectGauge {
+  id: string;
+  project_id: string;
+  stitches: number;
+  rows: number | null;
+  needle_mm: number | null;
+  pattern: string | null;
+  created_at: string;
+}
