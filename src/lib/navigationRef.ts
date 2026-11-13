@@ -57,6 +57,9 @@ export function navigateFromNotificationData(data?: Record<string, string>) {
       params: {
         screen: MY_PAGE_ROUTES.NOTICE_DETAIL,
         params: {noticeId: data.noticeId},
+        // 마이페이지 탭을 아직 안 열었으면 스택이 [공지 상세]만으로 만들어져서 뒤로가기/탭 재선택이 안 됨
+        // initial: false면 [마이페이지 메인, 공지 상세]로 쌓임
+        initial: false,
       },
     } as never);
     return;
@@ -69,6 +72,7 @@ export function navigateFromNotificationData(data?: Record<string, string>) {
       params: {
         screen: POST_ROUTES.POST_DETAIL,
         params: {postId: data.postId},
+        initial: false,
       },
     } as never);
     return;

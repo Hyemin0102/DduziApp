@@ -116,3 +116,13 @@ export const TrendingTagText = styled.Text`
   font-size: 14px;
   color: #333;
 `;
+
+// 최근 뜨개함에 저장됐어요 — 가로 스크롤 카드
+export const SavedSection = styled.View`
+  padding: 4px 0 8px;
+`;
+
+export const ExploreLoading = styled.View`
+  padding: 24px 0;
+  align-items: center;
+`;

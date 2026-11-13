@@ -7,6 +7,7 @@ import {supabase} from '@/lib/supabase';
 import PostCard from '@/components/common/PostCard';
 import NativeAdCard from '@/components/common/NativeAdCard';
 import SavedProjectSearchCard from '@/components/common/SavedProjectSearchCard';
+import ExploreGridRow, {EXPLORE_COLUMNS, ExplorePost} from '@/components/common/ExploreGridRow';
 import NativeAdCardRounded from '@/components/common/NativeAdCardRounded';
 import WeeklyTopPosterCard from '@/components/common/WeeklyTopPosterCard';
 import {Post} from '@/@types/database';
@@ -14,7 +15,6 @@ import * as S from './Search.style';
 import useCommonNavigation from '@/hooks/useCommonNavigation';
 import {PROJECTS_ROUTES, POST_ROUTES} from '@/constants/navigation.constant';
 import {profileUrl} from '@/lib/imageTransform';
-import {getProjectDateLabel} from '@/lib/projectDate';
 import {trackEvent} from '@/lib/mixpanel';
 import PostCommentsSheet from '@/components/common/PostCommentsSheet';
 import PostLikersSheet from '@/components/common/PostLikersSheet';
@@ -54,6 +54,13 @@ type SearchFeedItem =
   | {type: 'post'; key: string; post: Post}
   | {type: 'ad'; key: string};
 
+// 검색 전 화면의 둘러보기 그리드 한 줄
+type ExploreRowItem = {type: 'explore'; key: string; posts: ExplorePost[]};
+type ListItem = SearchFeedItem | ExploreRowItem;
+
+// 둘러보기: 최신순, 3의 배수로 잘라서 줄이 중간에 비지 않게
+const EXPLORE_PAGE_SIZE = 30;
+
 const buildSearchFeedItems = (posts: Post[]): SearchFeedItem[] => {
   const items: SearchFeedItem[] = [];
   let nextAdAt = SEARCH_AD_GAP_SEQUENCE[0];
@@ -85,6 +92,14 @@ const Search = () => {
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
   const isFocused = useRef(true);
   const inputRef = useRef<any>(null);
+
+  // 둘러보기 (검색 전 화면 하단 3그리드)
+  const [explorePosts, setExplorePosts] = useState<ExplorePost[]>([]);
+  const [exploreLoading, setExploreLoading] = useState(true);
+  const [exploreLoadingMore, setExploreLoadingMore] = useState(false);
+  const [exploreHasMore, setExploreHasMore] = useState(true);
+  const explorePageRef = useRef(0);
+  const blockedIdsRef = useRef<string[] | null>(null);
 
   // unmount 시 (뒤로가기) 상태 정리
   useEffect(() => {
@@ -161,6 +176,80 @@ const Search = () => {
     fetchMostSavedProjects();
   }, []);
 
+
+  const getBlockedIds = async (): Promise<string[]> => {
+    if (blockedIdsRef.current) return blockedIdsRef.current;
+    const {data: {user}} = await supabase.auth.getUser();
+    if (!user) return [];
+    const {data: blocks} = await supabase
+      .from('blocks')
+      .select('blocked_id')
+      .eq('blocker_id', user.id);
+    blockedIdsRef.current = blocks ? blocks.map(b => b.blocked_id) : [];
+    return blockedIdsRef.current;
+  };
+
+  // 홈 피드와 같은 조건(공개 프로젝트, 차단 사용자 제외, 최신순) — 썸네일만 필요해서 이미지만 조회
+  const fetchExplorePage = async (page: number) => {
+    const ids = await getBlockedIds();
+    let query = supabase
+      .from('posts')
+      .select('id, post_images ( image_url, display_order ), projects!inner ( visibility )')
+      .eq('projects.visibility', 'public')
+      .order('created_at', {ascending: false})
+      .range(page * EXPLORE_PAGE_SIZE, (page + 1) * EXPLORE_PAGE_SIZE - 1);
+    if (ids.length > 0) {
+      query = query.not('user_id', 'in', `(${ids.join(',')})`);
+    }
+    const {data, error} = await query;
+    if (error) throw error;
+    const rows = (data ?? []) as any[];
+    const posts: ExplorePost[] = rows.flatMap(post => {
+      const images = (post.post_images || [])
+        .slice()
+        .sort((a: any, b: any) => a.display_order - b.display_order);
+      if (!images[0]?.image_url) return [];
+      return [{id: post.id, image_url: images[0].image_url, image_count: images.length}];
+    });
+    return {posts, hasMore: rows.length === EXPLORE_PAGE_SIZE};
+  };
+
+  const loadExplore = async () => {
+    try {
+      const {posts, hasMore} = await fetchExplorePage(0);
+      explorePageRef.current = 0;
+      setExplorePosts(posts);
+      setExploreHasMore(hasMore);
+    } catch (error) {
+      console.error('둘러보기 로드 실패:', error);
+    } finally {
+      setExploreLoading(false);
+    }
+  };
+
+  const loadMoreExplore = async () => {
+    if (hasSearched || exploreLoading || exploreLoadingMore || !exploreHasMore) return;
+    setExploreLoadingMore(true);
+    try {
+      const nextPage = explorePageRef.current + 1;
+      const {posts, hasMore} = await fetchExplorePage(nextPage);
+      explorePageRef.current = nextPage;
+      setExploreHasMore(hasMore);
+      setExplorePosts(prev => {
+        const seen = new Set(prev.map(p => p.id));
+        return [...prev, ...posts.filter(p => !seen.has(p.id))];
+      });
+    } catch (error) {
+      console.error('둘러보기 추가 로드 실패:', error);
+    } finally {
+      setExploreLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    loadExplore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 탭 전환 시 상태 정리 (혹시 탭 네비게이터 안으로 이동할 경우 대비)
   useFocusEffect(
@@ -318,12 +407,32 @@ const Search = () => {
   };
 
   const onRefresh = async () => {
+    if (!hasSearched) {
+      setRefreshing(true);
+      await loadExplore();
+      setRefreshing(false);
+      return;
+    }
     if (!searchQuery.trim()) return;
     setRefreshing(true);
     await handleSearch(searchQuery);
   };
 
   const feedItems = useMemo(() => buildSearchFeedItems(searchResults), [searchResults]);
+
+  const exploreRows = useMemo(() => {
+    const rows: ExploreRowItem[] = [];
+    for (let i = 0; i < explorePosts.length; i += EXPLORE_COLUMNS) {
+      const posts = explorePosts.slice(i, i + EXPLORE_COLUMNS);
+      rows.push({type: 'explore', key: `explore-${posts[0].id}`, posts});
+    }
+    return rows;
+  }, [explorePosts]);
+
+  const openPostDetail = useCallback(
+    (postId: string) => navigation.navigate(POST_ROUTES.POST_DETAIL, {postId}),
+    [navigation],
+  );
 
   const handleLikeToggled = (postId: string, liked: boolean) => {
     setSearchResults(prev =>
@@ -349,8 +458,10 @@ const Search = () => {
     });
   };
 
-  const renderItem = ({item}: {item: SearchFeedItem}) =>
-    item.type === 'ad' ? (
+  const renderItem = ({item}: {item: ListItem}) =>
+    item.type === 'explore' ? (
+      <ExploreGridRow posts={item.posts} onPress={openPostDetail} />
+    ) : item.type === 'ad' ? (
       <NativeAdCard />
     ) : (
       <PostCard
@@ -369,11 +480,6 @@ const Search = () => {
         profileUrl(project.owner_profile_image) ?? project.owner_profile_image
       }
       title={project.title}
-      dateLabel={getProjectDateLabel(
-        project.is_completed,
-        project.started_at,
-        project.completed_at,
-      )}
       thumbnailUrl={project.thumbnail_url}
       onPress={() => {
         navigation.navigate(PROJECTS_ROUTES.PROJECT_DETAIL, {
@@ -382,6 +488,84 @@ const Search = () => {
         });
       }}
     />
+  );
+
+  const renderExploreHeader = () => (
+    <>
+      {trendingKeywords.length > 0 && (
+        <S.TrendingSection>
+          <S.TrendingTitle>지금 많이 뜨고있어요</S.TrendingTitle>
+          <S.TrendingTagRow>
+            {trendingKeywords.map(keyword => (
+              <S.TrendingTag
+                key={keyword}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setSearchQuery(keyword);
+                  handleSearch(keyword);
+                }}>
+                <S.TrendingTagText>
+                  {keyword.length > 10 ? `${keyword.slice(0, 10)}...` : keyword}
+                </S.TrendingTagText>
+              </S.TrendingTag>
+            ))}
+          </S.TrendingTagRow>
+        </S.TrendingSection>
+      )}
+
+      {/* {weeklyTopPosters.length > 0 && (
+        <S.TrendingProjects>
+          <S.TrendingSection style={{paddingBottom: 0}}>
+            <S.TrendingTitle>위클리 뜨개왕 ✨</S.TrendingTitle>
+          </S.TrendingSection>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{paddingTop: 8, paddingLeft: 20, paddingBottom: 0}}>
+            {weeklyTopPosters.map((poster, index) => (
+              <WeeklyTopPosterCard
+                key={poster.user_id}
+                rank={index + 1}
+                nickname={poster.nickname}
+                profileImage={
+                  profileUrl(poster.profile_image) ?? poster.profile_image
+                }
+                postCount={poster.post_count}
+                onPress={() => {
+                  trackEvent('weekly_top_poster_tapped', {
+                    user_id: poster.user_id,
+                    rank: index + 1,
+                  });
+                  navigation.navigate(POST_ROUTES.POSTS_MAIN, {
+                    userId: poster.user_id,
+                  });
+                }}
+              />
+            ))}
+          </ScrollView>
+        </S.TrendingProjects>
+      )} */}
+
+      {mostSavedProjects.length > 0 && (
+        <S.SavedSection>
+          <S.TrendingTitle style={{paddingHorizontal: 20}}>
+            최근 뜨개함에 저장됐어요
+          </S.TrendingTitle>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{paddingHorizontal: 20, gap: 10}}>
+            {mostSavedProjects.map(renderSavedProjectCard)}
+          </ScrollView>
+        </S.SavedSection>
+      )}
+
+      {explorePosts.length > 0 && (
+        <S.TrendingSection style={{paddingBottom: 0}}>
+          <S.TrendingTitle>둘러보기</S.TrendingTitle>
+        </S.TrendingSection>
+      )}
+    </>
   );
 
   const renderEmptyComponent = () => {
@@ -403,88 +587,23 @@ const Search = () => {
     }
 
     if (!hasSearched) {
-      if (
-        trendingKeywords.length > 0 ||
-        weeklyTopPosters.length > 0 ||
-        mostSavedProjects.length > 0
-      ) {
+      if (exploreLoading) {
         return (
-          <>
-            {trendingKeywords.length > 0 && (
-              <S.TrendingSection>
-                <S.TrendingTitle>지금 많이 뜨고있어요</S.TrendingTitle>
-                <S.TrendingTagRow>
-                  {trendingKeywords.map(keyword => (
-                    <S.TrendingTag
-                      key={keyword}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        setSearchQuery(keyword);
-                        handleSearch(keyword);
-                      }}>
-                      <S.TrendingTagText>
-                        {keyword.length > 10 ? `${keyword.slice(0, 10)}...` : keyword}
-                      </S.TrendingTagText>
-                    </S.TrendingTag>
-                  ))}
-                </S.TrendingTagRow>
-              </S.TrendingSection>
-            )}
-
-            {/* {weeklyTopPosters.length > 0 && (
-              <S.TrendingProjects>
-                <S.TrendingSection style={{paddingBottom: 0}}>
-                  <S.TrendingTitle>위클리 뜨개왕 ✨</S.TrendingTitle>
-                </S.TrendingSection>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{paddingTop: 8, paddingLeft: 20, paddingBottom: 0}}>
-                  {weeklyTopPosters.map((poster, index) => (
-                    <WeeklyTopPosterCard
-                      key={poster.user_id}
-                      rank={index + 1}
-                      nickname={poster.nickname}
-                      profileImage={
-                        profileUrl(poster.profile_image) ?? poster.profile_image
-                      }
-                      postCount={poster.post_count}
-                      onPress={() => {
-                        trackEvent('weekly_top_poster_tapped', {
-                          user_id: poster.user_id,
-                          rank: index + 1,
-                        });
-                        navigation.navigate(POST_ROUTES.POSTS_MAIN, {
-                          userId: poster.user_id,
-                        });
-                      }}
-                    />
-                  ))}
-                </ScrollView>
-              </S.TrendingProjects>
-            )} */}
-            {mostSavedProjects.length > 0 && (
-              <S.TrendingProjects>
-                <S.TrendingSection style={{paddingBottom: 4}}>
-                  <S.TrendingTitle style={{marginBottom: 8}}>
-                    최근 뜨개함에 저장됐어요
-                  </S.TrendingTitle>
-                </S.TrendingSection>
-                {mostSavedProjects.map(renderSavedProjectCard)}
-               {/* <NativeAdCardRounded /> */}
-              </S.TrendingProjects>
-            )}
-          </>
+          <S.ExploreLoading>
+            <ActivityIndicator color="#999" />
+          </S.ExploreLoading>
         );
       }
-      return (
-        <S.CenterContainer>
-          <S.EmptyText>검색어를 입력해주세요</S.EmptyText>
-          <S.EmptySubText>
-            프로젝트 제목 또는 작성자로 검색할 수 있습니다
-          </S.EmptySubText>
-        </S.CenterContainer>
-      );
+      if (trendingKeywords.length === 0 && mostSavedProjects.length === 0) {
+        return (
+          <S.CenterContainer>
+            <S.EmptyText>검색어를 입력해주세요</S.EmptyText>
+            <S.EmptySubText>
+              프로젝트 제목 또는 작성자로 검색할 수 있습니다
+            </S.EmptySubText>
+          </S.CenterContainer>
+        );
+      }
     }
 
     return null;
@@ -522,11 +641,21 @@ const Search = () => {
         </S.SearchInputContainer>
       </S.SearchHeader>
 
-      <FlatList
-        data={!loading ? feedItems : []}
+      <FlatList<ListItem>
+        data={loading ? [] : hasSearched ? feedItems : exploreRows}
         keyExtractor={item => item.key}
         renderItem={renderItem}
+        ListHeaderComponent={!hasSearched && !loading ? renderExploreHeader() : null}
         ListEmptyComponent={renderEmptyComponent}
+        ListFooterComponent={
+          !hasSearched && exploreLoadingMore ? (
+            <S.ExploreLoading>
+              <ActivityIndicator color="#999" />
+            </S.ExploreLoading>
+          ) : null
+        }
+        onEndReached={loadMoreExplore}
+        onEndReachedThreshold={0.5}
         contentContainerStyle={{flexGrow: 1}}
         refreshControl={
           <RefreshControl
